@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.angular/
+*.log
+npm-debug.log*
+.idea
+.vscode
+.git
+.gitignore
+*.md
+.env
+.env.*
+coverage/
+e2e/

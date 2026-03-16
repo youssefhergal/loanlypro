@@ -1,5 +1,6 @@
-# Environnement de développement - Base de données
-# Usage: docker-compose up -d
+# Environnement identique pour toute l'équipe 
+# Usage: docker compose up -d
+# Frontend: http://localhost:4200  |  Backend API: http://localhost:8080  |  MySQL: localhost:3306
 
 services:
   db:
@@ -20,6 +21,31 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: loan-management-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/loan_management?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: app
+      SPRING_DATASOURCE_PASSWORD: app
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: loan-management-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
 
 volumes:
   mysql_data:

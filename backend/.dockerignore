@@ -1,0 +1,10 @@
+target/
+*.log
+.idea
+.vscode
+*.iml
+.git
+.gitignore
+*.md
+.env
+.env.*
