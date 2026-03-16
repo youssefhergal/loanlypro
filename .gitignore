@@ -1,0 +1,27 @@
+# Frontend
+node_modules/
+dist/
+.angular/
+*.log
+npm-debug.log*
+
+# Backend
+target/
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Env & OS
+.env
+.env.local
+.env.*.local
+.DS_Store
+Thumbs.db
+
+
+JIRA/
