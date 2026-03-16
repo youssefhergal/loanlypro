@@ -1,0 +1,21 @@
+# Configuration Spring Boot - Environnement de développement
+# La base de données MySQL est lancée via Docker: docker-compose up -d
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/loan_management?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: app
+    password: app
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+
+server:
+  port: 8080
