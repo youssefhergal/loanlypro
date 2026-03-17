@@ -6,6 +6,7 @@ import { AUTH_TOKEN_KEY, AUTH_USER_KEY } from '../constants/auth.constants';
 import type { User } from '../models/user.model';
 import type { LoginRequest } from '../models/login-request.model';
 import type { LoginResponse } from '../models/login-response.model';
+import type { RegisterRequest } from '../models/register-request.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -28,6 +29,14 @@ export class AuthService {
         this.currentUserSignal.set(res.user);
       })
     );
+  }
+
+  register(payload: RegisterRequest): Observable<unknown> {
+    return this.http.post(`${this.apiUrl}/register`, payload);
+  }
+
+  verifyEmail(token: string): Observable<unknown> {
+    return this.http.post(`${this.apiUrl}/verify-email`, { token });
   }
 
   logout(): void {
