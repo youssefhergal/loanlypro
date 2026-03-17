@@ -20,6 +20,12 @@ spring:
 server:
   port: 8080
 
+# JWT (en prod utiliser une variable d'environnement pour app.jwt.secret)
+app:
+  jwt:
+    secret: ${JWT_SECRET:defaultSecretKeyForDevelopmentOnlyChangeInProductionMinimum32Characters}
+    expiration-ms: 86400000
+
 # Swagger / OpenAPI
 springdoc:
   api-docs:
