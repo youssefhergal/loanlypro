@@ -57,7 +57,7 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!localStorage.getItem('token');
+    return !!this.getToken();
   }
 
   private loadUserFromStorage(): User | null {
