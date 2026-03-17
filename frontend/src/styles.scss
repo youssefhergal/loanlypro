@@ -1,19 +1,100 @@
-
-// Custom Theming for Angular Material
-// For more information: https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-primary: #1a7a4a;
+  --color-primary-light: #e8f5ee;
+  --color-primary-dark: #0f5431;
+  --color-accent: #5db885;
+  --color-bg: #f7faf8;
+  --color-surface: #ffffff;
+  --color-text: #1a2e22;
+  --color-text-muted: #6b7c72;
+  --color-border: #d8e8de;
+  --color-error: #d32f2f;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-card: 0 2px 16px rgba(26, 122, 74, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 html {
   @include mat.theme((
     color: (
       theme-type: light,
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
+      primary: mat.$green-palette,
     ),
     typography: Roboto,
     density: 0,
   ));
-}/* You can add global styles to this file, and also import other style files */
+}
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+/* ── Material overrides ─────────────────────────────────────── */
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.mat-mdc-raised-button,
+.mat-mdc-outlined-button,
+.mat-mdc-stroked-button {
+  border-radius: var(--radius-sm) !important;
+}
+
+.mat-mdc-raised-button.mat-primary {
+  background-color: var(--color-primary) !important;
+  height: 48px;
+  font-size: 15px;
+  font-weight: 600;
+  width: 100%;
+}
+
+.mat-mdc-raised-button.mat-primary .mdc-button__label {
+  color: white !important;
+}
+
+.mat-mdc-outlined-button.mat-primary .mdc-button__label {
+  color: var(--color-primary) !important;
+}
+
+.mat-mdc-button {
+  color: var(--color-primary) !important;
+}
+
+.mat-mdc-raised-button.mat-primary:hover {
+  background-color: var(--color-primary-dark) !important;
+  transition: background-color 0.2s ease;
+}
+
+.mat-mdc-outlined-button.mat-primary:hover {
+  background-color: var(--color-primary-light) !important;
+  transition: background-color 0.2s ease;
+}
+
+.mat-mdc-button:hover {
+  background-color: var(--color-primary-light) !important;
+  transition: background-color 0.2s ease;
+}
