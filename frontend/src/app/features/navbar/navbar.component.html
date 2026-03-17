@@ -1,0 +1,20 @@
+<nav class="navbar">
+
+  <a class="logo" routerLink="/">
+    <span class="logo-icon">✓</span>
+    LoanlyFans
+  </a>
+
+  <div class="nav-actions">
+    @if (auth.isLoggedIn()) {
+      <button mat-button (click)="auth.logout()">
+        <mat-icon>logout</mat-icon>
+        Se déconnecter
+      </button>
+    } @else {
+      <a mat-raised-button color="primary" routerLink="/login">Se connecter</a>
+      <a mat-raised-button color="primary" routerLink="/register">S'inscrire</a>
+    }
+  </div>
+
+</nav>

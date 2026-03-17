@@ -56,6 +56,10 @@ export class AuthService {
     return allowedRoles.some((role) => user.roles.includes(role));
   }
 
+  isLoggedIn(): boolean {
+    return !!localStorage.getItem('token');
+  }
+
   private loadUserFromStorage(): User | null {
     const raw = localStorage.getItem(AUTH_USER_KEY);
     if (!raw) return null;
