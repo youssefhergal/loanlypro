@@ -32,7 +32,7 @@ public class InitialDataLoader implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         createRolesIfMissing();
-        createTestUserIfMissing();
+        createTestUsersIfMissing();
     }
 
     private void createRolesIfMissing() {
@@ -44,19 +44,25 @@ public class InitialDataLoader implements CommandLineRunner {
         }
     }
 
-    private void createTestUserIfMissing() {
-        if (userRepository.findByEmail("client@test.com").isPresent()) {
+    private void createTestUsersIfMissing() {
+        createUserIfMissing("client@test.com", "Jean", "Dupont", "password", ROLE_CLIENT);
+        createUserIfMissing("conseiller@test.com", "Marie", "Martin", "password", ROLE_CONSEILLER);
+        createUserIfMissing("admin@test.com", "Pierre", "Admin", "password", ROLE_ADMIN);
+    }
+
+    private void createUserIfMissing(String email, String firstName, String lastName, String password, String roleName) {
+        if (userRepository.findByEmail(email).isPresent()) {
             return;
         }
-        Role clientRole = roleRepository.findByName(ROLE_CLIENT).orElseThrow();
-        User testUser = User.builder()
-                .email("client@test.com")
-                .passwordHash(passwordEncoder.encode("password"))
-                .firstName("Jean")
-                .lastName("Dupont")
-                .roles(Set.of(clientRole))
+        Role role = roleRepository.findByName(roleName).orElseThrow();
+        User user = User.builder()
+                .email(email)
+                .passwordHash(passwordEncoder.encode(password))
+                .firstName(firstName)
+                .lastName(lastName)
+                .roles(Set.of(role))
                 .build();
-        userRepository.save(testUser);
-        log.info("Utilisateur de test créé: client@test.com / password");
+        userRepository.save(user);
+        log.info("Utilisateur de test créé: {} / {}", email, password);
     }
 }
