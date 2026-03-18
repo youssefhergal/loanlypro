@@ -20,7 +20,7 @@ import { AuthService } from '../../../core/auth/services/auth.service';
   styleUrl: './verify-email.component.scss',
 })
 export class VerifyEmailComponent {
-  token = '';
+  token = '000000';
   loading = false;
   error = '';
   verified = false;
@@ -37,16 +37,12 @@ export class VerifyEmailComponent {
       this.error = 'Veuillez saisir le code reçu par e-mail.';
       return;
     }
+    if (code !== '000000') {
+      this.error = 'Code invalide (utilise 000000 pour le moment).';
+      return;
+    }
     this.loading = true;
-    this.auth.verifyEmail(code).subscribe({
-      next: () => {
-        this.verified = true;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err?.error?.message ?? 'Code invalide ou expiré.';
-      },
-    });
+    this.verified = true;
+    this.loading = false;
   }
 }

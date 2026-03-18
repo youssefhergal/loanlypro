@@ -7,6 +7,7 @@ import type { User } from '../models/user.model';
 import type { LoginRequest } from '../models/login-request.model';
 import type { LoginResponse } from '../models/login-response.model';
 import type { RegisterRequest } from '../models/register-request.model';
+import type { RegisterResponse } from '../models/register-response.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })

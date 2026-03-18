@@ -73,10 +73,9 @@ export class RegisterComponent {
     const v = this.registerForm.value;
     this.auth
       .register({
-        first_name: v.firstName,
-        last_name: v.lastName,
         email: v.email,
-        phone: v.phone || undefined,
+        firstname: v.firstName,
+        lastname: v.lastName,
         password: v.password,
       })
       .subscribe({
