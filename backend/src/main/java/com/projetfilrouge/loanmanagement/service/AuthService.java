@@ -2,6 +2,7 @@ package com.projetfilrouge.loanmanagement.service;
 
 import com.projetfilrouge.loanmanagement.entity.Role;
 import com.projetfilrouge.loanmanagement.entity.User;
+import com.projetfilrouge.loanmanagement.repository.RoleRepository;
 import com.projetfilrouge.loanmanagement.repository.UserRepository;
 import com.projetfilrouge.loanmanagement.security.JwtService;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoginRequest;
@@ -18,12 +19,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
+    private static final String ROLE_CLIENT = "ROLE_CLIENT";
+
+    private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -62,11 +67,15 @@ public class AuthService {
             throw new RuntimeException("Cet email est déjà utilisé");
         }
 
+        Role clientRole = roleRepository.findByName(ROLE_CLIENT)
+                .orElseThrow(() -> new IllegalStateException("Le rôle ROLE_CLIENT n'existe pas en base"));
+
         User user = User.builder()
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstname())
                 .lastName(request.getLastname())
+                .roles(Set.of(clientRole))
                 .build();
 
         User savedUser = userRepository.save(user);
