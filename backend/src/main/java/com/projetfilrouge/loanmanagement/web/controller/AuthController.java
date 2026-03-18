@@ -2,7 +2,9 @@ package com.projetfilrouge.loanmanagement.web.controller;
 
 import com.projetfilrouge.loanmanagement.service.AuthService;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoginRequest;
+import com.projetfilrouge.loanmanagement.web.dto.request.RegisterRequest;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoginResponse;
+import com.projetfilrouge.loanmanagement.web.dto.response.RegisterResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,5 +31,19 @@ public class AuthController {
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/register")
+    @Operation(
+            summary = "Inscription",
+            description = "Crée un nouvel utilisateur. Retourne les informations de l'utilisateur créé."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Utilisateur créé avec succès"),
+            @ApiResponse(responseCode = "400", description = "Données invalides ou email déjà utilisé")
+    })
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
+        RegisterResponse response = authService.register(request);
+        return new ResponseEntity<>(response, org.springframework.http.HttpStatus.CREATED);
     }
 }
