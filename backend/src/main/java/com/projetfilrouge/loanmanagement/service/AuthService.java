@@ -1,10 +1,13 @@
 package com.projetfilrouge.loanmanagement.service;
 
+import com.projetfilrouge.loanmanagement.entity.Role;
 import com.projetfilrouge.loanmanagement.entity.User;
 import com.projetfilrouge.loanmanagement.repository.UserRepository;
 import com.projetfilrouge.loanmanagement.security.JwtService;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoginRequest;
+import com.projetfilrouge.loanmanagement.web.dto.request.RegisterRequest;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoginResponse;
+import com.projetfilrouge.loanmanagement.web.dto.response.RegisterResponse;
 import com.projetfilrouge.loanmanagement.web.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -50,6 +53,37 @@ public class AuthService {
         return LoginResponse.builder()
                 .token(token)
                 .user(userResponse)
+                .build();
+    }
+
+    @Transactional
+    public RegisterResponse register(RegisterRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Cet email est déjà utilisé");
+        }
+
+        User user = User.builder()
+                .email(request.getEmail())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .firstName(request.getFirstname())
+                .lastName(request.getLastname())
+                .build();
+
+        User savedUser = userRepository.save(user);
+
+        UserResponse userResponse = UserResponse.builder()
+                .id(savedUser.getId())
+                .email(savedUser.getEmail())
+                .firstName(savedUser.getFirstName())
+                .lastName(savedUser.getLastName())
+                .roles(savedUser.getRoles().stream()
+                        .map(Role::getName)
+                        .collect(Collectors.toList()))
+                .build();
+
+        return RegisterResponse.builder()
+                .user(userResponse)
+                .message("Utilisateur enregistré avec succès")
                 .build();
     }
 }
