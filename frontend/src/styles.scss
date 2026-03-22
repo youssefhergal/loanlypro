@@ -41,6 +41,11 @@ body {
   height: 100%;
 }
 
+app-root {
+  display: block;
+  min-height: 100%;
+}
+
 body {
   font-family: 'DM Sans', sans-serif;
   background: var(--color-bg);
