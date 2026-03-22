@@ -6,12 +6,12 @@ import { AuthService } from '../../core/auth/services/auth.service';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [MatCardModule, MatButtonModule],
+  imports: [MatCardModule],
   template: `
     <div class="page">
       <mat-card>
         <mat-card-header>
-          <mat-card-title>Tableau de bord</mat-card-title>
+          <mat-card-title>Votre compte</mat-card-title>
           <mat-card-subtitle>
             Connecté : {{ auth.currentUser()?.firstName }} {{ auth.currentUser()?.lastName }}
             ({{ auth.currentUser()?.email }})
@@ -20,9 +20,6 @@ import { AuthService } from '../../core/auth/services/auth.service';
         <mat-card-content>
           <p>Rôles : {{ auth.currentUser()?.roles?.join(', ') }}</p>
         </mat-card-content>
-        <mat-card-actions>
-          <button mat-button color="warn" (click)="auth.logout()">Se déconnecter</button>
-        </mat-card-actions>
       </mat-card>
     </div>
   `,
