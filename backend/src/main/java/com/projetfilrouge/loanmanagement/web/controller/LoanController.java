@@ -11,7 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication; // Ajouté
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,9 +45,7 @@ public class LoanController {
     @Operation(summary = "Lister les demandes", description = "Récupère les dossiers de prêt. Note : Les clients ne voient que les leurs.")
     @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès")
     public ResponseEntity<List<LoanResponseDto>> getAll(Authentication authentication) {
-        // Optionnel : Tu pourrais filtrer ici, mais il vaut mieux le faire dans le service
-        // pour que la logique métier soit centralisée.
-        return ResponseEntity.ok(loanService.getAllApplications());
+        return ResponseEntity.ok(loanService.getAllApplications(authentication.getName()));
     }
 
     @GetMapping("/{reference}")
@@ -61,7 +59,7 @@ public class LoanController {
             @PathVariable String reference,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(loanService.getApplicationByReference(reference));
+        return ResponseEntity.ok(loanService.getApplicationByReference(reference, authentication.getName()));
     }
 
     @PostMapping("/{id}/submit")
@@ -70,7 +68,7 @@ public class LoanController {
             @ApiResponse(responseCode = "200", description = "Dossier soumis"),
             @ApiResponse(responseCode = "404", description = "Dossier inexistant")
     })
-    public ResponseEntity<LoanResponseDto> submit(@PathVariable Long id) {
-        return ResponseEntity.ok(loanService.submitApplication(id));
+    public ResponseEntity<LoanResponseDto> submit(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(loanService.submitApplication(id, authentication.getName()));
     }
 }
