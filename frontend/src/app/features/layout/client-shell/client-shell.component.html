@@ -1,31 +1,31 @@
 <div class="client-shell" [class.sidebar-collapsed]="sidebarCollapsed()">
   <aside class="sidebar" aria-label="Navigation principale">
-    <div class="sidebar-scroll">
-      <div class="sidebar-header">
-        <div class="sidebar-brand">
-          <a routerLink="/dashboard" class="logo">
-            <span class="logo-icon">✓</span>
-            <span class="logo-text">LoanlyFans</span>
-          </a>
-        </div>
-        <button
-          type="button"
-          mat-icon-button
-          class="sidebar-toggle"
-          (click)="toggleSidebar()"
-          [attr.aria-expanded]="!sidebarCollapsed()"
-          [attr.aria-label]="
-            sidebarCollapsed() ? 'Développer le menu latéral' : 'Réduire le menu latéral'
-          "
-          [matTooltip]="
-            sidebarCollapsed() ? 'Développer le menu' : 'Réduire le menu'
-          "
-          matTooltipPosition="right"
-        >
-          <mat-icon>{{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
-        </button>
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <a routerLink="/dashboard" class="logo">
+          <span class="logo-icon">✓</span>
+          <span class="logo-text">LoanlyFans</span>
+        </a>
       </div>
+      <button
+        type="button"
+        mat-icon-button
+        class="sidebar-toggle"
+        (click)="toggleSidebar()"
+        [attr.aria-expanded]="!sidebarCollapsed()"
+        [attr.aria-label]="
+          sidebarCollapsed() ? 'Développer le menu latéral' : 'Réduire le menu latéral'
+        "
+        [matTooltip]="
+          sidebarCollapsed() ? 'Développer le menu' : 'Réduire le menu'
+        "
+        matTooltipPosition="right"
+      >
+        <mat-icon>{{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+      </button>
+    </div>
 
+    <div class="sidebar-scroll">
       <section
         class="cta-demand-card"
         matTooltip="Nouvelle demande"

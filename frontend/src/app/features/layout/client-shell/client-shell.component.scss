@@ -28,7 +28,7 @@
   /* pas de bordure droite : séparation uniquement par le contraste du main */
 }
 
-/* Header + CTA + nav dans la même colonne (même largeur que la zone scroll + gutter) */
+/* Scroll uniquement sur CTA + menu ; logo / toggle restent fixes au-dessus */
 .sidebar-scroll {
   flex: 1;
   min-height: 0;
@@ -37,7 +37,6 @@
   display: flex;
   flex-direction: column;
   scrollbar-gutter: stable;
-  /* pas de padding-top : le header fait 64px comme la topbar (alignement visuel) */
   padding: 0 16px 16px;
   box-sizing: border-box;
 }
@@ -184,20 +183,22 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 20px;
   flex-shrink: 0;
+  box-sizing: border-box;
+  /* Même retrait horizontal que .sidebar-scroll (icônes alignées malgré la scrollbar) */
+  padding-inline: 16px;
+  margin-bottom: 20px;
+  background: var(--color-surface);
+
+  @media (max-width: 900px) {
+    /* le .sidebar parent applique déjà le padding sur mobile */
+    padding-inline: 0;
+  }
 
   @media (min-width: 901px) {
-    position: sticky;
-    top: 0;
-    z-index: 4;
-    /* Même hauteur de ligne que la topbar (grid row 64px) : logo + chevron centrés */
+    /* Même hauteur de bande que la topbar (64px) : logo + chevron centrés */
     min-height: 64px;
-    margin-top: 0;
-    padding-top: 0;
     margin-bottom: 16px;
-    box-sizing: border-box;
-    background: var(--color-surface);
   }
 }
 
@@ -536,6 +537,8 @@
 
   .client-shell.sidebar-collapsed .sidebar-scroll {
     padding: 0 8px 16px;
+    /* stable réserve la scrollbar sur le scroll uniquement → logo/chevron décalés vs nav ; auto = même colonne que le header */
+    scrollbar-gutter: auto;
   }
 
   /* Rail replié : colonne logo + chevron (pas la même hauteur que la topbar) */
@@ -546,6 +549,7 @@
     min-height: 0;
     margin-top: 0;
     padding-top: 8px;
+    padding-inline: 8px;
     margin-bottom: 12px;
     width: 100%;
   }
