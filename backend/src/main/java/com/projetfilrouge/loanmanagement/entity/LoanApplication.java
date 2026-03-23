@@ -21,7 +21,7 @@ public class LoanApplication {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true, length = 32)
     private String reference;
 
     // Liaison avec le client (Applicant) - Relation 1 côté User
@@ -38,19 +38,20 @@ public class LoanApplication {
     @Column(nullable = false)
     private LoanApplicationStatus status;
 
-    @Column(name = "requested_amount", precision = 15, scale = 2)
+    @Column(name = "requested_amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal requestedAmount;
 
-    @Column(name = "requested_duration_months")
+    @Column(name = "requested_duration_months", nullable = false)
     private Integer requestedDurationMonths;
 
+    @Column(nullable = false, length = 255)
     private String purpose;
 
-    @Column(name = "monthly_income", precision = 15, scale = 2)
+    @Column(name = "monthly_income", nullable = false, precision = 15, scale = 2)
     private BigDecimal monthlyIncome;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "employment_status")
+    @Column(name = "employment_status", nullable = false, length = 40)
     private EmploymentStatus employmentStatus;
 
     @Column(name = "submitted_at")
