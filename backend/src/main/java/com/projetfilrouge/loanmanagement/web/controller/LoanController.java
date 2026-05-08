@@ -1,5 +1,6 @@
 package com.projetfilrouge.loanmanagement.web.controller;
 
+import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
 import com.projetfilrouge.loanmanagement.service.LoanService;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
@@ -9,12 +10,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/loan-applications")
@@ -44,8 +44,13 @@ public class LoanController {
     @GetMapping
     @Operation(summary = "Lister les demandes", description = "Récupère les dossiers de prêt. Note : Les clients ne voient que les leurs.")
     @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès")
-    public ResponseEntity<List<LoanResponseDto>> getAll(Authentication authentication) {
-        return ResponseEntity.ok(loanService.getAllApplications(authentication.getName()));
+    public ResponseEntity<Page<LoanResponseDto>> getAll(
+            Authentication authentication,
+            @RequestParam(required = false) LoanApplicationStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(loanService.getAllApplications(authentication.getName(), status, page, size));
     }
 
     @GetMapping("/{id}")

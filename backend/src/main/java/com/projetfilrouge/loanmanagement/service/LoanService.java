@@ -7,14 +7,20 @@ import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
 import com.projetfilrouge.loanmanagement.repository.UserRepository;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
+import com.projetfilrouge.loanmanagement.web.exception.BusinessRuleException;
+import com.projetfilrouge.loanmanagement.web.exception.ForbiddenOperationException;
+import com.projetfilrouge.loanmanagement.web.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,28 +51,33 @@ public class LoanService {
     }
 
     @Transactional(readOnly = true)
-    public List<LoanResponseDto> getAllApplications(String currentUserEmail) {
+    public Page<LoanResponseDto> getAllApplications(String currentUserEmail, LoanApplicationStatus status, int page, int size) {
         User currentUser = getRequiredUser(currentUserEmail);
-        List<LoanApplication> loans;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<LoanApplication> loans;
 
         if (hasRole(currentUser, ROLE_ADMIN)) {
-            loans = loanRepository.findAll();
+            loans = status == null
+                    ? loanRepository.findAll(pageable)
+                    : loanRepository.findByStatus(status, pageable);
         } else if (hasRole(currentUser, ROLE_CONSEILLER)) {
-            loans = loanRepository.findByAssignedAdvisorId(currentUser.getId());
+            loans = status == null
+                    ? loanRepository.findByAssignedAdvisorId(currentUser.getId(), pageable)
+                    : loanRepository.findByAssignedAdvisorIdAndStatus(currentUser.getId(), status, pageable);
         } else {
-            loans = loanRepository.findByApplicantEmail(currentUserEmail);
+            loans = status == null
+                    ? loanRepository.findByApplicantEmail(currentUserEmail, pageable)
+                    : loanRepository.findByApplicantEmailAndStatus(currentUserEmail, status, pageable);
         }
 
-        return loans.stream()
-                .map(this::mapToResponseDto)
-                .collect(Collectors.toList());
+        return loans.map(this::mapToResponseDto);
     }
 
     @Transactional(readOnly = true)
     public LoanResponseDto getApplicationByReference(String reference, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findByReference(reference)
-                .orElseThrow(() -> new RuntimeException("Demande de prêt introuvable avec la référence : " + reference));
+                .orElseThrow(() -> new ResourceNotFoundException("Demande de prêt introuvable avec la référence : " + reference));
         ensureCanAccessLoan(loan, currentUser);
         return mapToResponseDto(loan);
     }
@@ -75,7 +86,7 @@ public class LoanService {
     public LoanResponseDto getApplicationById(Long id, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Demande de prêt introuvable avec l'identifiant : " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Demande de prêt introuvable avec l'identifiant : " + id));
         ensureCanAccessLoan(loan, currentUser);
         return mapToResponseDto(loan);
     }
@@ -84,7 +95,7 @@ public class LoanService {
     public LoanResponseDto updateDraftApplication(Long id, LoanRequestDto request, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
         ensureCanAccessLoan(loan, currentUser);
         ensureCanEditDraft(loan);
 
@@ -101,7 +112,7 @@ public class LoanService {
     public LoanResponseDto submitApplication(Long id, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
         ensureCanAccessLoan(loan, currentUser);
         ensureCanSubmit(loan);
 
@@ -127,7 +138,7 @@ public class LoanService {
 
     private User getRequiredUser(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));
     }
 
     private boolean hasRole(User user, String roleName) {
@@ -152,12 +163,12 @@ public class LoanService {
         if (isApplicant(loan, currentUser)) {
             return;
         }
-        throw new RuntimeException("Accès refusé à cette demande");
+        throw new ForbiddenOperationException("Accès refusé à cette demande");
     }
 
     private void ensureCanSubmit(LoanApplication loan) {
         if (loan.getStatus() != LoanApplicationStatus.DRAFT) {
-            throw new RuntimeException(
+            throw new BusinessRuleException(
                     "Soumission impossible : seul un dossier en brouillon (DRAFT) peut être soumis."
             );
         }
@@ -165,7 +176,7 @@ public class LoanService {
 
     private void ensureCanEditDraft(LoanApplication loan) {
         if (loan.getStatus() != LoanApplicationStatus.DRAFT) {
-            throw new RuntimeException(
+            throw new BusinessRuleException(
                     "Modification impossible : seul un dossier en brouillon (DRAFT) peut être modifié."
             );
         }
