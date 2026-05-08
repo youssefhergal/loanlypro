@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/loans")
+@RequestMapping("/api/v1/loan-applications")
 @RequiredArgsConstructor
 @Tag(name = "Loan", description = "Gestion des demandes de prêt")
 public class LoanController {
@@ -48,18 +48,34 @@ public class LoanController {
         return ResponseEntity.ok(loanService.getAllApplications(authentication.getName()));
     }
 
-    @GetMapping("/{reference}")
-    @Operation(summary = "Consulter une demande", description = "Récupère les détails d'un dossier via sa référence.")
+    @GetMapping("/{id}")
+    @Operation(summary = "Consulter une demande", description = "Récupère les détails d'un dossier via son identifiant.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Dossier trouvé"),
             @ApiResponse(responseCode = "404", description = "Dossier introuvable"),
             @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier")
     })
-    public ResponseEntity<LoanResponseDto> getByReference(
-            @PathVariable String reference,
+    public ResponseEntity<LoanResponseDto> getById(
+            @PathVariable Long id,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(loanService.getApplicationByReference(reference, authentication.getName()));
+        return ResponseEntity.ok(loanService.getApplicationById(id, authentication.getName()));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Mettre à jour un brouillon", description = "Modifie les informations d'une demande en statut DRAFT.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dossier mis à jour"),
+            @ApiResponse(responseCode = "400", description = "Données invalides"),
+            @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier"),
+            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
+    })
+    public ResponseEntity<LoanResponseDto> updateDraft(
+            @PathVariable Long id,
+            @Valid @RequestBody LoanRequestDto request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.updateDraftApplication(id, request, authentication.getName()));
     }
 
     @PostMapping("/{id}/submit")

@@ -13,13 +13,13 @@ import java.math.BigDecimal;
 public class LoanRequestDto {
 
     @NotNull(message = "Le montant demandé est obligatoire")
-    @DecimalMin(value = "500.0", message = "Le montant minimum est de 500 €")
-    @DecimalMax(value = "100000.0", message = "Le montant maximum est de 100 000 €")
+    @DecimalMin(value = "1000.0", message = "Le montant minimum est de 1 000 €")
+    @DecimalMax(value = "200000.0", message = "Le montant maximum est de 200 000 €")
     private BigDecimal requestedAmount;
 
     @NotNull(message = "La durée est obligatoire")
-    @Min(value = 6, message = "La durée minimum est de 6 mois")
-    @Max(value = 120, message = "La durée maximum est de 120 mois")
+    @Min(value = 12, message = "La durée minimum est de 12 mois")
+    @Max(value = 240, message = "La durée maximum est de 240 mois")
     private Integer requestedDurationMonths;
 
     @NotBlank(message = "Le motif du prêt est obligatoire")

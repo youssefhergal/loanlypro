@@ -71,6 +71,32 @@ public class LoanService {
         return mapToResponseDto(loan);
     }
 
+    @Transactional(readOnly = true)
+    public LoanResponseDto getApplicationById(Long id, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Demande de prêt introuvable avec l'identifiant : " + id));
+        ensureCanAccessLoan(loan, currentUser);
+        return mapToResponseDto(loan);
+    }
+
+    @Transactional
+    public LoanResponseDto updateDraftApplication(Long id, LoanRequestDto request, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dossier introuvable"));
+        ensureCanAccessLoan(loan, currentUser);
+        ensureCanEditDraft(loan);
+
+        loan.setRequestedAmount(request.getRequestedAmount());
+        loan.setRequestedDurationMonths(request.getRequestedDurationMonths());
+        loan.setPurpose(request.getPurpose());
+        loan.setMonthlyIncome(request.getMonthlyIncome());
+        loan.setEmploymentStatus(request.getEmploymentStatus());
+
+        return mapToResponseDto(loanRepository.save(loan));
+    }
+
     @Transactional
     public LoanResponseDto submitApplication(Long id, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
@@ -133,6 +159,14 @@ public class LoanService {
         if (loan.getStatus() != LoanApplicationStatus.DRAFT) {
             throw new RuntimeException(
                     "Soumission impossible : seul un dossier en brouillon (DRAFT) peut être soumis."
+            );
+        }
+    }
+
+    private void ensureCanEditDraft(LoanApplication loan) {
+        if (loan.getStatus() != LoanApplicationStatus.DRAFT) {
+            throw new RuntimeException(
+                    "Modification impossible : seul un dossier en brouillon (DRAFT) peut être modifié."
             );
         }
     }
