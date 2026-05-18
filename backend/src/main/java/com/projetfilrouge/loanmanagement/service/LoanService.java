@@ -6,6 +6,7 @@ import com.projetfilrouge.loanmanagement.entity.User;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
 import com.projetfilrouge.loanmanagement.repository.UserRepository;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.LoanSubmittedUpdateDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class LoanService {
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String ROLE_CONSEILLER = "ROLE_CONSEILLER";
+    private static final String ROLE_CLIENT = "ROLE_CLIENT";
     private static final int MAX_REFERENCE_GENERATION_ATTEMPTS = 10;
 
     private final LoanApplicationRepository loanRepository;
@@ -87,6 +89,78 @@ public class LoanService {
         return mapToResponseDto(loanRepository.save(loan));
     }
 
+    @Transactional
+    public LoanResponseDto updateApplication(Long id, LoanRequestDto request, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dossier introuvable"));
+        ensureCanAccessLoan(loan, currentUser);
+        ensureCanUpdate(loan);
+
+        // Mettre à jour uniquement les champs éditables par l'utilisateur sur un brouillon
+        loan.setRequestedAmount(request.getRequestedAmount());
+        loan.setRequestedDurationMonths(request.getRequestedDurationMonths());
+        loan.setPurpose(request.getPurpose());
+        loan.setMonthlyIncome(request.getMonthlyIncome());
+        loan.setEmploymentStatus(request.getEmploymentStatus());
+
+        return mapToResponseDto(loanRepository.save(loan));
+    }
+
+    @Transactional
+    public void deleteApplication(Long id, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dossier introuvable"));
+
+        // Vérifie l'accès (admin, conseiller assigné ou demandeur)
+        ensureCanAccessLoan(loan, currentUser);
+
+        // Règle spécifique: un client ne peut supprimer qu'un dossier en DRAFT
+        if (hasRole(currentUser, ROLE_CLIENT) && loan.getStatus() != LoanApplicationStatus.DRAFT) {
+            throw new RuntimeException(
+                    "Suppression impossible : un client ne peut supprimer qu'un dossier en brouillon (DRAFT)."
+            );
+        }
+
+        loanRepository.delete(loan);
+    }
+
+    @Transactional
+    public LoanResponseDto updateSubmittedApplication(Long id, LoanSubmittedUpdateDto request, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dossier introuvable"));
+
+        // Autorisé uniquement aux conseillers et admins, indépendamment de l'appartenance au dossier
+        if (!(hasRole(currentUser, ROLE_ADMIN) || hasRole(currentUser, ROLE_CONSEILLER))) {
+            throw new RuntimeException("Accès refusé à cette demande");
+        }
+
+        // L'opération ne s'applique que sur un dossier soumis
+        if (loan.getStatus() != LoanApplicationStatus.SUBMITTED) {
+            throw new RuntimeException("Mise à jour impossible : seul un dossier soumis (SUBMITTED) peut être modifié.");
+        }
+
+        // Mettre à jour les champs autorisés si fournis
+        if (request.getAssignedAdvisorId() != null) {
+            User advisor = userRepository.findById(request.getAssignedAdvisorId())
+                    .orElseThrow(() -> new RuntimeException("Conseiller introuvable"));
+            loan.setAssignedAdvisor(advisor);
+        }
+        if (request.getApprovedAmount() != null) {
+            loan.setApprovedAmount(request.getApprovedAmount());
+        }
+        if (request.getApprovedDurationMonths() != null) {
+            loan.setApprovedDurationMonths(request.getApprovedDurationMonths());
+        }
+        if (request.getInterestRate() != null) {
+            loan.setInterestRate(request.getInterestRate());
+        }
+
+        return mapToResponseDto(loanRepository.save(loan));
+    }
+
     // --- Helper Methods ---
 
     private String generateUniqueReference() {
@@ -133,6 +207,14 @@ public class LoanService {
         if (loan.getStatus() != LoanApplicationStatus.DRAFT) {
             throw new RuntimeException(
                     "Soumission impossible : seul un dossier en brouillon (DRAFT) peut être soumis."
+            );
+        }
+    }
+
+    private void ensureCanUpdate(LoanApplication loan) {
+        if (loan.getStatus() != LoanApplicationStatus.DRAFT) {
+            throw new RuntimeException(
+                    "Mise à jour impossible : seul un dossier en brouillon (DRAFT) peut être modifié."
             );
         }
     }
