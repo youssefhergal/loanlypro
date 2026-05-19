@@ -30,7 +30,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -46,6 +48,8 @@ public class LoanService {
     private final UserRepository userRepository;
     @Value("${app.storage.loan-documents-dir:uploads/loan-documents}")
     private String loanDocumentsDir;
+
+    public record DownloadedLoanDocument(String fileName, String contentType, byte[] content) {}
 
     @Transactional
     public LoanResponseDto createApplication(LoanRequestDto request, String currentUserEmail) {
@@ -195,6 +199,34 @@ public class LoanService {
 
         deleteStoredFile(document.getStoragePath());
         loanDocumentRepository.delete(document);
+        cleanupLoanDirectoryOrphans(loanId);
+    }
+
+    @Transactional(readOnly = true)
+    public DownloadedLoanDocument downloadDocument(Long loanId, Long documentId, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+        ensureCanAccessLoan(loan, currentUser);
+
+        LoanDocument document = loanDocumentRepository.findByIdAndLoanApplicationId(documentId, loanId)
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
+
+        Path filePath = Paths.get(document.getStoragePath());
+        if (!Files.exists(filePath)) {
+            throw new ResourceNotFoundException("Le fichier physique du document est introuvable.");
+        }
+
+        try {
+            byte[] content = Files.readAllBytes(filePath);
+            return new DownloadedLoanDocument(
+                    document.getOriginalFileName(),
+                    document.getContentType() == null ? "application/octet-stream" : document.getContentType(),
+                    content
+            );
+        } catch (IOException e) {
+            throw new RuntimeException("Impossible de lire le fichier document", e);
+        }
     }
 
     // --- Helper Methods ---
@@ -339,6 +371,34 @@ public class LoanService {
             Files.deleteIfExists(Paths.get(storagePath));
         } catch (IOException e) {
             throw new RuntimeException("Impossible de supprimer le fichier stocké", e);
+        }
+    }
+
+    private void cleanupLoanDirectoryOrphans(Long loanId) {
+        Path loanDir = Paths.get(loanDocumentsDir).resolve("loan-" + loanId);
+        if (!Files.isDirectory(loanDir)) {
+            return;
+        }
+
+        Set<String> referenced = new HashSet<>(
+                loanDocumentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(loanId)
+                        .stream()
+                        .map(LoanDocument::getStoredFileName)
+                        .toList()
+        );
+
+        try (var stream = Files.list(loanDir)) {
+            stream.filter(Files::isRegularFile)
+                    .filter(path -> !referenced.contains(path.getFileName().toString()))
+                    .forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException ignored) {
+                            // Nettoyage best-effort : ne pas bloquer la requête utilisateur.
+                        }
+                    });
+        } catch (IOException ignored) {
+            // Le nettoyage d'orphelins est best-effort.
         }
     }
 

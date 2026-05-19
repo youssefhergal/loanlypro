@@ -13,7 +13,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.multipart.MultipartFile;
@@ -144,5 +146,24 @@ public class LoanController {
     ) {
         loanService.deleteDocument(id, documentId, authentication.getName());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/documents/{documentId}/download")
+    @Operation(summary = "Télécharger un document", description = "Télécharge un document associé à une demande accessible.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Document téléchargé"),
+            @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier"),
+            @ApiResponse(responseCode = "404", description = "Dossier ou document introuvable")
+    })
+    public ResponseEntity<byte[]> downloadDocument(
+            @PathVariable Long id,
+            @PathVariable Long documentId,
+            Authentication authentication
+    ) {
+        LoanService.DownloadedLoanDocument file = loanService.downloadDocument(id, documentId, authentication.getName());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.fileName() + "\"")
+                .contentType(MediaType.parseMediaType(file.contentType()))
+                .body(file.content());
     }
 }
