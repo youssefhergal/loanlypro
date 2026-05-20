@@ -66,6 +66,10 @@ public class LoanController {
             if ("Accès refusé à cette demande".equals(ex.getMessage())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
+            // Mappe l'erreur métier de recherche par référence en 404
+            if (ex.getMessage() != null && ex.getMessage().startsWith("Demande de prêt introuvable avec la référence")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
             throw ex;
         }
     }
@@ -108,7 +112,7 @@ public class LoanController {
     @Operation(summary = "Soumettre une demande", description = "Envoie le dossier pour étude par un conseiller.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Dossier soumis"),
-            @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier"),
+            @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier ou règles métier non respectées"),
             @ApiResponse(responseCode = "404", description = "Dossier inexistant")
     })
     public ResponseEntity<LoanResponseDto> submit(@PathVariable Long id, Authentication authentication) {
@@ -117,6 +121,12 @@ public class LoanController {
         } catch (RuntimeException ex) {
             if ("Accès refusé à cette demande".equals(ex.getMessage())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            if ("Soumission impossible : seul un dossier en brouillon (DRAFT) peut être soumis.".equals(ex.getMessage())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            if ("Dossier introuvable".equals(ex.getMessage())) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
             throw ex;
         }
@@ -150,6 +160,10 @@ public class LoanController {
             if ("Accès refusé à cette demande".equals(ex.getMessage())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
+            // Si dossier introuvable, renvoyer 404
+            if ("Dossier introuvable".equals(ex.getMessage())) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
             // Sinon, repropager pour laisser le gestionnaire global traiter l'erreur
             throw ex;
         }
@@ -182,6 +196,67 @@ public class LoanController {
             }
             // Si dossier introuvable, renvoyer 404
             if("Dossier introuvable".equals(ex.getMessage())){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            throw ex;
+        }
+    }
+
+    @PostMapping("/{id}/approve")
+    @Operation(summary = "Approuver une demande",
+            description = "Action réservée au rôle ROLE_CONSEILLER. Le dossier doit être complet et au statut SUBMITTED ou UNDER_REVIEW.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dossier approuvé"),
+            @ApiResponse(responseCode = "403", description = "Accès interdit ou règles métier non respectées"),
+            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
+    })
+    public ResponseEntity<LoanResponseDto> approve(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        try {
+            LoanResponseDto response = loanService.approveApplication(id, authentication.getName());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException ex) {
+            if ("Accès refusé à cette demande".equals(ex.getMessage())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            if ("Approbation impossible : le dossier doit être en statut SUBMITTED ou UNDER_REVIEW.".equals(ex.getMessage())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            if ("Approbation impossible : tous les champs requis du dossier ne sont pas remplis.".equals(ex.getMessage())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            if ("Dossier introuvable".equals(ex.getMessage())) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            throw ex;
+        }
+    }
+
+    @PostMapping("/{id}/reject")
+    @Operation(summary = "Rejeter une demande",
+            description = "Action réservée au rôle ROLE_CONSEILLER. Le dossier doit être au statut SUBMITTED ou UNDER_REVIEW.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dossier rejeté"),
+            @ApiResponse(responseCode = "403", description = "Accès interdit ou règles métier non respectées"),
+            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
+    })
+    public ResponseEntity<LoanResponseDto> reject(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        try {
+            LoanResponseDto response = loanService.rejectApplication(id, authentication.getName());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException ex) {
+            if ("Accès refusé à cette demande".equals(ex.getMessage())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            if ("Rejet impossible : le dossier doit être en statut SUBMITTED ou UNDER_REVIEW.".equals(ex.getMessage())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            if ("Dossier introuvable".equals(ex.getMessage())) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
             throw ex;

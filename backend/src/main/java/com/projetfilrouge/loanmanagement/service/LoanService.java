@@ -161,6 +161,55 @@ public class LoanService {
         return mapToResponseDto(loanRepository.save(loan));
     }
 
+    @Transactional
+    public LoanResponseDto approveApplication(Long id, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dossier introuvable"));
+
+        // Autorisé uniquement aux conseillers
+        if (!hasRole(currentUser, ROLE_CONSEILLER)) {
+            throw new RuntimeException("Accès refusé à cette demande");
+        }
+
+        // Statut éligible: SUBMITTED ou UNDER_REVIEW
+        if (!(loan.getStatus() == LoanApplicationStatus.SUBMITTED || loan.getStatus() == LoanApplicationStatus.UNDER_REVIEW)) {
+            throw new RuntimeException("Approbation impossible : le dossier doit être en statut SUBMITTED ou UNDER_REVIEW.");
+        }
+
+        // Vérifier que tous les champs nécessaires sont remplis
+        if (!isCompleteForApproval(loan)) {
+            throw new RuntimeException("Approbation impossible : tous les champs requis du dossier ne sont pas remplis.");
+        }
+
+        loan.setStatus(LoanApplicationStatus.APPROVED);
+        loan.setDecidedAt(Instant.now());
+
+        return mapToResponseDto(loanRepository.save(loan));
+    }
+
+    @Transactional
+    public LoanResponseDto rejectApplication(Long id, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dossier introuvable"));
+
+        // Autorisé uniquement aux conseillers
+        if (!hasRole(currentUser, ROLE_CONSEILLER)) {
+            throw new RuntimeException("Accès refusé à cette demande");
+        }
+
+        // Statut éligible: SUBMITTED ou UNDER_REVIEW
+        if (!(loan.getStatus() == LoanApplicationStatus.SUBMITTED || loan.getStatus() == LoanApplicationStatus.UNDER_REVIEW)) {
+            throw new RuntimeException("Rejet impossible : le dossier doit être en statut SUBMITTED ou UNDER_REVIEW.");
+        }
+
+        loan.setStatus(LoanApplicationStatus.REJECTED);
+        loan.setDecidedAt(Instant.now());
+
+        return mapToResponseDto(loanRepository.save(loan));
+    }
+
     // --- Helper Methods ---
 
     private String generateUniqueReference() {
@@ -217,6 +266,18 @@ public class LoanService {
                     "Mise à jour impossible : seul un dossier en brouillon (DRAFT) peut être modifié."
             );
         }
+    }
+
+    private boolean isCompleteForApproval(LoanApplication loan) {
+        return loan.getRequestedAmount() != null
+                && loan.getRequestedDurationMonths() != null
+                && loan.getPurpose() != null && !loan.getPurpose().isBlank()
+                && loan.getMonthlyIncome() != null
+                && loan.getEmploymentStatus() != null
+                && loan.getAssignedAdvisor() != null
+                && loan.getApprovedAmount() != null
+                && loan.getApprovedDurationMonths() != null
+                && loan.getInterestRate() != null;
     }
 
     private LoanResponseDto mapToResponseDto(LoanApplication loan) {
