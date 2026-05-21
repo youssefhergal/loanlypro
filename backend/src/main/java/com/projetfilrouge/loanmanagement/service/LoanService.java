@@ -9,6 +9,7 @@ import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanDocumentRepository;
 import com.projetfilrouge.loanmanagement.repository.UserRepository;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.LoanSubmittedUpdateDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
 import com.projetfilrouge.loanmanagement.web.exception.BusinessRuleException;
@@ -40,6 +41,7 @@ import java.util.UUID;
 public class LoanService {
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String ROLE_CONSEILLER = "ROLE_CONSEILLER";
+    private static final String ROLE_CLIENT = "ROLE_CLIENT";
     private static final int MAX_REFERENCE_GENERATION_ATTEMPTS = 10;
     private static final long MAX_FILE_SIZE_BYTES = 10L * 1024 * 1024;
 
@@ -128,6 +130,57 @@ public class LoanService {
     }
 
     @Transactional
+    public void deleteApplication(Long id, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+
+        ensureCanAccessLoan(loan, currentUser);
+
+        if (hasRole(currentUser, ROLE_CLIENT) && loan.getStatus() != LoanApplicationStatus.DRAFT) {
+            throw new BusinessRuleException(
+                    "Suppression impossible : un client ne peut supprimer qu'un dossier en brouillon (DRAFT)."
+            );
+        }
+
+        loanRepository.delete(loan);
+    }
+
+    @Transactional
+    public LoanResponseDto updateSubmittedApplication(Long id, LoanSubmittedUpdateDto request, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+
+        if (!(hasRole(currentUser, ROLE_ADMIN) || hasRole(currentUser, ROLE_CONSEILLER))) {
+            throw new ForbiddenOperationException("Accès refusé à cette demande");
+        }
+
+        if (loan.getStatus() != LoanApplicationStatus.SUBMITTED) {
+            throw new BusinessRuleException(
+                    "Mise à jour impossible : seul un dossier soumis (SUBMITTED) peut être modifié."
+            );
+        }
+
+        if (request.getAssignedAdvisorId() != null) {
+            User advisor = userRepository.findById(request.getAssignedAdvisorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Conseiller introuvable"));
+            loan.setAssignedAdvisor(advisor);
+        }
+        if (request.getApprovedAmount() != null) {
+            loan.setApprovedAmount(request.getApprovedAmount());
+        }
+        if (request.getApprovedDurationMonths() != null) {
+            loan.setApprovedDurationMonths(request.getApprovedDurationMonths());
+        }
+        if (request.getInterestRate() != null) {
+            loan.setInterestRate(request.getInterestRate());
+        }
+
+        return mapToResponseDto(loanRepository.save(loan));
+    }
+
+    @Transactional
     public LoanResponseDto submitApplication(Long id, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
@@ -139,6 +192,58 @@ public class LoanService {
         if (loan.getSubmittedAt() == null) {
             loan.setSubmittedAt(Instant.now());
         }
+
+        return mapToResponseDto(loanRepository.save(loan));
+    }
+
+    @Transactional
+    public LoanResponseDto approveApplication(Long id, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+
+        if (!hasRole(currentUser, ROLE_CONSEILLER)) {
+            throw new ForbiddenOperationException("Accès refusé à cette demande");
+        }
+
+        if (!(loan.getStatus() == LoanApplicationStatus.SUBMITTED
+                || loan.getStatus() == LoanApplicationStatus.UNDER_REVIEW)) {
+            throw new BusinessRuleException(
+                    "Approbation impossible : le dossier doit être en statut SUBMITTED ou UNDER_REVIEW."
+            );
+        }
+
+        if (!isCompleteForApproval(loan)) {
+            throw new BusinessRuleException(
+                    "Approbation impossible : tous les champs requis du dossier ne sont pas remplis."
+            );
+        }
+
+        loan.setStatus(LoanApplicationStatus.APPROVED);
+        loan.setDecidedAt(Instant.now());
+
+        return mapToResponseDto(loanRepository.save(loan));
+    }
+
+    @Transactional
+    public LoanResponseDto rejectApplication(Long id, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+
+        if (!hasRole(currentUser, ROLE_CONSEILLER)) {
+            throw new ForbiddenOperationException("Accès refusé à cette demande");
+        }
+
+        if (!(loan.getStatus() == LoanApplicationStatus.SUBMITTED
+                || loan.getStatus() == LoanApplicationStatus.UNDER_REVIEW)) {
+            throw new BusinessRuleException(
+                    "Rejet impossible : le dossier doit être en statut SUBMITTED ou UNDER_REVIEW."
+            );
+        }
+
+        loan.setStatus(LoanApplicationStatus.REJECTED);
+        loan.setDecidedAt(Instant.now());
 
         return mapToResponseDto(loanRepository.save(loan));
     }
@@ -229,8 +334,6 @@ public class LoanService {
         }
     }
 
-    // --- Helper Methods ---
-
     private String generateUniqueReference() {
         for (int attempt = 0; attempt < MAX_REFERENCE_GENERATION_ATTEMPTS; attempt++) {
             String candidate = "LOAN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -285,6 +388,18 @@ public class LoanService {
                     "Modification impossible : seul un dossier en brouillon (DRAFT) peut être modifié."
             );
         }
+    }
+
+    private boolean isCompleteForApproval(LoanApplication loan) {
+        return loan.getRequestedAmount() != null
+                && loan.getRequestedDurationMonths() != null
+                && loan.getPurpose() != null && !loan.getPurpose().isBlank()
+                && loan.getMonthlyIncome() != null
+                && loan.getEmploymentStatus() != null
+                && loan.getAssignedAdvisor() != null
+                && loan.getApprovedAmount() != null
+                && loan.getApprovedDurationMonths() != null
+                && loan.getInterestRate() != null;
     }
 
     private LoanResponseDto mapToResponseDto(LoanApplication loan) {
@@ -394,11 +509,11 @@ public class LoanService {
                         try {
                             Files.deleteIfExists(path);
                         } catch (IOException ignored) {
-                            // Nettoyage best-effort : ne pas bloquer la requête utilisateur.
+                            // best-effort
                         }
                     });
         } catch (IOException ignored) {
-            // Le nettoyage d'orphelins est best-effort.
+            // best-effort
         }
     }
 

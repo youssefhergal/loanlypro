@@ -4,6 +4,7 @@ import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
 import com.projetfilrouge.loanmanagement.entity.LoanDocumentType;
 import com.projetfilrouge.loanmanagement.service.LoanService;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.LoanSubmittedUpdateDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,11 +41,9 @@ public class LoanController {
     })
     public ResponseEntity<LoanResponseDto> create(
             @Valid @RequestBody LoanRequestDto request,
-            Authentication authentication // Spring injecte l'utilisateur connecté ici
+            Authentication authentication
     ) {
-        // On récupère l'email (le username) de l'utilisateur authentifié via le JWT
-        String userEmail = authentication.getName();
-        LoanResponseDto response = loanService.createApplication(request, userEmail);
+        LoanResponseDto response = loanService.createApplication(request, authentication.getName());
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -90,14 +89,94 @@ public class LoanController {
         return ResponseEntity.ok(loanService.updateDraftApplication(id, request, authentication.getName()));
     }
 
+    @PutMapping("/{id}")
+    @Operation(summary = "Mettre à jour une demande (DRAFT uniquement)",
+            description = "Alias PUT de la mise à jour brouillon.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dossier mis à jour"),
+            @ApiResponse(responseCode = "400", description = "Données invalides"),
+            @ApiResponse(responseCode = "403", description = "Accès refusé"),
+            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
+    })
+    public ResponseEntity<LoanResponseDto> update(
+            @PathVariable Long id,
+            @Valid @RequestBody LoanRequestDto request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.updateDraftApplication(id, request, authentication.getName()));
+    }
+
+    @PutMapping("/{id}/submitted")
+    @Operation(
+            summary = "Mettre à jour une demande SOUMISE (SUBMITTED)",
+            description = "Mise à jour réservée aux rôles ROLE_CONSEILLER et ROLE_ADMIN."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dossier mis à jour"),
+            @ApiResponse(responseCode = "403", description = "Accès interdit"),
+            @ApiResponse(responseCode = "404", description = "Dossier ou conseiller introuvable")
+    })
+    public ResponseEntity<LoanResponseDto> updateSubmitted(
+            @PathVariable Long id,
+            @RequestBody LoanSubmittedUpdateDto request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.updateSubmittedApplication(id, request, authentication.getName()));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Supprimer une demande",
+            description = "Un client ne peut supprimer qu'un dossier en DRAFT.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Dossier supprimé"),
+            @ApiResponse(responseCode = "403", description = "Suppression interdite"),
+            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
+    })
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        loanService.deleteApplication(id, authentication.getName());
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/{id}/submit")
     @Operation(summary = "Soumettre une demande", description = "Envoie le dossier pour étude par un conseiller.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Dossier soumis"),
+            @ApiResponse(responseCode = "403", description = "Accès refusé ou règles métier"),
             @ApiResponse(responseCode = "404", description = "Dossier inexistant")
     })
     public ResponseEntity<LoanResponseDto> submit(@PathVariable Long id, Authentication authentication) {
         return ResponseEntity.ok(loanService.submitApplication(id, authentication.getName()));
+    }
+
+    @PostMapping("/{id}/approve")
+    @Operation(summary = "Approuver une demande", description = "Action réservée au rôle ROLE_CONSEILLER.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dossier approuvé"),
+            @ApiResponse(responseCode = "403", description = "Accès interdit"),
+            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
+    })
+    public ResponseEntity<LoanResponseDto> approve(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.approveApplication(id, authentication.getName()));
+    }
+
+    @PostMapping("/{id}/reject")
+    @Operation(summary = "Rejeter une demande", description = "Action réservée au rôle ROLE_CONSEILLER.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dossier rejeté"),
+            @ApiResponse(responseCode = "403", description = "Accès interdit"),
+            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
+    })
+    public ResponseEntity<LoanResponseDto> reject(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.rejectApplication(id, authentication.getName()));
     }
 
     @PostMapping("/{id}/documents")
@@ -105,7 +184,7 @@ public class LoanController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Document uploadé"),
             @ApiResponse(responseCode = "400", description = "Fichier invalide"),
-            @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier"),
+            @ApiResponse(responseCode = "403", description = "Accès refusé"),
             @ApiResponse(responseCode = "404", description = "Dossier introuvable")
     })
     public ResponseEntity<LoanDocumentResponseDto> uploadDocument(
@@ -120,11 +199,6 @@ public class LoanController {
 
     @GetMapping("/{id}/documents")
     @Operation(summary = "Lister les documents", description = "Récupère les documents associés à une demande.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Liste récupérée"),
-            @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier"),
-            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
-    })
     public ResponseEntity<List<LoanDocumentResponseDto>> getDocuments(
             @PathVariable Long id,
             Authentication authentication
@@ -134,11 +208,6 @@ public class LoanController {
 
     @DeleteMapping("/{id}/documents/{documentId}")
     @Operation(summary = "Supprimer un document", description = "Supprime un document tant que le dossier est en brouillon.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Document supprimé"),
-            @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier"),
-            @ApiResponse(responseCode = "404", description = "Dossier ou document introuvable")
-    })
     public ResponseEntity<Void> deleteDocument(
             @PathVariable Long id,
             @PathVariable Long documentId,
@@ -150,11 +219,6 @@ public class LoanController {
 
     @GetMapping("/{id}/documents/{documentId}/download")
     @Operation(summary = "Télécharger un document", description = "Télécharge un document associé à une demande accessible.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Document téléchargé"),
-            @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier"),
-            @ApiResponse(responseCode = "404", description = "Dossier ou document introuvable")
-    })
     public ResponseEntity<byte[]> downloadDocument(
             @PathVariable Long id,
             @PathVariable Long documentId,
