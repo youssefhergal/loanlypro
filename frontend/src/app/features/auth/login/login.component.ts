@@ -7,11 +7,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../core/auth/services/auth.service';
 import { ROLES } from '../../../core/auth/constants/auth.constants';
+import { NavbarComponent } from '../../navbar/navbar.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
+    NavbarComponent,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,

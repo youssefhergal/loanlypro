@@ -1,15 +1,16 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { AuthService } from '../../../core/auth/services/auth.service';
+import { NavbarComponent } from '../../navbar/navbar.component';
 
 @Component({
   selector: 'app-verify-email',
   standalone: true,
   imports: [
+    NavbarComponent,
     FormsModule,
     RouterLink,
     MatButtonModule,
@@ -24,11 +25,6 @@ export class VerifyEmailComponent {
   loading = false;
   error = '';
   verified = false;
-
-  constructor(
-    private readonly auth: AuthService,
-    private readonly router: Router
-  ) {}
 
   verify(): void {
     this.error = '';
