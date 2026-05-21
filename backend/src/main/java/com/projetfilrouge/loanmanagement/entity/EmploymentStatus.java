@@ -1,5 +1,5 @@
 package com.projetfilrouge.loanmanagement.entity;
 
 public enum EmploymentStatus {
-    CDI, CDD, FREELANCE, UNEMPLOYED, RETIRED, STUDENT
+    CDI, CDD, FREELANCE, PUBLIC_SECTOR, UNEMPLOYED, RETIRED, STUDENT
 }

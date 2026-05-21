@@ -1,0 +1,39 @@
+.loading {
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-banner {
+  color: #c62828;
+  background: #ffebee;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.wizard-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.ref-badge {
+  margin-left: auto;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.loan-stepper {
+  background: transparent;
+}
+
+.step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}

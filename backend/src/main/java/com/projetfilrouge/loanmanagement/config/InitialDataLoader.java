@@ -111,11 +111,18 @@ public class InitialDataLoader implements CommandLineRunner {
         LoanApplication loan = LoanApplication.builder()
                 .reference(ref)
                 .status(status)
+                .title("Demande " + ref)
+                .loanPurpose(com.projetfilrouge.loanmanagement.entity.LoanPurpose.PERSONAL)
                 .requestedAmount(amount)
                 .requestedDurationMonths(duration)
                 .purpose(purpose)
                 .monthlyIncome(income)
                 .employmentStatus(employment)
+                .additionalIncome(java.math.BigDecimal.ZERO)
+                .monthlyRent(java.math.BigDecimal.ZERO)
+                .monthlyLoanPayments(java.math.BigDecimal.ZERO)
+                .monthlyAlimony(java.math.BigDecimal.ZERO)
+                .monthlyOtherCharges(java.math.BigDecimal.ZERO)
                 .applicant(applicant) // Liaison obligatoire
                 .assignedAdvisor(advisor) // Liaison optionnelle
                 .createdAt(Instant.now())

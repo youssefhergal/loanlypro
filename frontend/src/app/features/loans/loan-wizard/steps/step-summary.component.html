@@ -1,0 +1,67 @@
+<div class="summary-layout" [formGroup]="form">
+  @if (reference()) {
+    <p class="ref">Référence dossier : <strong>{{ reference() }}</strong></p>
+  }
+
+  <mat-expansion-panel expanded>
+    <mat-expansion-panel-header>
+      <mat-panel-title>Besoin</mat-panel-title>
+    </mat-expansion-panel-header>
+    <ul class="summary-list">
+      <li><span>Intitulé</span><strong>{{ form.get('title')?.value }}</strong></li>
+      <li><span>Finalité</span><strong>{{ purposeLabel() }}</strong></li>
+      <li>
+        <span>Montant / durée</span>
+        <strong
+          >{{ form.get('requestedAmount')?.value | currency: 'EUR' : 'symbol' : '1.0-0' }} —
+          {{ form.get('requestedDurationMonths')?.value }} mois</strong
+        >
+      </li>
+      @if (form.get('comment')?.value) {
+        <li><span>Commentaire</span><strong>{{ form.get('comment')?.value }}</strong></li>
+      }
+    </ul>
+  </mat-expansion-panel>
+
+  <mat-expansion-panel expanded>
+    <mat-expansion-panel-header>
+      <mat-panel-title>Situation</mat-panel-title>
+    </mat-expansion-panel-header>
+    <ul class="summary-list">
+      <li>
+        <span>Revenus</span>
+        <strong
+          >{{ form.get('monthlyIncome')?.value | currency: 'EUR' : 'symbol' : '1.0-0' }} (+ compl.
+          {{ form.get('additionalIncome')?.value | currency: 'EUR' : 'symbol' : '1.0-0' }})</strong
+        >
+      </li>
+      <li><span>Statut pro</span><strong>{{ employmentLabel() }}</strong></li>
+    </ul>
+  </mat-expansion-panel>
+
+  <mat-expansion-panel expanded>
+    <mat-expansion-panel-header>
+      <mat-panel-title>Documents ({{ documents().length }})</mat-panel-title>
+    </mat-expansion-panel-header>
+  <ul class="summary-list">
+      @for (doc of documents(); track doc.id) {
+        <li><span>{{ doc.documentType }}</span><strong>{{ doc.originalFileName }}</strong></li>
+      }
+    </ul>
+  </mat-expansion-panel>
+
+  <app-loan-simulation-card
+    [amount]="form.get('requestedAmount')?.value ?? 0"
+    [durationMonths]="form.get('requestedDurationMonths')?.value ?? 0"
+    [debtRatio]="debtRatio()"
+  />
+
+  <div class="legal">
+    <mat-checkbox formControlName="certifyAccuracy">
+      Je certifie l'exactitude des informations fournies.
+    </mat-checkbox>
+    <mat-checkbox formControlName="acceptTerms">
+      J'accepte les conditions générales d'utilisation.
+    </mat-checkbox>
+  </div>
+</div>

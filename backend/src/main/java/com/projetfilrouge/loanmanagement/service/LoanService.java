@@ -4,6 +4,7 @@ import com.projetfilrouge.loanmanagement.entity.LoanApplication;
 import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
 import com.projetfilrouge.loanmanagement.entity.LoanDocument;
 import com.projetfilrouge.loanmanagement.entity.LoanDocumentType;
+import com.projetfilrouge.loanmanagement.entity.LoanPurpose;
 import com.projetfilrouge.loanmanagement.entity.User;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanDocumentRepository;
@@ -26,11 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,6 +47,13 @@ public class LoanService {
     private static final String ROLE_CLIENT = "ROLE_CLIENT";
     private static final int MAX_REFERENCE_GENERATION_ATTEMPTS = 10;
     private static final long MAX_FILE_SIZE_BYTES = 10L * 1024 * 1024;
+    private static final Set<LoanDocumentType> REQUIRED_DOCUMENT_TYPES = EnumSet.of(
+            LoanDocumentType.IDENTITY,
+            LoanDocumentType.PAYSLIPS,
+            LoanDocumentType.TAX_NOTICE,
+            LoanDocumentType.BANK_STATEMENTS,
+            LoanDocumentType.PROOF_OF_ADDRESS
+    );
 
     private final LoanApplicationRepository loanRepository;
     private final LoanDocumentRepository loanDocumentRepository;
@@ -61,12 +71,8 @@ public class LoanService {
                 .reference(generateUniqueReference())
                 .applicant(applicant)
                 .status(LoanApplicationStatus.DRAFT)
-                .requestedAmount(request.getRequestedAmount())
-                .requestedDurationMonths(request.getRequestedDurationMonths())
-                .purpose(request.getPurpose())
-                .monthlyIncome(request.getMonthlyIncome())
-                .employmentStatus(request.getEmploymentStatus())
                 .build();
+        applyRequestToLoan(loanApplication, request);
 
         return mapToResponseDto(loanRepository.save(loanApplication));
     }
@@ -120,11 +126,7 @@ public class LoanService {
         ensureCanAccessLoan(loan, currentUser);
         ensureCanEditDraft(loan);
 
-        loan.setRequestedAmount(request.getRequestedAmount());
-        loan.setRequestedDurationMonths(request.getRequestedDurationMonths());
-        loan.setPurpose(request.getPurpose());
-        loan.setMonthlyIncome(request.getMonthlyIncome());
-        loan.setEmploymentStatus(request.getEmploymentStatus());
+        applyRequestToLoan(loan, request);
 
         return mapToResponseDto(loanRepository.save(loan));
     }
@@ -187,6 +189,7 @@ public class LoanService {
                 .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
         ensureCanAccessLoan(loan, currentUser);
         ensureCanSubmit(loan);
+        ensureRequiredDocumentsPresent(loan.getId());
 
         loan.setStatus(LoanApplicationStatus.SUBMITTED);
         if (loan.getSubmittedAt() == null) {
@@ -382,6 +385,53 @@ public class LoanService {
         }
     }
 
+    private void ensureRequiredDocumentsPresent(Long loanId) {
+        List<LoanDocument> documents = loanDocumentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(loanId);
+        Set<LoanDocumentType> presentTypes = documents.stream()
+                .map(LoanDocument::getDocumentType)
+                .collect(java.util.stream.Collectors.toSet());
+        for (LoanDocumentType required : REQUIRED_DOCUMENT_TYPES) {
+            if (!presentTypes.contains(required)) {
+                throw new BusinessRuleException(
+                        "Soumission impossible : le document obligatoire « " + required + " » est manquant."
+                );
+            }
+        }
+    }
+
+    private void applyRequestToLoan(LoanApplication loan, LoanRequestDto request) {
+        loan.setTitle(request.getTitle());
+        loan.setLoanPurpose(request.getLoanPurpose());
+        loan.setPurpose(resolvePurposeLabel(request.getLoanPurpose()));
+        loan.setRequestedAmount(request.getRequestedAmount());
+        loan.setRequestedDurationMonths(request.getRequestedDurationMonths());
+        loan.setComment(request.getComment());
+        loan.setMonthlyIncome(request.getMonthlyIncome());
+        loan.setEmploymentStatus(request.getEmploymentStatus());
+        loan.setAdditionalIncome(defaultZero(request.getAdditionalIncome()));
+        loan.setEmployerName(request.getEmployerName());
+        loan.setSeniorityMonths(request.getSeniorityMonths());
+        loan.setMonthlyRent(defaultZero(request.getMonthlyRent()));
+        loan.setMonthlyLoanPayments(defaultZero(request.getMonthlyLoanPayments()));
+        loan.setMonthlyAlimony(defaultZero(request.getMonthlyAlimony()));
+        loan.setMonthlyOtherCharges(defaultZero(request.getMonthlyOtherCharges()));
+    }
+
+    private BigDecimal defaultZero(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
+    private String resolvePurposeLabel(LoanPurpose loanPurpose) {
+        return switch (loanPurpose) {
+            case SOFTWARE -> "Logiciel / équipement professionnel";
+            case VEHICLE -> "Véhicule";
+            case HOME_IMPROVEMENT -> "Travaux / aménagement";
+            case PERSONAL -> "Projet personnel";
+            case EDUCATION -> "Formation / études";
+            case OTHER -> "Autre";
+        };
+    }
+
     private void ensureCanEditDraft(LoanApplication loan) {
         if (loan.getStatus() != LoanApplicationStatus.DRAFT) {
             throw new BusinessRuleException(
@@ -407,11 +457,21 @@ public class LoanService {
                 .id(loan.getId())
                 .reference(loan.getReference())
                 .status(loan.getStatus())
+                .title(loan.getTitle())
+                .loanPurpose(loan.getLoanPurpose())
                 .requestedAmount(loan.getRequestedAmount())
                 .requestedDurationMonths(loan.getRequestedDurationMonths())
                 .purpose(loan.getPurpose())
+                .comment(loan.getComment())
                 .monthlyIncome(loan.getMonthlyIncome())
                 .employmentStatus(loan.getEmploymentStatus())
+                .additionalIncome(loan.getAdditionalIncome())
+                .employerName(loan.getEmployerName())
+                .seniorityMonths(loan.getSeniorityMonths())
+                .monthlyRent(loan.getMonthlyRent())
+                .monthlyLoanPayments(loan.getMonthlyLoanPayments())
+                .monthlyAlimony(loan.getMonthlyAlimony())
+                .monthlyOtherCharges(loan.getMonthlyOtherCharges())
                 .submittedAt(loan.getSubmittedAt())
                 .decidedAt(loan.getDecidedAt())
                 .createdAt(loan.getCreatedAt())

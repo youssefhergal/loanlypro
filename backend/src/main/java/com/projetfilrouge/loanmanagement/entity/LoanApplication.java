@@ -44,11 +44,42 @@ public class LoanApplication {
     @Column(name = "requested_duration_months", nullable = false)
     private Integer requestedDurationMonths;
 
+    @Column(nullable = false, length = 120)
+    private String title;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "loan_purpose", nullable = false, length = 40)
+    private LoanPurpose loanPurpose;
+
     @Column(nullable = false, length = 255)
     private String purpose;
 
+    @Column(length = 500)
+    private String comment;
+
     @Column(name = "monthly_income", nullable = false, precision = 15, scale = 2)
     private BigDecimal monthlyIncome;
+
+    @Column(name = "additional_income", precision = 15, scale = 2)
+    private BigDecimal additionalIncome;
+
+    @Column(name = "employer_name", length = 120)
+    private String employerName;
+
+    @Column(name = "seniority_months")
+    private Integer seniorityMonths;
+
+    @Column(name = "monthly_rent", precision = 15, scale = 2)
+    private BigDecimal monthlyRent;
+
+    @Column(name = "monthly_loan_payments", precision = 15, scale = 2)
+    private BigDecimal monthlyLoanPayments;
+
+    @Column(name = "monthly_alimony", precision = 15, scale = 2)
+    private BigDecimal monthlyAlimony;
+
+    @Column(name = "monthly_other_charges", precision = 15, scale = 2)
+    private BigDecimal monthlyOtherCharges;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "employment_status", nullable = false, length = 40)

@@ -1,0 +1,22 @@
+.step-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.step-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+@media (max-width: 900px) {
+  .step-layout {
+    grid-template-columns: 1fr;
+  }
+}

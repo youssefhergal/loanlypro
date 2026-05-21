@@ -1,7 +1,6 @@
 .navbar {
   height: 64px;
   background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -9,6 +8,8 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  flex-shrink: 0;
+  box-shadow: 0 1px 0 var(--color-border);
 }
 
 .logo {

@@ -12,11 +12,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../core/auth/services/auth.service';
+import { NavbarComponent } from '../../navbar/navbar.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
   imports: [
+    NavbarComponent,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,

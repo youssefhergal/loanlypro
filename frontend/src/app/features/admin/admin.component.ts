@@ -2,12 +2,14 @@ import { Component, inject } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../../core/auth/services/auth.service';
+import { NavbarComponent } from '../navbar/navbar.component';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [MatCardModule, MatButtonModule],
+  imports: [NavbarComponent, MatCardModule, MatButtonModule],
   template: `
+    <app-navbar />
     <div class="page">
       <mat-card>
         <mat-card-title>Espace administrateur</mat-card-title>

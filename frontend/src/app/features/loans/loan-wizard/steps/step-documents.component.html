@@ -1,0 +1,18 @@
+<p class="intro">
+  Ajoutez les pièces justificatives. Formats acceptés : PDF, JPG, PNG (max 10 Mo par fichier).
+</p>
+
+@if (errorMessage()) {
+  <p class="error-banner">{{ errorMessage() }}</p>
+}
+
+@for (slot of slots; track slot.type) {
+  <app-document-upload-slot
+    [label]="slot.label"
+    [documentType]="slot.type"
+    [required]="slot.required"
+    [files]="getFiles(slot.type)"
+    (upload)="onUpload(slot.type, $event)"
+    (remove)="onRemove($event)"
+  />
+}
