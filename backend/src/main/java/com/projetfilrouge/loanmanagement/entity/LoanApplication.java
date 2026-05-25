@@ -7,6 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "loan_applications")
@@ -65,6 +66,15 @@ public class LoanApplication {
 
     @Column(name = "employer_name", length = 120)
     private String employerName;
+
+    @Column(name = "job_title", length = 120)
+    private String jobTitle;
+
+    @Column(name = "employer_sector", length = 40)
+    private String employerSector;
+
+    @Column(name = "hire_date")
+    private LocalDate hireDate;
 
     @Column(name = "seniority_months")
     private Integer seniorityMonths;
