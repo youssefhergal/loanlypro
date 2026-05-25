@@ -10,6 +10,7 @@ import com.projetfilrouge.loanmanagement.web.dto.request.RegisterRequest;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoginResponse;
 import com.projetfilrouge.loanmanagement.web.dto.response.RegisterResponse;
 import com.projetfilrouge.loanmanagement.web.dto.response.UserResponse;
+import com.projetfilrouge.loanmanagement.web.exception.BusinessRuleException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -64,7 +65,7 @@ public class AuthService {
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Cet email est déjà utilisé");
+            throw new BusinessRuleException("Cet email est déjà utilisé");
         }
 
         Role clientRole = roleRepository.findByName(ROLE_CLIENT)
