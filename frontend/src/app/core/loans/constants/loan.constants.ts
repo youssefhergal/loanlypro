@@ -6,8 +6,12 @@ export const LOAN_DURATION_MIN = 12;
 export const LOAN_DURATION_MAX = 240;
 export const LOAN_INTEREST_RATE = 0.0385;
 export const LOAN_DEBT_RATIO_MAX = 0.33;
+/** Seuil affiché dans le simulateur d'endettement (indicatif banque). */
+export const LOAN_DEBT_RATIO_DISPLAY_MAX = 0.35;
 export const LOAN_COMMENT_MAX_LENGTH = 500;
 export const LOAN_FILE_MAX_BYTES = 10 * 1024 * 1024;
+export const OTHER_DOCUMENT_MAX_COUNT = 2;
+export const OTHER_DOCUMENT_LABEL_MAX_LENGTH = 120;
 export const LOAN_ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 
 export const LOAN_PURPOSE_OPTIONS: { value: LoanPurpose; label: string }[] = [
@@ -17,6 +21,29 @@ export const LOAN_PURPOSE_OPTIONS: { value: LoanPurpose; label: string }[] = [
   { value: 'PERSONAL', label: 'Projet personnel' },
   { value: 'EDUCATION', label: 'Formation / études' },
   { value: 'OTHER', label: 'Autre' },
+];
+
+export const EMPLOYER_SECTOR_OPTIONS: { value: string; label: string }[] = [
+  { value: 'BANKING', label: 'Banque / Finance' },
+  { value: 'IT', label: 'Informatique / Tech' },
+  { value: 'HEALTH', label: 'Santé' },
+  { value: 'EDUCATION', label: 'Enseignement' },
+  { value: 'RETAIL', label: 'Commerce / Distribution' },
+  { value: 'INDUSTRY', label: 'Industrie' },
+  { value: 'PUBLIC', label: 'Secteur public' },
+  { value: 'OTHER', label: 'Autre' },
+];
+
+export const SENIORITY_RANGE_OPTIONS: {
+  value: string;
+  label: string;
+  months: number;
+}[] = [
+  { value: 'LT_1', label: 'Moins de 1 an', months: 6 },
+  { value: '1_3', label: '1 – 3 ans', months: 24 },
+  { value: '3_5', label: '3 – 5 ans', months: 48 },
+  { value: '5_10', label: '5 – 10 ans', months: 84 },
+  { value: 'GT_10', label: 'Plus de 10 ans', months: 132 },
 ];
 
 export const EMPLOYMENT_OPTIONS: { value: string; label: string; requiresEmployer: boolean }[] = [
@@ -55,3 +82,17 @@ export const STATUS_LABELS: Record<
 };
 
 export const WIZARD_STORAGE_KEY = 'loanly_wizard_draft';
+
+export function seniorityMonthsFromRange(range: string | null | undefined): number | null {
+  if (!range) return null;
+  return SENIORITY_RANGE_OPTIONS.find((o) => o.value === range)?.months ?? null;
+}
+
+export function seniorityRangeFromMonths(months: number | null | undefined): string {
+  if (months == null || months < 0) return '';
+  if (months < 12) return 'LT_1';
+  if (months < 36) return '1_3';
+  if (months < 60) return '3_5';
+  if (months < 120) return '5_10';
+  return 'GT_10';
+}

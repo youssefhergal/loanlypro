@@ -16,11 +16,11 @@ export const clientAreaGuard: CanActivateFn = () => {
     return false;
   }
   if (user.roles.includes(ROLES.ADMIN)) {
-    router.navigate(['/admin']);
+    router.navigate(['/admin/dashboard']);
     return false;
   }
   if (user.roles.includes(ROLES.CONSEILLER)) {
-    router.navigate(['/conseiller']);
+    router.navigate(['/conseiller/dashboard']);
     return false;
   }
   if (user.roles.includes(ROLES.CLIENT)) {

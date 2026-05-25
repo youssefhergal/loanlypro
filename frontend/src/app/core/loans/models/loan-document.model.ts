@@ -5,6 +5,7 @@ export interface LoanDocumentResponseDto {
   loanApplicationId: number;
   documentType: LoanDocumentType;
   originalFileName: string;
+  displayName?: string | null;
   contentType: string;
   fileSizeBytes: number;
   uploadedAt: string;

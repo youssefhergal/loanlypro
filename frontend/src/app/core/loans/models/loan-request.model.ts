@@ -10,6 +10,9 @@ export interface LoanRequestDto {
   employmentStatus: EmploymentStatus;
   additionalIncome?: number | null;
   employerName?: string | null;
+  jobTitle?: string | null;
+  employerSector?: string | null;
+  hireDate?: string | null;
   seniorityMonths?: number | null;
   monthlyRent?: number | null;
   monthlyLoanPayments?: number | null;

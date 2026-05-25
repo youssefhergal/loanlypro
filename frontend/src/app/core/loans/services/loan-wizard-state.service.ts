@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Observable, of, tap, catchError, throwError, finalize, switchMap } from 'rxjs';
+import { Observable, of, tap, catchError, throwError, finalize, switchMap, startWith } from 'rxjs';
 import { LoanApiService } from './loan-api.service';
 import { LoanResponseDto } from '../models/loan-response.model';
 import { LoanRequestDto } from '../models/loan-request.model';
@@ -13,6 +14,7 @@ import {
   LOAN_DURATION_MAX,
   LOAN_DURATION_MIN,
   WIZARD_STORAGE_KEY,
+  seniorityRangeFromMonths,
 } from '../constants/loan.constants';
 import { getErrorMessage } from '../utils/api-error.util';
 
@@ -53,6 +55,10 @@ export class LoanWizardStateService {
     additionalIncome: [0, [Validators.min(0)]],
     employmentStatus: ['CDI' as EmploymentStatus, Validators.required],
     employerName: [''],
+    employerSector: [''],
+    jobTitle: [''],
+    hireDate: [''],
+    seniorityRange: [''],
     seniorityMonths: [null as number | null, [Validators.min(0)]],
     monthlyRent: [0, [Validators.min(0)]],
     monthlyLoanPayments: [0, [Validators.min(0)]],
@@ -69,6 +75,10 @@ export class LoanWizardStateService {
       'additionalIncome',
       'employmentStatus',
       'employerName',
+      'employerSector',
+      'jobTitle',
+      'hireDate',
+      'seniorityRange',
       'seniorityMonths',
       'monthlyRent',
       'monthlyLoanPayments',
@@ -80,6 +90,12 @@ export class LoanWizardStateService {
   ];
 
   readonly hasApplication = computed(() => this.applicationId() !== null);
+
+  /** Réactif aux changements du formulaire (pour computed() dans le récapitulatif). */
+  readonly formValue = toSignal(
+    this.form.valueChanges.pipe(startWith(this.form.getRawValue())),
+    { initialValue: this.form.getRawValue() }
+  );
 
   initFromRoute(id: number | null): Observable<LoanResponseDto | null> {
     if (!id) {
@@ -116,6 +132,10 @@ export class LoanWizardStateService {
       additionalIncome: Number(loan.additionalIncome ?? 0),
       employmentStatus: loan.employmentStatus,
       employerName: loan.employerName ?? '',
+      employerSector: loan.employerSector ?? '',
+      jobTitle: loan.jobTitle ?? '',
+      hireDate: loan.hireDate ?? '',
+      seniorityRange: seniorityRangeFromMonths(loan.seniorityMonths),
       seniorityMonths: loan.seniorityMonths,
       monthlyRent: Number(loan.monthlyRent ?? 0),
       monthlyLoanPayments: Number(loan.monthlyLoanPayments ?? 0),
@@ -137,6 +157,9 @@ export class LoanWizardStateService {
       employmentStatus: v.employmentStatus,
       additionalIncome: Number(v.additionalIncome ?? 0),
       employerName: v.employerName || null,
+      jobTitle: v.jobTitle || null,
+      employerSector: v.employerSector || null,
+      hireDate: v.hireDate || null,
       seniorityMonths: v.seniorityMonths != null ? Number(v.seniorityMonths) : null,
       monthlyRent: Number(v.monthlyRent ?? 0),
       monthlyLoanPayments: Number(v.monthlyLoanPayments ?? 0),
