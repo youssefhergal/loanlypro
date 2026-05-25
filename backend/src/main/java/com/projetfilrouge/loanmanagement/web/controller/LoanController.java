@@ -3,9 +3,12 @@ package com.projetfilrouge.loanmanagement.web.controller;
 import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
 import com.projetfilrouge.loanmanagement.entity.LoanDocumentType;
 import com.projetfilrouge.loanmanagement.service.LoanService;
+import com.projetfilrouge.loanmanagement.web.dto.request.CancelLoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanSubmittedUpdateDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.RejectDocumentRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentResponseDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.LoanHistoryEventResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -165,6 +168,34 @@ public class LoanController {
         return ResponseEntity.ok(loanService.approveApplication(id, authentication.getName()));
     }
 
+    @GetMapping("/{id}/history")
+    @Operation(summary = "Historique de la demande", description = "Journal chronologique des événements du dossier.")
+    public ResponseEntity<List<LoanHistoryEventResponseDto>> getHistory(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.getApplicationHistory(id, authentication.getName()));
+    }
+
+    @PostMapping("/{id}/start-review")
+    @Operation(summary = "Démarrer l'analyse", description = "Passe le dossier en UNDER_REVIEW et enregistre un événement.")
+    public ResponseEntity<LoanResponseDto> startReview(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.startReview(id, authentication.getName()));
+    }
+
+    @PostMapping("/{id}/documents/reject")
+    @Operation(summary = "Rejeter un document", description = "Conseiller : demande de complément sur un type de pièce.")
+    public ResponseEntity<LoanHistoryEventResponseDto> rejectDocument(
+            @PathVariable Long id,
+            @Valid @RequestBody RejectDocumentRequestDto request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.rejectDocument(id, request, authentication.getName()));
+    }
+
     @PostMapping("/{id}/reject")
     @Operation(summary = "Rejeter une demande", description = "Action réservée au rôle ROLE_CONSEILLER.")
     @ApiResponses({
@@ -179,6 +210,25 @@ public class LoanController {
         return ResponseEntity.ok(loanService.rejectApplication(id, authentication.getName()));
     }
 
+    @PostMapping("/{id}/cancel")
+    @Operation(
+            summary = "Annuler une demande",
+            description = "Le demandeur peut annuler un dossier SUBMITTED ou UNDER_REVIEW."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Demande annulée"),
+            @ApiResponse(responseCode = "400", description = "Données invalides"),
+            @ApiResponse(responseCode = "403", description = "Accès interdit"),
+            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
+    })
+    public ResponseEntity<LoanResponseDto> cancel(
+            @PathVariable Long id,
+            @RequestBody(required = false) @Valid CancelLoanRequestDto request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.cancelApplication(id, request, authentication.getName()));
+    }
+
     @PostMapping("/{id}/documents")
     @Operation(summary = "Ajouter un document", description = "Upload d'un document pour une demande en brouillon.")
     @ApiResponses({
@@ -191,9 +241,25 @@ public class LoanController {
             @PathVariable Long id,
             @RequestParam("documentType") LoanDocumentType documentType,
             @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "displayName", required = false) String displayName,
             Authentication authentication
     ) {
-        LoanDocumentResponseDto response = loanService.uploadDocument(id, documentType, file, authentication.getName());
+        LoanDocumentResponseDto response = loanService.uploadDocument(
+                id, documentType, file, displayName, authentication.getName());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/{id}/documents/complement")
+    @Operation(summary = "Déposer un complément documentaire", description = "Client : remplace ou ajoute une pièce lorsque le dossier est en analyse (UNDER_REVIEW).")
+    public ResponseEntity<LoanDocumentResponseDto> uploadComplementDocument(
+            @PathVariable Long id,
+            @RequestParam("documentType") LoanDocumentType documentType,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "displayName", required = false) String displayName,
+            Authentication authentication
+    ) {
+        LoanDocumentResponseDto response = loanService.uploadComplementDocument(
+                id, documentType, file, displayName, authentication.getName());
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 

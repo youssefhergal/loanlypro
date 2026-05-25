@@ -1,23 +1,29 @@
 package com.projetfilrouge.loanmanagement.service;
 
 import com.projetfilrouge.loanmanagement.entity.LoanApplication;
+import com.projetfilrouge.loanmanagement.entity.LoanApplicationEvent;
+import com.projetfilrouge.loanmanagement.entity.LoanApplicationEventType;
 import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
 import com.projetfilrouge.loanmanagement.entity.LoanDocument;
 import com.projetfilrouge.loanmanagement.entity.LoanDocumentType;
+import com.projetfilrouge.loanmanagement.entity.LoanEventActorType;
 import com.projetfilrouge.loanmanagement.entity.LoanPurpose;
 import com.projetfilrouge.loanmanagement.entity.User;
+import com.projetfilrouge.loanmanagement.repository.LoanApplicationEventRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanDocumentRepository;
 import com.projetfilrouge.loanmanagement.repository.UserRepository;
+import com.projetfilrouge.loanmanagement.web.dto.request.CancelLoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanSubmittedUpdateDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.RejectDocumentRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentResponseDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.LoanHistoryEventResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
 import com.projetfilrouge.loanmanagement.web.exception.BusinessRuleException;
 import com.projetfilrouge.loanmanagement.web.exception.ForbiddenOperationException;
 import com.projetfilrouge.loanmanagement.web.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,16 +32,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -46,7 +48,8 @@ public class LoanService {
     private static final String ROLE_CONSEILLER = "ROLE_CONSEILLER";
     private static final String ROLE_CLIENT = "ROLE_CLIENT";
     private static final int MAX_REFERENCE_GENERATION_ATTEMPTS = 10;
-    private static final long MAX_FILE_SIZE_BYTES = 10L * 1024 * 1024;
+    private static final int MAX_OTHER_DOCUMENTS = 2;
+    private static final int MAX_DOCUMENT_DISPLAY_NAME_LENGTH = 120;
     private static final Set<LoanDocumentType> REQUIRED_DOCUMENT_TYPES = EnumSet.of(
             LoanDocumentType.IDENTITY,
             LoanDocumentType.PAYSLIPS,
@@ -57,9 +60,10 @@ public class LoanService {
 
     private final LoanApplicationRepository loanRepository;
     private final LoanDocumentRepository loanDocumentRepository;
+    private final LoanApplicationEventRepository eventRepository;
     private final UserRepository userRepository;
-    @Value("${app.storage.loan-documents-dir:uploads/loan-documents}")
-    private String loanDocumentsDir;
+    private final LoanApplicationHistoryService historyService;
+    private final LoanDocumentStorageService documentStorage;
 
     public record DownloadedLoanDocument(String fileName, String contentType, byte[] content) {}
 
@@ -74,7 +78,16 @@ public class LoanService {
                 .build();
         applyRequestToLoan(loanApplication, request);
 
-        return mapToResponseDto(loanRepository.save(loanApplication));
+        LoanApplication saved = loanRepository.save(loanApplication);
+        historyService.recordEvent(
+                saved,
+                LoanApplicationEventType.APPLICATION_CREATED,
+                LoanEventActorType.CLIENT,
+                applicant.getEmail(),
+                displayName(applicant),
+                Map.of("reference", saved.getReference())
+        );
+        return mapToResponseDto(saved);
     }
 
     @Transactional(readOnly = true)
@@ -98,15 +111,6 @@ public class LoanService {
         }
 
         return loans.map(this::mapToResponseDto);
-    }
-
-    @Transactional(readOnly = true)
-    public LoanResponseDto getApplicationByReference(String reference, String currentUserEmail) {
-        User currentUser = getRequiredUser(currentUserEmail);
-        LoanApplication loan = loanRepository.findByReference(reference)
-                .orElseThrow(() -> new ResourceNotFoundException("Demande de prêt introuvable avec la référence : " + reference));
-        ensureCanAccessLoan(loan, currentUser);
-        return mapToResponseDto(loan);
     }
 
     @Transactional(readOnly = true)
@@ -145,6 +149,14 @@ public class LoanService {
             );
         }
 
+        Long loanId = loan.getId();
+        List<LoanDocument> documents = loanDocumentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(loanId);
+        for (LoanDocument document : documents) {
+            documentStorage.deleteFile(document.getStoragePath());
+        }
+        loanDocumentRepository.deleteAll(documents);
+        documentStorage.deleteLoanStorageDirectory(loanId);
+        eventRepository.deleteByLoanApplicationId(loanId);
         loanRepository.delete(loan);
     }
 
@@ -164,10 +176,13 @@ public class LoanService {
             );
         }
 
-        if (request.getAssignedAdvisorId() != null) {
-            User advisor = userRepository.findById(request.getAssignedAdvisorId())
+        User newlyAssignedAdvisor = null;
+        boolean recordAdvisorAssignment = false;
+        if (request.getAssignedAdvisorId() != null && loan.getAssignedAdvisor() == null) {
+            newlyAssignedAdvisor = userRepository.findById(request.getAssignedAdvisorId())
                     .orElseThrow(() -> new ResourceNotFoundException("Conseiller introuvable"));
-            loan.setAssignedAdvisor(advisor);
+            loan.setAssignedAdvisor(newlyAssignedAdvisor);
+            recordAdvisorAssignment = true;
         }
         if (request.getApprovedAmount() != null) {
             loan.setApprovedAmount(request.getApprovedAmount());
@@ -179,7 +194,18 @@ public class LoanService {
             loan.setInterestRate(request.getInterestRate());
         }
 
-        return mapToResponseDto(loanRepository.save(loan));
+        LoanApplication saved = loanRepository.save(loan);
+        if (recordAdvisorAssignment && newlyAssignedAdvisor != null) {
+            historyService.recordEvent(
+                    saved,
+                    LoanApplicationEventType.ADVISOR_ASSIGNED,
+                    actorTypeFor(currentUser),
+                    currentUser.getEmail(),
+                    displayName(currentUser),
+                    Map.of("advisorName", displayName(newlyAssignedAdvisor))
+            );
+        }
+        return mapToResponseDto(saved);
     }
 
     @Transactional
@@ -196,7 +222,101 @@ public class LoanService {
             loan.setSubmittedAt(Instant.now());
         }
 
-        return mapToResponseDto(loanRepository.save(loan));
+        LoanApplication saved = loanRepository.save(loan);
+        recordInitialDocumentsBundle(saved, currentUser, saved.getSubmittedAt());
+        historyService.recordEvent(
+                saved,
+                LoanApplicationEventType.APPLICATION_SUBMITTED,
+                LoanEventActorType.CLIENT,
+                currentUser.getEmail(),
+                displayName(currentUser),
+                Map.of("reference", saved.getReference()),
+                saved.getSubmittedAt()
+        );
+        return mapToResponseDto(saved);
+    }
+
+    @Transactional
+    public LoanResponseDto startReview(Long id, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+
+        if (!(hasRole(currentUser, ROLE_CONSEILLER) || hasRole(currentUser, ROLE_ADMIN))) {
+            throw new ForbiddenOperationException("Accès refusé");
+        }
+
+        if (loan.getStatus() != LoanApplicationStatus.SUBMITTED
+                && loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
+            throw new BusinessRuleException(
+                    "Analyse impossible : le dossier doit être SUBMITTED ou UNDER_REVIEW."
+            );
+        }
+
+        LoanApplicationStatus previousStatus = loan.getStatus();
+        if (previousStatus == LoanApplicationStatus.UNDER_REVIEW) {
+            return mapToResponseDto(loan);
+        }
+
+        loan.setStatus(LoanApplicationStatus.UNDER_REVIEW);
+        LoanApplication saved = loanRepository.save(loan);
+
+        if (previousStatus == LoanApplicationStatus.SUBMITTED) {
+            historyService.recordEvent(
+                    saved,
+                    LoanApplicationEventType.REVIEW_STARTED,
+                    actorTypeFor(currentUser),
+                    currentUser.getEmail(),
+                    displayName(currentUser),
+                    Map.of()
+            );
+        }
+        return mapToResponseDto(saved);
+    }
+
+    @Transactional
+    public LoanHistoryEventResponseDto rejectDocument(
+            Long id,
+            RejectDocumentRequestDto request,
+            String currentUserEmail
+    ) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+
+        if (!(hasRole(currentUser, ROLE_CONSEILLER) || hasRole(currentUser, ROLE_ADMIN))) {
+            throw new ForbiddenOperationException("Accès refusé");
+        }
+
+        if (loan.getStatus() != LoanApplicationStatus.SUBMITTED
+                && loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
+            throw new BusinessRuleException(
+                    "Rejet de document impossible pour ce statut de dossier."
+            );
+        }
+
+        LoanApplicationEvent event = historyService.recordEvent(
+                loan,
+                LoanApplicationEventType.DOCUMENT_REJECTED,
+                actorTypeFor(currentUser),
+                currentUser.getEmail(),
+                displayName(currentUser),
+                Map.of(
+                        "documentType", request.getDocumentType().name(),
+                        "comment", request.getComment()
+                )
+        );
+
+        return historyService.mapEventToDisplayDto(event);
+    }
+
+    @Transactional(readOnly = true)
+    public List<LoanHistoryEventResponseDto> getApplicationHistory(Long id, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+        ensureCanAccessLoan(loan, currentUser);
+        return historyService.getHistory(id);
     }
 
     @Transactional
@@ -225,7 +345,16 @@ public class LoanService {
         loan.setStatus(LoanApplicationStatus.APPROVED);
         loan.setDecidedAt(Instant.now());
 
-        return mapToResponseDto(loanRepository.save(loan));
+        LoanApplication saved = loanRepository.save(loan);
+        historyService.recordEvent(
+                saved,
+                LoanApplicationEventType.APPLICATION_APPROVED,
+                actorTypeFor(currentUser),
+                currentUser.getEmail(),
+                displayName(currentUser),
+                Map.of("comment", saved.getDecisionComment() != null ? saved.getDecisionComment() : "")
+        );
+        return mapToResponseDto(saved);
     }
 
     @Transactional
@@ -248,7 +377,61 @@ public class LoanService {
         loan.setStatus(LoanApplicationStatus.REJECTED);
         loan.setDecidedAt(Instant.now());
 
-        return mapToResponseDto(loanRepository.save(loan));
+        LoanApplication saved = loanRepository.save(loan);
+        historyService.recordEvent(
+                saved,
+                LoanApplicationEventType.APPLICATION_REJECTED,
+                actorTypeFor(currentUser),
+                currentUser.getEmail(),
+                displayName(currentUser),
+                Map.of("comment", saved.getDecisionComment() != null ? saved.getDecisionComment() : "")
+        );
+        return mapToResponseDto(saved);
+    }
+
+    @Transactional
+    public LoanResponseDto cancelApplication(
+            Long id,
+            CancelLoanRequestDto request,
+            String currentUserEmail
+    ) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+        ensureCanAccessLoan(loan, currentUser);
+
+        if (!isApplicant(loan, currentUser)) {
+            throw new ForbiddenOperationException("Seul le demandeur peut annuler sa demande.");
+        }
+
+        if (loan.getStatus() != LoanApplicationStatus.SUBMITTED
+                && loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
+            throw new BusinessRuleException(
+                    "Annulation impossible : seuls les dossiers soumis (SUBMITTED) ou en analyse (UNDER_REVIEW) peuvent être annulés."
+            );
+        }
+
+        String comment = request != null && request.getComment() != null
+                ? request.getComment().trim()
+                : "";
+        if (comment.isBlank()) {
+            comment = "Annulée à la demande du client.";
+        }
+
+        loan.setStatus(LoanApplicationStatus.CANCELLED);
+        loan.setDecidedAt(Instant.now());
+        loan.setDecisionComment(comment);
+
+        LoanApplication saved = loanRepository.save(loan);
+        historyService.recordEvent(
+                saved,
+                LoanApplicationEventType.APPLICATION_CANCELLED,
+                LoanEventActorType.CLIENT,
+                currentUser.getEmail(),
+                displayName(currentUser),
+                Map.of("comment", comment)
+        );
+        return mapToResponseDto(saved);
     }
 
     @Transactional
@@ -256,6 +439,7 @@ public class LoanService {
             Long loanId,
             LoanDocumentType documentType,
             MultipartFile file,
+            String displayName,
             String currentUserEmail
     ) {
         User currentUser = getRequiredUser(currentUserEmail);
@@ -263,23 +447,65 @@ public class LoanService {
                 .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
         ensureCanAccessLoan(loan, currentUser);
         ensureCanEditDraft(loan);
-        ensureValidUpload(file);
-
-        String storedFileName = UUID.randomUUID() + "-" + sanitize(file.getOriginalFilename());
-        Path destination = resolveLoanDirectory(loanId).resolve(storedFileName);
-        writeFile(file, destination);
+        String resolvedDisplayName = resolveDisplayName(documentType, displayName, loanId);
+        LoanDocumentStorageService.StoredUpload stored = documentStorage.storeUpload(loanId, file);
 
         LoanDocument document = LoanDocument.builder()
                 .loanApplication(loan)
                 .documentType(documentType)
-                .originalFileName(sanitize(file.getOriginalFilename()))
-                .storedFileName(storedFileName)
-                .contentType(file.getContentType())
-                .fileSizeBytes(file.getSize())
-                .storagePath(destination.toString())
+                .originalFileName(stored.originalFileName())
+                .displayName(resolvedDisplayName)
+                .storedFileName(stored.storedFileName())
+                .contentType(stored.contentType())
+                .fileSizeBytes(stored.fileSizeBytes())
+                .storagePath(stored.storagePath())
                 .build();
 
-        return mapToDocumentResponse(loanDocumentRepository.save(document));
+        LoanDocument savedDoc = loanDocumentRepository.save(document);
+        return mapToDocumentResponse(savedDoc);
+    }
+
+    @Transactional
+    public LoanDocumentResponseDto uploadComplementDocument(
+            Long loanId,
+            LoanDocumentType documentType,
+            MultipartFile file,
+            String displayName,
+            String currentUserEmail
+    ) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+        ensureCanAccessLoan(loan, currentUser);
+        ensureCanUploadComplement(loan);
+        String resolvedDisplayName = resolveDisplayName(documentType, displayName, loanId);
+        LoanDocumentStorageService.StoredUpload stored = documentStorage.storeUpload(loanId, file);
+
+        LoanDocument document = LoanDocument.builder()
+                .loanApplication(loan)
+                .documentType(documentType)
+                .originalFileName(stored.originalFileName())
+                .displayName(resolvedDisplayName)
+                .storedFileName(stored.storedFileName())
+                .contentType(stored.contentType())
+                .fileSizeBytes(stored.fileSizeBytes())
+                .storagePath(stored.storagePath())
+                .build();
+
+        LoanDocument savedDoc = loanDocumentRepository.save(document);
+        historyService.recordEvent(
+                loan,
+                LoanApplicationEventType.DOCUMENT_UPLOADED,
+                LoanEventActorType.CLIENT,
+                currentUser.getEmail(),
+                displayName(currentUser),
+                Map.of(
+                        "documentType", documentType.name(),
+                        "fileName", savedDoc.getOriginalFileName(),
+                        "complement", true
+                )
+        );
+        return mapToDocumentResponse(savedDoc);
     }
 
     @Transactional(readOnly = true)
@@ -305,9 +531,13 @@ public class LoanService {
         LoanDocument document = loanDocumentRepository.findByIdAndLoanApplicationId(documentId, loanId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
 
-        deleteStoredFile(document.getStoragePath());
+        documentStorage.deleteFile(document.getStoragePath());
         loanDocumentRepository.delete(document);
-        cleanupLoanDirectoryOrphans(loanId);
+        Set<String> referenced = loanDocumentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(loanId)
+                .stream()
+                .map(LoanDocument::getStoredFileName)
+                .collect(java.util.stream.Collectors.toSet());
+        documentStorage.cleanupLoanDirectoryOrphans(loanId, referenced);
     }
 
     @Transactional(readOnly = true)
@@ -320,21 +550,12 @@ public class LoanService {
         LoanDocument document = loanDocumentRepository.findByIdAndLoanApplicationId(documentId, loanId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
 
-        Path filePath = Paths.get(document.getStoragePath());
-        if (!Files.exists(filePath)) {
-            throw new ResourceNotFoundException("Le fichier physique du document est introuvable.");
-        }
-
-        try {
-            byte[] content = Files.readAllBytes(filePath);
-            return new DownloadedLoanDocument(
-                    document.getOriginalFileName(),
-                    document.getContentType() == null ? "application/octet-stream" : document.getContentType(),
-                    content
-            );
-        } catch (IOException e) {
-            throw new RuntimeException("Impossible de lire le fichier document", e);
-        }
+        LoanDocumentStorageService.DownloadedFile file = documentStorage.readFile(
+                document.getStoragePath(),
+                document.getOriginalFileName(),
+                document.getContentType()
+        );
+        return new DownloadedLoanDocument(file.fileName(), file.contentType(), file.content());
     }
 
     private String generateUniqueReference() {
@@ -385,6 +606,61 @@ public class LoanService {
         }
     }
 
+    private void ensureCanUploadComplement(LoanApplication loan) {
+        if (loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
+            throw new BusinessRuleException(
+                    "Dépôt impossible : complément autorisé uniquement pour un dossier en analyse (UNDER_REVIEW)."
+            );
+        }
+    }
+
+    private LoanEventActorType actorTypeFor(User user) {
+        if (hasRole(user, ROLE_ADMIN)) {
+            return LoanEventActorType.ADMIN;
+        }
+        if (hasRole(user, ROLE_CONSEILLER)) {
+            return LoanEventActorType.ADVISOR;
+        }
+        return LoanEventActorType.CLIENT;
+    }
+
+    private String displayName(User user) {
+        return (user.getFirstName() + " " + user.getLastName()).trim();
+    }
+
+    private void recordInitialDocumentsBundle(LoanApplication loan, User client, Instant submittedAt) {
+        List<LoanDocument> documents = loanDocumentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(loan.getId());
+        if (documents.isEmpty()) {
+            return;
+        }
+        long requiredTypesPresent = documents.stream()
+                .map(LoanDocument::getDocumentType)
+                .filter(REQUIRED_DOCUMENT_TYPES::contains)
+                .distinct()
+                .count();
+        List<String> documentTypes = documents.stream()
+                .map(d -> d.getDocumentType().name())
+                .distinct()
+                .toList();
+        Instant occurredAt = submittedAt != null
+                ? submittedAt.minus(1, ChronoUnit.SECONDS)
+                : Instant.now();
+        historyService.recordEvent(
+                loan,
+                LoanApplicationEventType.DOCUMENT_UPLOADED,
+                LoanEventActorType.CLIENT,
+                client.getEmail(),
+                displayName(client),
+                Map.of(
+                        "bundled", true,
+                        "documentCount", documents.size(),
+                        "requiredDocumentCount", requiredTypesPresent,
+                        "documentTypes", documentTypes
+                ),
+                occurredAt
+        );
+    }
+
     private void ensureRequiredDocumentsPresent(Long loanId) {
         List<LoanDocument> documents = loanDocumentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(loanId);
         Set<LoanDocumentType> presentTypes = documents.stream()
@@ -410,6 +686,9 @@ public class LoanService {
         loan.setEmploymentStatus(request.getEmploymentStatus());
         loan.setAdditionalIncome(defaultZero(request.getAdditionalIncome()));
         loan.setEmployerName(request.getEmployerName());
+        loan.setJobTitle(blankToNull(request.getJobTitle()));
+        loan.setEmployerSector(blankToNull(request.getEmployerSector()));
+        loan.setHireDate(request.getHireDate());
         loan.setSeniorityMonths(request.getSeniorityMonths());
         loan.setMonthlyRent(defaultZero(request.getMonthlyRent()));
         loan.setMonthlyLoanPayments(defaultZero(request.getMonthlyLoanPayments()));
@@ -419,6 +698,13 @@ public class LoanService {
 
     private BigDecimal defaultZero(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
+    }
+
+    private String blankToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 
     private String resolvePurposeLabel(LoanPurpose loanPurpose) {
@@ -467,6 +753,9 @@ public class LoanService {
                 .employmentStatus(loan.getEmploymentStatus())
                 .additionalIncome(loan.getAdditionalIncome())
                 .employerName(loan.getEmployerName())
+                .jobTitle(loan.getJobTitle())
+                .employerSector(loan.getEmployerSector())
+                .hireDate(loan.getHireDate())
                 .seniorityMonths(loan.getSeniorityMonths())
                 .monthlyRent(loan.getMonthlyRent())
                 .monthlyLoanPayments(loan.getMonthlyLoanPayments())
@@ -501,86 +790,36 @@ public class LoanService {
                 .loanApplicationId(document.getLoanApplication().getId())
                 .documentType(document.getDocumentType())
                 .originalFileName(document.getOriginalFileName())
+                .displayName(document.getDisplayName())
                 .contentType(document.getContentType())
                 .fileSizeBytes(document.getFileSizeBytes())
                 .uploadedAt(document.getUploadedAt())
                 .build();
     }
 
-    private void ensureValidUpload(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new BusinessRuleException("Le fichier est obligatoire.");
+    private String resolveDisplayName(LoanDocumentType documentType, String displayName, Long loanId) {
+        if (documentType == LoanDocumentType.OTHER) {
+            long otherCount = loanDocumentRepository.countByLoanApplicationIdAndDocumentType(
+                    loanId, LoanDocumentType.OTHER);
+            if (otherCount >= MAX_OTHER_DOCUMENTS) {
+                throw new BusinessRuleException(
+                        "Maximum " + MAX_OTHER_DOCUMENTS + " documents pour la catégorie « Autre document »."
+                );
+            }
+            if (displayName == null || displayName.isBlank()) {
+                throw new BusinessRuleException(
+                        "Le nom du document est obligatoire pour la catégorie « Autre document »."
+                );
+            }
+            String trimmed = displayName.trim();
+            if (trimmed.length() > MAX_DOCUMENT_DISPLAY_NAME_LENGTH) {
+                throw new BusinessRuleException(
+                        "Le nom du document ne doit pas dépasser " + MAX_DOCUMENT_DISPLAY_NAME_LENGTH + " caractères."
+                );
+            }
+            return trimmed;
         }
-        if (file.getSize() > MAX_FILE_SIZE_BYTES) {
-            throw new BusinessRuleException("Le fichier dépasse la limite de 10 Mo.");
-        }
-        String contentType = file.getContentType() == null ? "" : file.getContentType();
-        boolean allowed = contentType.equals("application/pdf")
-                || contentType.equals("image/jpeg")
-                || contentType.equals("image/png");
-        if (!allowed) {
-            throw new BusinessRuleException("Type de fichier non autorisé. Formats acceptés : PDF, JPG, PNG.");
-        }
+        return null;
     }
 
-    private Path resolveLoanDirectory(Long loanId) {
-        Path dir = Paths.get(loanDocumentsDir).resolve("loan-" + loanId);
-        try {
-            Files.createDirectories(dir);
-            return dir;
-        } catch (IOException e) {
-            throw new RuntimeException("Impossible de créer le dossier de stockage", e);
-        }
-    }
-
-    private void writeFile(MultipartFile file, Path destination) {
-        try {
-            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new RuntimeException("Impossible d'enregistrer le fichier", e);
-        }
-    }
-
-    private void deleteStoredFile(String storagePath) {
-        try {
-            Files.deleteIfExists(Paths.get(storagePath));
-        } catch (IOException e) {
-            throw new RuntimeException("Impossible de supprimer le fichier stocké", e);
-        }
-    }
-
-    private void cleanupLoanDirectoryOrphans(Long loanId) {
-        Path loanDir = Paths.get(loanDocumentsDir).resolve("loan-" + loanId);
-        if (!Files.isDirectory(loanDir)) {
-            return;
-        }
-
-        Set<String> referenced = new HashSet<>(
-                loanDocumentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(loanId)
-                        .stream()
-                        .map(LoanDocument::getStoredFileName)
-                        .toList()
-        );
-
-        try (var stream = Files.list(loanDir)) {
-            stream.filter(Files::isRegularFile)
-                    .filter(path -> !referenced.contains(path.getFileName().toString()))
-                    .forEach(path -> {
-                        try {
-                            Files.deleteIfExists(path);
-                        } catch (IOException ignored) {
-                            // best-effort
-                        }
-                    });
-        } catch (IOException ignored) {
-            // best-effort
-        }
-    }
-
-    private String sanitize(String fileName) {
-        if (fileName == null || fileName.isBlank()) {
-            return "document";
-        }
-        return fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
-    }
 }
