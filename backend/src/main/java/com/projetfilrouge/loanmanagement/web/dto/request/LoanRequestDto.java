@@ -13,6 +13,7 @@ import lombok.*;
 
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 
@@ -92,7 +93,13 @@ public class LoanRequestDto {
 
     private String employerName;
 
+    @Size(max = 120, message = "Le poste ne doit pas dépasser 120 caractères")
+    private String jobTitle;
 
+    @Size(max = 40, message = "Le secteur ne doit pas dépasser 40 caractères")
+    private String employerSector;
+
+    private LocalDate hireDate;
 
     @Min(value = 0, message = "L'ancienneté ne peut pas être négative")
 

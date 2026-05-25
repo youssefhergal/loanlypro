@@ -17,6 +17,7 @@ public class LoanDocumentResponseDto {
     private Long loanApplicationId;
     private LoanDocumentType documentType;
     private String originalFileName;
+    private String displayName;
     private String contentType;
     private Long fileSizeBytes;
     private Instant uploadedAt;

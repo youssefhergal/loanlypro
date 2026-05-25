@@ -30,6 +30,10 @@ public class LoanDocument {
     @Column(name = "original_file_name", nullable = false, length = 255)
     private String originalFileName;
 
+    /** Libellé saisi par le client (obligatoire pour le type OTHER). */
+    @Column(name = "display_name", length = 120)
+    private String displayName;
+
     @Column(name = "stored_file_name", nullable = false, length = 255)
     private String storedFileName;
 

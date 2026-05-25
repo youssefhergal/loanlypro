@@ -1,6 +1,7 @@
 package com.projetfilrouge.loanmanagement.repository;
 
 import com.projetfilrouge.loanmanagement.entity.LoanDocument;
+import com.projetfilrouge.loanmanagement.entity.LoanDocumentType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,4 +13,6 @@ public interface LoanDocumentRepository extends JpaRepository<LoanDocument, Long
     List<LoanDocument> findByLoanApplicationIdOrderByUploadedAtDesc(Long loanApplicationId);
 
     Optional<LoanDocument> findByIdAndLoanApplicationId(Long id, Long loanApplicationId);
+
+    long countByLoanApplicationIdAndDocumentType(Long loanApplicationId, LoanDocumentType documentType);
 }
