@@ -2,6 +2,22 @@
 
 Application de gestion des prêts (demandes, suivi, remboursements) — client et conseiller.
 
+## Documentation wiki (modulaire)
+
+Wiki par **dossiers** (`auth/`, `demande-pret-client/`, …) : [`wiki/README.md`](wiki/README.md).
+
+Audit pré-livraison (parcours client) : [`wiki/demande-pret-client/08-audit-pre-livraison.md`](wiki/demande-pret-client/08-audit-pre-livraison.md).
+
+## Comptes de démonstration
+
+| Rôle | Email | Mot de passe |
+|------|-------|--------------|
+| Client | `client@test.com` | `password` |
+| Conseiller | `conseiller@test.com` | `password` |
+| Admin | `admin@test.com` | `password` |
+
+Les demandes de prêt ne sont pas pré-remplies : créez-les via l’application (wizard client).
+
 ## Comment lancer le projet (BDD, backend, frontend)
 
 **Prérequis :** Docker, Java 17, Node 20.

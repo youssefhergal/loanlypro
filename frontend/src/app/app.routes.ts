@@ -4,6 +4,11 @@ import { clientAreaGuard } from './core/auth/guards/client-area.guard';
 import { roleGuard } from './core/auth/guards/role.guard';
 import { ROLES } from './core/auth/constants/auth.constants';
 
+const comingSoon = () =>
+  import('./features/shared/coming-soon/coming-soon.component').then(
+    (m) => m.ComingSoonComponent
+  );
+
 export const routes: Routes = [
   {
     path: 'login',
@@ -25,16 +30,145 @@ export const routes: Routes = [
   {
     path: 'conseiller',
     loadComponent: () =>
-      import('./features/conseiller/conseiller.component').then((m) => m.ConseillerComponent),
+      import('./features/layout/advisor-shell/advisor-shell.component').then(
+        (m) => m.AdvisorShellComponent
+      ),
     canActivate: [authGuard, roleGuard],
     data: { roles: [ROLES.CONSEILLER] },
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/dashboard/advisor/advisor-dashboard.component').then(
+            (m) => m.AdvisorDashboardComponent
+          ),
+        data: {
+          title: 'Tableau de bord',
+          description: 'Vue d’ensemble de votre activité d’instruction.',
+        },
+      },
+      {
+        path: 'dossiers',
+        loadComponent: comingSoon,
+        data: {
+          title: 'Mes dossiers',
+          description: 'File des demandes de prêt à instruire — bientôt disponible.',
+        },
+      },
+      {
+        path: 'dossiers/:id',
+        loadComponent: comingSoon,
+        data: {
+          title: 'Détail du dossier',
+          description: 'Instruction du dossier — bientôt disponible.',
+        },
+      },
+      {
+        path: 'prets',
+        loadComponent: comingSoon,
+        data: {
+          title: 'Prêts',
+          description: 'Suivi des prêts accordés — bientôt disponible.',
+        },
+      },
+      {
+        path: 'messages',
+        loadComponent: comingSoon,
+        data: { title: 'Messages', description: 'Messagerie conseiller — bientôt disponible.' },
+      },
+      {
+        path: 'notifications',
+        loadComponent: comingSoon,
+        data: {
+          title: 'Notifications',
+          description: 'Centre de notifications — bientôt disponible.',
+        },
+      },
+      {
+        path: 'profil',
+        loadComponent: comingSoon,
+        data: { title: 'Mon profil', description: 'Profil conseiller — bientôt disponible.' },
+      },
+      {
+        path: 'aide',
+        loadComponent: comingSoon,
+        data: { title: 'Aide', description: 'FAQ et support — bientôt disponible.' },
+      },
+    ],
   },
   {
     path: 'admin',
     loadComponent: () =>
-      import('./features/admin/admin.component').then((m) => m.AdminComponent),
+      import('./features/layout/admin-shell/admin-shell.component').then(
+        (m) => m.AdminShellComponent
+      ),
     canActivate: [authGuard, roleGuard],
     data: { roles: [ROLES.ADMIN] },
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/dashboard/admin/admin-dashboard.component').then(
+            (m) => m.AdminDashboardComponent
+          ),
+        data: {
+          title: 'Tableau de bord',
+          description: 'Supervision de la plateforme LoanlyFans.',
+        },
+      },
+      {
+        path: 'demandes',
+        loadComponent: comingSoon,
+        data: {
+          title: 'Toutes les demandes',
+          description: 'Liste de l’ensemble des demandes de prêt — bientôt disponible.',
+        },
+      },
+      {
+        path: 'demandes/:id',
+        loadComponent: comingSoon,
+        data: {
+          title: 'Détail de la demande',
+          description: 'Supervision du dossier — bientôt disponible.',
+        },
+      },
+      {
+        path: 'prets',
+        loadComponent: comingSoon,
+        data: {
+          title: 'Prêts',
+          description: 'Prêts actifs sur la plateforme — bientôt disponible.',
+        },
+      },
+      {
+        path: 'utilisateurs',
+        loadComponent: comingSoon,
+        data: {
+          title: 'Utilisateurs',
+          description: 'Gestion des comptes — bientôt disponible.',
+        },
+      },
+      {
+        path: 'parametres',
+        loadComponent: comingSoon,
+        data: {
+          title: 'Paramètres',
+          description: 'Paramétrage plateforme — bientôt disponible.',
+        },
+      },
+      {
+        path: 'profil',
+        loadComponent: comingSoon,
+        data: { title: 'Mon profil', description: 'Profil administrateur — bientôt disponible.' },
+      },
+      {
+        path: 'aide',
+        loadComponent: comingSoon,
+        data: { title: 'Aide', description: 'FAQ et support — bientôt disponible.' },
+      },
+    ],
   },
   {
     path: '',
@@ -48,7 +182,9 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+          import('./features/dashboard/client/dashboard.component').then(
+            (m) => m.DashboardComponent
+          ),
         data: {
           title: 'Tableau de bord',
           description:
@@ -58,42 +194,61 @@ export const routes: Routes = [
       {
         path: 'mes-demandes',
         loadComponent: () =>
-          import('./features/loans/loan-list/loan-list.component').then((m) => m.LoanListComponent),
+          import('./features/loans/applicant/loan-list/loan-list.component').then(
+            (m) => m.LoanListComponent
+          ),
         data: {
           title: 'Mes demandes',
-          description:
-            'Consultez l’état de vos dossiers, les pièces demandées et les prochaines étapes.',
+          description: "Gérez et suivez l'ensemble de vos demandes.",
+        },
+      },
+      {
+        path: 'mes-demandes/:id',
+        loadComponent: () =>
+          import('./features/loans/applicant/loan-detail/loan-detail.component').then(
+            (m) => m.LoanDetailComponent
+          ),
+        data: {
+          title: 'Détail de la demande',
+          description: 'Suivez l’avancement de votre dossier et consultez les informations associées.',
         },
       },
       {
         path: 'nouvelle-demande/:id',
         loadComponent: () =>
-          import('./features/loans/loan-wizard/loan-wizard.component').then(
+          import('./features/loans/applicant/loan-wizard/loan-wizard.component').then(
             (m) => m.LoanWizardComponent
           ),
         data: {
           title: 'Reprendre la demande',
-          description: 'Complétez votre brouillon et soumettez votre dossier.',
+          description: '',
         },
       },
       {
         path: 'nouvelle-demande',
         loadComponent: () =>
-          import('./features/loans/loan-wizard/loan-wizard.component').then(
+          import('./features/loans/applicant/loan-wizard/loan-wizard.component').then(
             (m) => m.LoanWizardComponent
           ),
         data: {
-          title: 'Nouvelle demande de prêt',
-          description:
-            'Démarrez une nouvelle demande et complétez les informations étape par étape.',
+          title: 'Nouvelle demande',
+          description: '',
+        },
+      },
+      {
+        path: 'demande-soumise/:id',
+        loadComponent: () =>
+          import('./features/loans/applicant/loan-submitted/loan-submitted.component').then(
+            (m) => m.LoanSubmittedComponent
+          ),
+        data: {
+          title: 'Demande soumise',
+          description: 'Votre dossier a été transmis avec succès.',
         },
       },
       {
         path: 'mes-prets',
-        loadComponent: () =>
-          import('./features/client/client-placeholder.component').then(
-            (m) => m.ClientPlaceholderComponent
-          ),
+        loadComponent: comingSoon,
         data: {
           title: 'Mes prêts',
           description:
@@ -102,10 +257,7 @@ export const routes: Routes = [
       },
       {
         path: 'paiements',
-        loadComponent: () =>
-          import('./features/client/client-placeholder.component').then(
-            (m) => m.ClientPlaceholderComponent
-          ),
+        loadComponent: comingSoon,
         data: {
           title: 'Paiements / Échéancier',
           description:
@@ -114,10 +266,7 @@ export const routes: Routes = [
       },
       {
         path: 'documents',
-        loadComponent: () =>
-          import('./features/client/client-placeholder.component').then(
-            (m) => m.ClientPlaceholderComponent
-          ),
+        loadComponent: comingSoon,
         data: {
           title: 'Documents',
           description:
@@ -126,10 +275,7 @@ export const routes: Routes = [
       },
       {
         path: 'messages',
-        loadComponent: () =>
-          import('./features/client/client-placeholder.component').then(
-            (m) => m.ClientPlaceholderComponent
-          ),
+        loadComponent: comingSoon,
         data: {
           title: 'Messages',
           description:
@@ -138,10 +284,7 @@ export const routes: Routes = [
       },
       {
         path: 'notifications',
-        loadComponent: () =>
-          import('./features/client/client-placeholder.component').then(
-            (m) => m.ClientPlaceholderComponent
-          ),
+        loadComponent: comingSoon,
         data: {
           title: 'Notifications',
           description:
@@ -150,10 +293,7 @@ export const routes: Routes = [
       },
       {
         path: 'profil',
-        loadComponent: () =>
-          import('./features/client/client-placeholder.component').then(
-            (m) => m.ClientPlaceholderComponent
-          ),
+        loadComponent: comingSoon,
         data: {
           title: 'Mon profil',
           description:
@@ -162,10 +302,7 @@ export const routes: Routes = [
       },
       {
         path: 'parametres',
-        loadComponent: () =>
-          import('./features/client/client-placeholder.component').then(
-            (m) => m.ClientPlaceholderComponent
-          ),
+        loadComponent: comingSoon,
         data: {
           title: 'Paramètres',
           description:
@@ -174,10 +311,7 @@ export const routes: Routes = [
       },
       {
         path: 'aide',
-        loadComponent: () =>
-          import('./features/client/client-placeholder.component').then(
-            (m) => m.ClientPlaceholderComponent
-          ),
+        loadComponent: comingSoon,
         data: {
           title: 'Aide / FAQ',
           description:
