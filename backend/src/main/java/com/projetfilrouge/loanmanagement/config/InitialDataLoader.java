@@ -14,10 +14,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
+/**
+ * Données minimales au démarrage : rôles et comptes de test (client, conseiller, admin).
+ * Les demandes de prêt ne sont plus seedées — à créer via l'application.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile("!test")
+@Profile("dev")
 public class InitialDataLoader implements CommandLineRunner {
 
     private static final String ROLE_CLIENT = "ROLE_CLIENT";
@@ -33,6 +37,7 @@ public class InitialDataLoader implements CommandLineRunner {
     public void run(String... args) {
         createRolesIfMissing();
         createTestUsersIfMissing();
+        log.info("Données initiales : rôles et utilisateurs de test vérifiés.");
     }
 
     private void createRolesIfMissing() {

@@ -1,0 +1,347 @@
+<div class="loan-detail-page">
+  @if (loading()) {
+    <p class="loan-detail-page__loading">Chargement du dossier…</p>
+  } @else if (error()) {
+    <p class="loan-detail-page__error">{{ error() }}</p>
+    <a mat-stroked-button routerLink="/mes-demandes">Retour à mes demandes</a>
+  } @else {
+    @if (loan(); as l) {
+      @if (statusStyle(); as style) {
+        <header class="loan-detail-header">
+          <div class="loan-detail-header__main">
+            <div class="loan-detail-header__title-row">
+              <h1 class="loan-detail-header__title">{{ l.title }}</h1>
+              <span
+                class="loan-detail-header__badge"
+                [style.background]="style.badgeBg"
+                [style.color]="style.badgeColor"
+              >
+                <span class="loan-detail-header__badge-dot" [style.background]="style.accent"></span>
+                {{ statusLabel() }}
+              </span>
+            </div>
+            <p class="loan-detail-header__meta">
+              <span>Réf. <strong>#{{ l.reference }}</strong></span>
+              @if (l.submittedAt) {
+                <span>· Soumis le {{ formatDate(l.submittedAt) }}</span>
+              }
+              <span>· Mis à jour le {{ formatDate(l.updatedAt) }}</span>
+            </p>
+          </div>
+          <div class="loan-detail-header__actions">
+            @if (canCancelLoan()) {
+              <button
+                mat-stroked-button
+                type="button"
+                class="loan-detail-header__cancel-btn"
+                (click)="cancelLoan()"
+              >
+                <mat-icon>cancel</mat-icon>
+                Annuler la demande
+              </button>
+            }
+            <button mat-stroked-button type="button" (click)="downloadRecap()">
+              <mat-icon>download</mat-icon>
+              Télécharger
+            </button>
+            <a mat-stroked-button routerLink="/mes-demandes">
+              <mat-icon>arrow_back</mat-icon>
+              Retour
+            </a>
+          </div>
+        </header>
+
+        @if (progress(); as prog) {
+          <section class="loan-detail-card loan-detail-progress">
+            <div class="loan-detail-progress__head">
+              <div>
+                <p class="loan-detail-progress__step">
+                  Étape {{ prog.stepIndex }} sur {{ prog.totalSteps }} – {{ prog.stepLabel }}
+                </p>
+                @if (prog.estimatedDecisionLabel) {
+                  <p class="loan-detail-progress__eta">
+                    Décision estimée : {{ prog.estimatedDecisionLabel }}
+                  </p>
+                }
+              </div>
+              <span class="loan-detail-progress__pct">{{ prog.percent }}%</span>
+            </div>
+            <mat-progress-bar mode="determinate" [value]="prog.percent" />
+          </section>
+        }
+
+        @if (showComplementAlert()) {
+          <section class="loan-detail-alert loan-detail-alert--action">
+            <mat-icon>warning_amber</mat-icon>
+            <div>
+              <h2>Action requise sur votre dossier</h2>
+              <p>
+                Votre conseiller a signalé
+                <strong>{{ documentsNeedingAction() }} document(s)</strong>
+                à corriger ou à ajouter. Utilisez les boutons dans la section « Documents fournis ».
+              </p>
+            </div>
+          </section>
+        }
+
+        <div class="loan-detail-layout">
+          <div class="loan-detail-layout__main">
+            <section class="loan-detail-card">
+              <h2 class="loan-detail-card__title">
+                <mat-icon>summarize</mat-icon>
+                Détails du prêt
+              </h2>
+              <dl class="loan-detail-dl loan-detail-dl--grid">
+                <div>
+                  <dt>Montant demandé</dt>
+                  <dd>{{ l.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+                </div>
+                <div>
+                  <dt>Durée</dt>
+                  <dd>{{ l.requestedDurationMonths }} mois<br /><span class="loan-detail-dl__hint">{{ durationYears() }}</span></dd>
+                </div>
+                <div>
+                  <dt>Mensualité est.</dt>
+                  <dd class="loan-detail-dl__accent">
+                    {{ monthlyPayment() | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Taux proposé</dt>
+                  <dd>{{ proposedRate() | number: '1.2-2' }} %<br /><span class="loan-detail-dl__hint">Taux fixe</span></dd>
+                </div>
+                <div>
+                  <dt>Objet</dt>
+                  <dd>{{ purposeLabel() }}<br /><span class="loan-detail-dl__hint">{{ l.purpose }}</span></dd>
+                </div>
+                <div>
+                  <dt>Coût total</dt>
+                  <dd>
+                    {{ totalCost() | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                    <span class="loan-detail-dl__hint">Intérêts inclus</span>
+                  </dd>
+                </div>
+              </dl>
+            </section>
+
+            <section class="loan-detail-card">
+              <h2 class="loan-detail-card__title">
+                <mat-icon>person</mat-icon>
+                Informations emprunteur
+              </h2>
+              <dl class="loan-detail-dl loan-detail-dl--grid">
+                <div>
+                  <dt>Nom complet</dt>
+                  <dd>{{ applicantName() }}</dd>
+                </div>
+                <div>
+                  <dt>Email</dt>
+                  <dd>{{ auth.currentUser()?.email ?? '—' }}</dd>
+                </div>
+                <div>
+                  <dt>Situation professionnelle</dt>
+                  <dd>{{ employmentLabel() }}</dd>
+                </div>
+                @if (l.employerName) {
+                  <div>
+                    <dt>Employeur</dt>
+                    <dd>{{ l.employerName }}</dd>
+                  </div>
+                }
+                @if (sectorLabel(); as sector) {
+                  <div>
+                    <dt>Secteur d'activité</dt>
+                    <dd>{{ sector }}</dd>
+                  </div>
+                }
+                @if (hireDateLabel(); as hire) {
+                  <div>
+                    <dt>Date d'embauche</dt>
+                    <dd>{{ hire }}</dd>
+                  </div>
+                }
+                <div>
+                  <dt>Revenus mensuels nets</dt>
+                  <dd>{{ l.monthlyIncome | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+                </div>
+                <div>
+                  <dt>Taux d'endettement</dt>
+                  <dd [class.loan-detail-dl__accent]="debtRatioPercent() <= debtRatioMaxPercent">
+                    {{ debtRatioPercent() | number: '1.1-1' }} %
+                  </dd>
+                </div>
+              </dl>
+            </section>
+
+            <section class="loan-detail-card" id="loan-detail-documents">
+              <h2 class="loan-detail-card__title">
+                <mat-icon>folder_open</mat-icon>
+                Documents fournis
+                <span class="loan-detail-card__count">{{ requiredProvided() }} / {{ requiredCount() }} obligatoires</span>
+              </h2>
+              <ul class="loan-detail-docs">
+                @for (row of documentRows(); track row.type) {
+                  <li
+                    class="loan-detail-docs__item"
+                    [class.loan-detail-docs__item--missing]="row.status === 'missing' && !showAdvisorDocumentReview()"
+                    [class.loan-detail-docs__item--rejected]="row.advisorReview?.status === 'rejected'"
+                    [class.loan-detail-docs__item--pending]="row.advisorReview?.status === 'pending_review'"
+                    [class.loan-detail-docs__item--validated]="row.advisorReview?.status === 'validated'"
+                  >
+                    <div class="loan-detail-docs__info">
+                      <span class="loan-detail-docs__label">{{ row.label }}</span>
+
+                      @if (displayFileName(row); as name) {
+                        <span class="loan-detail-docs__file-row">
+                          <span class="loan-detail-docs__file">
+                            @if (row.files.length > 0) {
+                              {{ name }} · {{ docSize(row.files[0].fileSizeBytes) }}
+                            }
+                          </span>
+                          @if (row.files.length > 0) {
+                            <button
+                              type="button"
+                              class="loan-detail-docs__download"
+                              [attr.aria-label]="'Télécharger ' + name"
+                              (click)="downloadDocument(row.files[0])"
+                            >
+                              <mat-icon>download</mat-icon>
+                            </button>
+                          }
+                        </span>
+                      } @else if (row.required) {
+                        <span class="loan-detail-docs__file loan-detail-docs__file--muted">
+                          Document requis – non fourni
+                        </span>
+                      }
+
+                      @if (row.advisorReview?.comment) {
+                        <p class="loan-detail-docs__advisor-comment">
+                          <mat-icon aria-hidden="true">record_voice_over</mat-icon>
+                          {{ row.advisorReview?.comment }}
+                        </p>
+                      }
+
+                      @if (showAdvisorDocumentReview() && canReplaceDocument(row)) {
+                        <div class="loan-detail-docs__actions">
+                          <label class="loan-detail-docs__replace-btn">
+                            <input
+                              type="file"
+                              class="loan-detail-docs__file-input"
+                              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                              (change)="onComplementDocumentSelected(row, $event)"
+                            />
+                            <mat-icon>upload_file</mat-icon>
+                            {{ replaceDocumentLabel(row) }}
+                          </label>
+                        </div>
+                      }
+                    </div>
+
+                    @if (showAdvisorDocumentReview() && row.advisorReview; as review) {
+                      <span
+                        class="loan-detail-docs__status"
+                        [class.loan-detail-docs__status--validated]="review.status === 'validated'"
+                        [class.loan-detail-docs__status--pending]="review.status === 'pending_review'"
+                        [class.loan-detail-docs__status--rejected]="review.status === 'rejected' || review.status === 'missing_upload'"
+                      >
+                        <mat-icon>{{ advisorReviewIcon(review.status) }}</mat-icon>
+                        {{ advisorReviewLabel(review.status) }}
+                      </span>
+                    } @else {
+                      <span
+                        class="loan-detail-docs__status"
+                        [class.loan-detail-docs__status--ok]="row.status === 'provided'"
+                        [class.loan-detail-docs__status--missing]="row.status === 'missing'"
+                      >
+                        @if (row.status === 'provided') {
+                          <mat-icon>check_circle</mat-icon> Importé
+                        } @else if (row.required) {
+                          <mat-icon>error_outline</mat-icon> Manquant
+                        } @else {
+                          Optionnel
+                        }
+                      </span>
+                    }
+                  </li>
+                }
+              </ul>
+            </section>
+          </div>
+
+          <aside class="loan-detail-layout__aside">
+            <section class="loan-detail-card loan-detail-card--timeline">
+              <h2 class="loan-detail-card__title">
+                <mat-icon>history</mat-icon>
+                Historique de la demande
+              </h2>
+              <ol class="loan-detail-timeline">
+                @for (event of timeline(); track event.title + event.dateLabel) {
+                  <li
+                    class="loan-detail-timeline__item"
+                    [class.loan-detail-timeline__item--done]="event.state === 'done'"
+                    [class.loan-detail-timeline__item--current]="event.state === 'current'"
+                    [class.loan-detail-timeline__item--warn]="event.state === 'warn'"
+                  >
+                    <span class="loan-detail-timeline__dot" aria-hidden="true"></span>
+                    <div>
+                      <div class="loan-detail-timeline__head">
+                        <h3>{{ event.title }}</h3>
+                        <span class="loan-detail-timeline__date">{{ event.dateLabel }}</span>
+                      </div>
+                      <p>{{ event.description }}</p>
+                    </div>
+                  </li>
+                }
+              </ol>
+            </section>
+
+            @if (l.advisorName) {
+              <section class="loan-detail-card loan-detail-advisor">
+                <h2 class="loan-detail-card__title">Votre conseiller</h2>
+                <div class="loan-detail-advisor__profile">
+                  <span class="loan-detail-advisor__avatar" aria-hidden="true">
+                    {{ l.advisorName.charAt(0) }}
+                  </span>
+                  <div>
+                    <p class="loan-detail-advisor__name">{{ l.advisorName }}</p>
+                    <p class="loan-detail-advisor__role">Conseiller LoanlyFans</p>
+                    <span class="loan-detail-advisor__status">Disponible</span>
+                  </div>
+                </div>
+                <div class="loan-detail-advisor__actions">
+                  <a mat-stroked-button href="mailto:conseil@loanlyfans.fr">
+                    <mat-icon>chat</mat-icon>
+                    Envoyer un message
+                  </a>
+                  <a mat-stroked-button href="tel:+33123456789">
+                    <mat-icon>call</mat-icon>
+                    Appeler
+                  </a>
+                </div>
+              </section>
+            }
+
+            <section class="loan-detail-card">
+              <h2 class="loan-detail-card__title">Actions rapides</h2>
+              <div class="loan-detail-quick">
+                <button mat-stroked-button type="button" class="loan-detail-quick__btn" (click)="downloadRecap()">
+                  <mat-icon>download</mat-icon>
+                  Télécharger le récapitulatif
+                </button>
+                @if (l.status === 'REJECTED') {
+                  <a mat-flat-button color="primary" class="loan-detail-quick__btn" routerLink="/nouvelle-demande">
+                    Nouvelle demande
+                  </a>
+                }
+                <a mat-stroked-button class="loan-detail-quick__btn" routerLink="/mes-demandes">
+                  Retour à la liste
+                </a>
+              </div>
+            </section>
+          </aside>
+        </div>
+      }
+    }
+  }
+</div>

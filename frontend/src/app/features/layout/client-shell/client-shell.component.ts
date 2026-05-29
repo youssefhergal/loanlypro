@@ -53,8 +53,8 @@ export class ClientShellComponent {
   /** Titre et sous-titre affichés au-dessus du contenu principal */
   readonly pageTitle = signal('');
   readonly pageDescription = signal('');
-  /** Bouton « Nouvelle demande » à droite du titre (dashboard uniquement) */
-  readonly showDashboardNewRequestCta = signal(false);
+  /** Bouton « Nouvelle demande » à droite du titre / description */
+  readonly showNewRequestCta = signal(false);
 
   constructor(public readonly auth: AuthService) {
     this.router.events
@@ -85,6 +85,7 @@ export class ClientShellComponent {
     }
 
     const isDashboard = path === '/dashboard';
+    const loanDetailMatch = /^\/mes-demandes\/(\d+)$/.exec(path);
 
     let pageTitle = routeTitle;
     let pageDescription = routeDescription;
@@ -98,13 +99,18 @@ export class ClientShellComponent {
       breadcrumbCurrentLabel = 'Accueil';
     }
 
-    this.showDashboardNewRequestCta.set(isDashboard);
+    this.showNewRequestCta.set(isDashboard || path === '/mes-demandes');
 
     const crumbs: BreadcrumbItem[] = [];
     if (!isDashboard) {
       crumbs.push({ label: 'Accueil', routerLink: '/dashboard' });
     }
-    crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
+    if (loanDetailMatch) {
+      crumbs.push({ label: 'Mes demandes', routerLink: '/mes-demandes' });
+      crumbs.push({ label: 'Détail du dossier', routerLink: path });
+    } else {
+      crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
+    }
 
     this.pageTitle.set(pageTitle);
     this.pageDescription.set(pageDescription);

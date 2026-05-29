@@ -1,0 +1,7 @@
+# Profil tests — pas de seed InitialDataLoader (@Profile dev uniquement)
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false

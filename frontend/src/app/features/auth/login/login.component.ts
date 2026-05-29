@@ -63,9 +63,9 @@ export class LoginComponent {
     this.loading = false;
     const user = this.auth.currentUser();
     if (user?.roles.includes(ROLES.ADMIN)) {
-      this.router.navigate(['/admin']);
+      this.router.navigate(['/admin/dashboard']);
     } else if (user?.roles.includes(ROLES.CONSEILLER)) {
-      this.router.navigate(['/conseiller']);
+      this.router.navigate(['/conseiller/dashboard']);
     } else {
       this.router.navigate(['/dashboard']);
     }

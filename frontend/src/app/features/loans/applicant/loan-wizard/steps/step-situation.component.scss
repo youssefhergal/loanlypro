@@ -1,0 +1,144 @@
+.step-situation {
+  display: grid;
+  grid-template-columns: 1fr minmax(220px, 260px);
+  gap: 1rem;
+  align-items: start;
+}
+
+.step-situation__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-left: var(--wizard-inset-x, 0.75rem);
+
+  .loan-detail-card {
+    margin-bottom: 0;
+  }
+}
+
+.step-situation__aside {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-right: var(--wizard-inset-x, 0.75rem);
+}
+
+.employment-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  width: 100%;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+  box-shadow: none !important;
+
+  // Groupe Material : chaque statut = pastille séparée (pas coins asymétriques 1er/dernier)
+  ::ng-deep &.mat-button-toggle-group-appearance-standard {
+    border: none;
+    border-radius: 0;
+  }
+
+  ::ng-deep .mat-button-toggle {
+    border: 1px solid var(--color-border, #d8e8de) !important;
+    border-radius: var(--radius-sm, 8px) !important;
+    overflow: hidden;
+    margin: 0 !important;
+  }
+
+  ::ng-deep .mat-button-toggle .mat-button-toggle-button {
+    border-radius: var(--radius-sm, 8px) !important;
+  }
+
+  ::ng-deep .mat-button-toggle:first-child,
+  ::ng-deep .mat-button-toggle:last-child,
+  ::ng-deep .mat-button-toggle:first-child .mat-button-toggle-button,
+  ::ng-deep .mat-button-toggle:last-child .mat-button-toggle-button {
+    border-radius: var(--radius-sm, 8px) !important;
+    border-top-left-radius: var(--radius-sm, 8px) !important;
+    border-top-right-radius: var(--radius-sm, 8px) !important;
+    border-bottom-left-radius: var(--radius-sm, 8px) !important;
+    border-bottom-right-radius: var(--radius-sm, 8px) !important;
+    border-start-start-radius: var(--radius-sm, 8px) !important;
+    border-start-end-radius: var(--radius-sm, 8px) !important;
+    border-end-start-radius: var(--radius-sm, 8px) !important;
+    border-end-end-radius: var(--radius-sm, 8px) !important;
+  }
+
+  ::ng-deep .mat-button-toggle-checked {
+    background: var(--color-primary-light, #e8f5ee) !important;
+    color: var(--color-primary, #1a7a4a) !important;
+  }
+
+  ::ng-deep .mat-button-toggle-label-content {
+    padding: 0 0.65rem;
+    line-height: 2rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+}
+
+.row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  row-gap: 0.85rem;
+}
+
+.totals-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--color-primary-light, #e8f5ee);
+  border-radius: var(--radius-sm, 8px);
+  margin-top: 0.15rem;
+}
+
+.totals-row__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.totals-row__label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted, #6b7c72);
+}
+
+.totals-row__value {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.totals-row__value--income {
+  color: var(--color-primary, #1a7a4a);
+}
+
+.totals-row__value--charges {
+  color: #c62828;
+}
+
+@media (max-width: 960px) {
+  .step-situation {
+    grid-template-columns: 1fr;
+  }
+
+  .step-situation__main {
+    margin-left: 0;
+  }
+
+  .step-situation__aside {
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .row-2,
+  .totals-row {
+    grid-template-columns: 1fr;
+  }
+}

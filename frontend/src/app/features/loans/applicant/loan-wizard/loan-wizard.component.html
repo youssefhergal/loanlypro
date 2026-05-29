@@ -1,0 +1,121 @@
+@if (loading()) {
+  <p class="loading">Chargement du dossier…</p>
+} @else if (loadError()) {
+  <p class="error-banner">{{ loadError() }}</p>
+  <a mat-button routerLink="/mes-demandes">Retour à mes demandes</a>
+} @else {
+  <div class="wizard-page">
+    <header class="wizard-header">
+      <nav class="wizard-progress" aria-label="Étapes de la demande">
+        @for (step of steps; track step.label; let i = $index) {
+          <div
+            class="wizard-progress__item"
+            [class.active]="state.currentStep() === i"
+            [class.completed]="state.currentStep() > i"
+          >
+            <span class="wizard-progress__dot">
+              @if (state.currentStep() > i) {
+                <mat-icon>check</mat-icon>
+              } @else {
+                {{ i + 1 }}
+              }
+            </span>
+            <span class="wizard-progress__label">{{ step.label }}</span>
+            @if (i < steps.length - 1) {
+              <span class="wizard-progress__connector" aria-hidden="true"></span>
+            }
+          </div>
+        }
+      </nav>
+    </header>
+
+    <div class="wizard-body">
+      <mat-stepper
+        class="loan-stepper"
+        [linear]="false"
+        [selectedIndex]="state.currentStep()"
+        (selectionChange)="onStepChange($event)"
+      >
+        <mat-step>
+          <ng-template matStepLabel>Besoin</ng-template>
+          <app-step-need />
+        </mat-step>
+        <mat-step>
+          <ng-template matStepLabel>Situation</ng-template>
+          <app-step-situation />
+        </mat-step>
+        <mat-step>
+          <ng-template matStepLabel>Documents</ng-template>
+          <app-step-documents />
+        </mat-step>
+        <mat-step>
+          <ng-template matStepLabel>Récapitulatif</ng-template>
+          <app-step-summary />
+        </mat-step>
+      </mat-stepper>
+
+      <footer class="wizard-step-actions">
+        @if (state.hasApplication()) {
+          <button
+            mat-stroked-button
+            type="button"
+            class="wizard-step-actions__delete"
+            (click)="deleteDraft()"
+            [disabled]="state.isSaving() || state.isSubmitting()"
+          >
+            <mat-icon>delete_outline</mat-icon>
+            Supprimer le brouillon
+          </button>
+        }
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="saveDraft()"
+          [disabled]="state.isSaving() || state.isSubmitting()"
+        >
+          @if (state.currentStep() === 3) {
+            <mat-icon>save_alt</mat-icon>
+          }
+          {{ state.currentStep() === 3 ? 'Enregistrer le brouillon' : 'Enregistrer brouillon' }}
+        </button>
+        <div class="wizard-step-actions__nav">
+          @if (state.currentStep() > 0) {
+            <button
+              mat-button
+              type="button"
+              (click)="goBack(state.currentStep())"
+              [disabled]="state.isSaving() || state.isSubmitting()"
+            >
+              @if (state.currentStep() === 3) {
+                <mat-icon>arrow_back</mat-icon>
+              }
+              Précédent
+            </button>
+          }
+          @if (state.currentStep() < 3) {
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              (click)="goNext(state.currentStep())"
+              [disabled]="state.isSaving() || state.isSubmitting()"
+            >
+              {{ state.isSaving() ? 'Enregistrement…' : 'Étape suivante' }}
+            </button>
+          } @else {
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              (click)="submit()"
+              [disabled]="state.isSaving() || state.isSubmitting()"
+            >
+              <mat-icon>send</mat-icon>
+              {{ state.isSubmitting() ? 'Soumission…' : 'Soumettre ma demande' }}
+            </button>
+          }
+        </div>
+      </footer>
+    </div>
+  </div>
+}

@@ -3,11 +3,11 @@ import { ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 
 @Component({
-  selector: 'app-client-placeholder',
+  selector: 'app-coming-soon',
   standalone: true,
   imports: [MatCardModule],
   template: `
-    <div class="page">
+    <div class="coming-soon">
       <mat-card>
         <mat-card-content>
           <p>Cette section sera disponible prochainement.</p>
@@ -17,11 +17,13 @@ import { MatCardModule } from '@angular/material/card';
   `,
   styles: [
     `
-      .page {
-        padding: 1.5rem;
+      .coming-soon {
+        padding: 0;
         max-width: 800px;
       }
     `,
   ],
 })
-export class ClientPlaceholderComponent {}
+export class ComingSoonComponent {
+  private readonly route = inject(ActivatedRoute);
+}

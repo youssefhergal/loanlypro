@@ -1,0 +1,44 @@
+<div class="step-documents">
+  <div class="step-documents__main">
+    <section class="loan-detail-card">
+      <h2 class="loan-detail-card__title">
+        <mat-icon>folder_open</mat-icon>
+        Téléverser vos documents
+      </h2>
+      <p class="loan-detail-card__desc">
+        Ajoutez les pièces justificatives requises. Formats acceptés : PDF, JPG, PNG (10 Mo max).
+      </p>
+
+      @if (errorMessage()) {
+        <p class="step-documents__error">{{ errorMessage() }}</p>
+      }
+
+      <div class="step-documents__slots">
+        @for (slot of slots; track slot.type) {
+          <app-document-upload-slot
+            [label]="slot.label"
+            [documentType]="slot.type"
+            [required]="slot.required"
+            [maxFiles]="maxFilesFor(slot.type)"
+            [requireDisplayName]="requireDisplayNameFor(slot.type)"
+            [files]="getFiles(slot.type)"
+            [uploadState]="getUploadState(slot.type)"
+            (upload)="onUpload(slot.type, $event)"
+            (remove)="onRemove($event)"
+            (download)="onDownload($event)"
+            (cancelUpload)="onCancelUpload(slot.type)"
+          />
+        }
+      </div>
+    </section>
+  </div>
+
+  <aside class="step-documents__aside">
+    <app-wizard-estimation-panel [amount]="amount" [durationMonths]="durationMonths" />
+    <app-wizard-advice-panel
+      icon="info"
+      [title]="adviceTitle"
+      [message]="adviceMessage"
+    />
+  </aside>
+</div>

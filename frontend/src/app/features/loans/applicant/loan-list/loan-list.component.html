@@ -1,0 +1,143 @@
+<div class="loan-list-page">
+  <div class="loan-list-toolbar">
+    <mat-form-field appearance="outline" class="loan-list-search">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        placeholder="Rechercher une demande…"
+        [value]="searchQuery()"
+        (input)="onSearchInput($any($event.target).value)"
+      />
+    </mat-form-field>
+    <button mat-stroked-button type="button" class="loan-list-toolbar__btn" disabled>
+      <mat-icon>tune</mat-icon>
+      Filtres
+    </button>
+    <button
+      mat-stroked-button
+      type="button"
+      class="loan-list-toolbar__btn"
+      [matMenuTriggerFor]="sortMenu"
+    >
+      <mat-icon>swap_vert</mat-icon>
+      {{ sortLabel() }}
+    </button>
+    <mat-menu #sortMenu="matMenu">
+      <button mat-menu-item type="button" (click)="setSort('updatedDesc')">Plus récentes</button>
+      <button mat-menu-item type="button" (click)="setSort('updatedAsc')">Plus anciennes</button>
+      <button mat-menu-item type="button" (click)="setSort('amountDesc')">Montant décroissant</button>
+      <button mat-menu-item type="button" (click)="setSort('amountAsc')">Montant croissant</button>
+    </mat-menu>
+  </div>
+
+  <nav class="loan-list-tabs" aria-label="Filtrer par statut">
+    @for (tab of statusTabs; track tab.key) {
+      <button
+        type="button"
+        class="loan-list-tabs__tab"
+        [class.loan-list-tabs__tab--active]="statusFilter() === tab.key"
+        (click)="selectStatus(tab.key)"
+      >
+        <span>{{ tab.label }}</span>
+        <span class="loan-list-tabs__count">{{ tabCount(tab.key) }}</span>
+      </button>
+    }
+  </nav>
+
+  @if (loading()) {
+    <div class="loan-list-skeleton" aria-busy="true" aria-label="Chargement">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="loan-card loan-card--skeleton">
+          <div class="loan-card__sk-line loan-card__sk-line--short"></div>
+          <div class="loan-card__sk-line loan-card__sk-line--title"></div>
+          <div class="loan-card__sk-line"></div>
+        </div>
+      }
+    </div>
+  } @else if (!filteredLoans().length) {
+    <div class="loan-list-empty">
+      <mat-icon>inbox</mat-icon>
+      <p>Aucune demande ne correspond à votre recherche.</p>
+      <a mat-stroked-button routerLink="/nouvelle-demande">Créer une demande</a>
+    </div>
+  } @else {
+    <ul class="loan-card-list">
+      @for (loan of paginatedLoans(); track loan.id) {
+        @let style = cardHelpers.statusStyle(loan.status);
+        <li class="loan-card-wrap">
+          @if (loan.status === 'DRAFT') {
+            <button
+              type="button"
+              class="loan-card__delete"
+              aria-label="Supprimer le brouillon"
+              (click)="deleteDraft(loan, $event)"
+            >
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          }
+          <a
+            class="loan-card"
+            [routerLink]="cardLink(loan)"
+            [style.--card-accent]="style.accent"
+          >
+            <span class="loan-card__accent" aria-hidden="true"></span>
+            <span
+              class="loan-card__icon-wrap"
+              [style.background]="style.iconBg"
+              [style.color]="style.accent"
+            >
+              <mat-icon>{{ style.icon }}</mat-icon>
+            </span>
+
+            <div class="loan-card__body">
+              <div class="loan-card__top">
+                <span class="loan-card__ref">{{ loan.reference }}</span>
+                <span
+                  class="loan-card__badge"
+                  [style.background]="style.badgeBg"
+                  [style.color]="style.badgeColor"
+                >
+                  <span class="loan-card__badge-dot" [style.background]="style.accent"></span>
+                  {{ style.label }}
+                </span>
+              </div>
+              <h2 class="loan-card__title">{{ loan.title }}</h2>
+              <p class="loan-card__meta">
+                <span class="loan-card__tag">{{ cardHelpers.purposeLabel(loan.loanPurpose) }}</span>
+                <span class="loan-card__meta-text">{{ cardHelpers.metaLine(loan) }}</span>
+              </p>
+            </div>
+
+            <div class="loan-card__aside">
+              <span class="loan-card__amount">
+                {{ loan.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}
+              </span>
+              @if (cardHelpers.relativeTime(loan); as rel) {
+                <span class="loan-card__time">{{ rel }}</span>
+              }
+              <mat-icon class="loan-card__chevron">chevron_right</mat-icon>
+            </div>
+          </a>
+        </li>
+      }
+    </ul>
+
+    <footer class="loan-list-footer">
+      <p class="loan-list-footer__summary">
+        Affichage de {{ paginatedLoans().length }} sur {{ totalFiltered() }} demande{{
+          totalFiltered() > 1 ? 's' : ''
+        }}
+      </p>
+      @if (totalFiltered() > pageSize()) {
+        <mat-paginator
+          [length]="totalFiltered()"
+          [pageSize]="pageSize()"
+          [pageIndex]="pageIndex()"
+          [pageSizeOptions]="[7, 10, 25]"
+          (page)="onPage($event)"
+          hidePageSize
+        />
+      }
+    </footer>
+  }
+</div>
