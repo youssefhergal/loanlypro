@@ -122,4 +122,17 @@ export class LoanApiService {
   deleteDocument(id: number, documentId: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}/documents/${documentId}`);
   }
+
+  // Conseiller actions
+  startReview(id: number): Observable<LoanResponseDto> {
+    return this.http.post<LoanResponseDto>(`${this.baseUrl}/${id}/start-review`, {});
+  }
+
+  approve(id: number): Observable<LoanResponseDto> {
+    return this.http.post<LoanResponseDto>(`${this.baseUrl}/${id}/approve`, {});
+  }
+
+  reject(id: number): Observable<LoanResponseDto> {
+    return this.http.post<LoanResponseDto>(`${this.baseUrl}/${id}/reject`, {});
+  }
 }

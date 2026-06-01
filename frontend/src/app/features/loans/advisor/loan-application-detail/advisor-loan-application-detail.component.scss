@@ -1,0 +1,174 @@
+.advisor-loan-detail {
+  display: block;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+.state.error {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.card {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+
+.card-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.card-header .meta {
+  display: flex;
+  gap: 16px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.field .label {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  margin-bottom: 2px;
+}
+
+.field .value {
+  font-weight: 500;
+}
+
+.footer {
+  margin-top: 16px;
+  display: flex;
+  gap: 16px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Status chip */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.status-chip mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.status-submitted {
+  background: rgba(25, 118, 210, 0.1);
+  color: rgb(25, 118, 210);
+}
+
+.status-under_review {
+  background: rgba(255, 193, 7, 0.15);
+  color: rgb(184, 134, 11);
+}
+
+.status-approved {
+  background: rgba(46, 125, 50, 0.12);
+  color: rgb(46, 125, 50);
+}
+
+.status-rejected {
+  background: rgba(211, 47, 47, 0.12);
+  color: rgb(211, 47, 47);
+}
+
+.status-cancelled {
+  background: rgba(97, 97, 97, 0.12);
+  color: rgb(97, 97, 97);
+}
+
+/* Quick info bar */
+.quick-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.qi-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(0, 0, 0, 0.8);
+}
+
+/* Historique */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: start;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.history-row:first-child {
+  border-top: none;
+}
+
+.history-icon mat-icon {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.history-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.history-desc {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.history-meta {
+  color: rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}

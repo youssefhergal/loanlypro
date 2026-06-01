@@ -48,14 +48,13 @@
               routerLink="/conseiller/dossiers"
               routerLinkActive="active"
               [routerLinkActiveOptions]="{ exact: true }"
-              class="nav-item nav-item--muted"
-              matTooltip="Mes dossiers (bientôt)"
+              class="nav-item"
+              matTooltip="Mes dossiers"
               [matTooltipDisabled]="!sidebarCollapsed()"
               matTooltipPosition="right"
             >
               <mat-icon>folder_open</mat-icon>
               <span>Mes dossiers</span>
-              <span class="badge-soon">Bientôt</span>
             </a>
             <a
               routerLink="/conseiller/prets"

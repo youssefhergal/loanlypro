@@ -1,0 +1,253 @@
+<div class="advisor-loan-detail">
+  <div class="toolbar">
+    <a mat-stroked-button color="primary" routerLink="/conseiller/dossiers">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Retour à la liste</span>
+    </a>
+  </div>
+
+  <div class="state" *ngIf="loading(); else loaded">
+    <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+  </div>
+
+  <ng-template #loaded>
+    <div class="state error" *ngIf="error() as e">
+      <mat-icon color="warn">error</mat-icon>
+      <span>{{ e }}</span>
+      <a mat-stroked-button color="primary" routerLink="/conseiller/dossiers">Retour</a>
+    </div>
+
+    <section class="card" *ngIf="!error() && loan() as l">
+      <header class="card-header">
+        <h2>
+          <mat-icon aria-hidden="true">description</mat-icon>
+          {{ l.title }}
+        </h2>
+        <div class="meta">
+          <span class="ref">Réf. {{ l.reference }}</span>
+          <span class="status">
+            <span [class]="statusClass(l.status)">
+              <mat-icon aria-hidden="true">{{ statusIcon(l.status) }}</mat-icon>
+              <span class="label">{{ l.status }}</span>
+            </span>
+          </span>
+        </div>
+      </header>
+
+      <!-- Infos clés -->
+      <div class="quick-info">
+        <div class="qi-item">
+          <mat-icon aria-hidden="true">euro</mat-icon>
+          <span>{{ l.requestedAmount | currency:'EUR':'symbol':'1.0-0' }}</span>
+        </div>
+        <div class="qi-item">
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+          <span>{{ l.requestedDurationMonths }} mois</span>
+        </div>
+        <div class="qi-item">
+          <mat-icon aria-hidden="true">sell</mat-icon>
+          <span>{{ l.purpose }}</span>
+        </div>
+        <div class="qi-item">
+          <mat-icon aria-hidden="true">update</mat-icon>
+          <span>Maj {{ l.updatedAt | date:'short' }}</span>
+        </div>
+      </div>
+
+      <!-- Actions conseiller -->
+      <div class="actions" style="display:flex; gap:8px; margin-bottom: 12px; flex-wrap: wrap;">
+        <button
+          type="button"
+          mat-stroked-button
+          color="primary"
+          (click)="startReview()"
+          [disabled]="actionLoading() || l.status !== 'SUBMITTED'"
+        >
+          <mat-icon>play_circle</mat-icon>
+          <span>Mettre en analyse</span>
+        </button>
+
+        <button
+          type="button"
+          mat-flat-button
+          color="primary"
+          (click)="approve()"
+          [disabled]="actionLoading() || l.status !== 'UNDER_REVIEW'"
+        >
+          <mat-icon>check_circle</mat-icon>
+          <span>Approuver</span>
+        </button>
+
+        <button
+          type="button"
+          mat-stroked-button
+          color="warn"
+          (click)="reject()"
+          [disabled]="actionLoading() || l.status !== 'UNDER_REVIEW'"
+        >
+          <mat-icon>cancel</mat-icon>
+          <span>Rejeter</span>
+        </button>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <div class="label">Demandeur</div>
+          <div class="value">{{ l.applicantName || '—' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Montant demandé</div>
+          <div class="value">{{ l.requestedAmount | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Durée</div>
+          <div class="value">{{ l.requestedDurationMonths }} mois</div>
+        </div>
+        <div class="field">
+          <div class="label">Objet du prêt</div>
+          <div class="value">{{ l.purpose }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Revenus mensuels</div>
+          <div class="value">{{ l.monthlyIncome | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+        <div class="field" *ngIf="l.additionalIncome != null">
+          <div class="label">Revenus complémentaires</div>
+          <div class="value">{{ l.additionalIncome | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+
+        <div class="field">
+          <div class="label">Emploi</div>
+          <div class="value">{{ l.jobTitle || '—' }} {{ l.employerName ? 'chez ' + l.employerName : '' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Loyer mensuel</div>
+          <div class="value">{{ l.monthlyRent || 0 | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Crédits en cours</div>
+          <div class="value">{{ l.monthlyLoanPayments || 0 | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Pension</div>
+          <div class="value">{{ l.monthlyAlimony || 0 | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Autres charges</div>
+          <div class="value">{{ l.monthlyOtherCharges || 0 | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Créée le {{ l.createdAt | date:'short' }}</div>
+        <div>Dernière mise à jour {{ l.updatedAt | date:'short' }}</div>
+      </div>
+    </section>
+
+    <!-- Documents liés -->
+    <section class="card" *ngIf="!error() && loan() as l">
+      <header class="card-header">
+        <h2>
+          <mat-icon aria-hidden="true">attach_file</mat-icon>
+          Documents liés
+        </h2>
+        <div class="meta">
+          <button type="button" mat-stroked-button (click)="refreshDocuments()">
+            <mat-icon>refresh</mat-icon>
+            <span>Rafraîchir</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="state" *ngIf="docsLoading()">
+        <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
+      </div>
+
+      <div class="state error" *ngIf="docsError() as de">
+        <mat-icon color="warn">error</mat-icon>
+        <span>{{ de }}</span>
+        <button type="button" mat-stroked-button color="primary" (click)="refreshDocuments()">
+          Réessayer
+        </button>
+      </div>
+
+      <div class="state empty" *ngIf="!docsLoading() && !docsError() && documents().length === 0">
+        <mat-icon>inbox</mat-icon>
+        <span>Aucun document fourni.</span>
+      </div>
+
+      <div class="documents" *ngIf="!docsLoading() && !docsError() && documents().length > 0">
+        <div class="doc-row" *ngFor="let d of documents()">
+          <div class="doc-main">
+            <mat-icon class="doc-icon" aria-hidden="true">insert_drive_file</mat-icon>
+            <div class="doc-texts">
+              <div class="doc-title">{{ docTitle(d) }}</div>
+              <div class="doc-meta">
+                <span class="chip">{{ d.documentType }}</span>
+                <span>{{ d.contentType }}</span>
+                <span>·</span>
+                <span>{{ docSize(d.fileSizeBytes) }}</span>
+                <span>·</span>
+                <span>Déposé le {{ d.uploadedAt | date:'short' }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="doc-actions">
+            <button type="button" mat-stroked-button color="primary" (click)="download(d)">
+              <mat-icon>download</mat-icon>
+              <span>Télécharger</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Historique des événements -->
+    <section class="card" *ngIf="!error() && loan() as l">
+      <header class="card-header">
+        <h2>
+          <mat-icon aria-hidden="true">history</mat-icon>
+          Historique des événements
+        </h2>
+        <div class="meta">
+          <button type="button" mat-stroked-button (click)="refreshHistory()">
+            <mat-icon>refresh</mat-icon>
+            <span>Rafraîchir</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="state" *ngIf="historyLoading()">
+        <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
+      </div>
+
+      <div class="state error" *ngIf="historyError() as he">
+        <mat-icon color="warn">error</mat-icon>
+        <span>{{ he }}</span>
+        <button type="button" mat-stroked-button color="primary" (click)="refreshHistory()">
+          Réessayer
+        </button>
+      </div>
+
+      <div class="state empty" *ngIf="!historyLoading() && !historyError() && history().length === 0">
+        <mat-icon>schedule</mat-icon>
+        <span>Aucun évènement enregistré.</span>
+      </div>
+
+      <div class="history-list" *ngIf="!historyLoading() && !historyError() && history().length > 0">
+        <div class="history-row" *ngFor="let e of history()">
+          <div class="history-icon">
+            <mat-icon aria-hidden="true">event</mat-icon>
+          </div>
+          <div class="history-main">
+            <div class="history-title">{{ e.title }}</div>
+            <div class="history-desc">{{ e.description }}</div>
+          </div>
+          <div class="history-meta">
+            <span>{{ e.occurredAt | date:'short' }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </ng-template>
+</div>

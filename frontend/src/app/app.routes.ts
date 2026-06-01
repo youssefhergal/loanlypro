@@ -50,18 +50,24 @@ export const routes: Routes = [
       },
       {
         path: 'dossiers',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/loans/advisor/loan-applications-list/advisor-loan-applications-list.component').then(
+            (m) => m.AdvisorLoanApplicationsListComponent
+          ),
         data: {
           title: 'Mes dossiers',
-          description: 'File des demandes de prêt à instruire — bientôt disponible.',
+          description: 'Liste des demandes de prêt à instruire.',
         },
       },
       {
         path: 'dossiers/:id',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/loans/advisor/loan-application-detail/advisor-loan-application-detail.component').then(
+            (m) => m.AdvisorLoanApplicationDetailComponent
+          ),
         data: {
           title: 'Détail du dossier',
-          description: 'Instruction du dossier — bientôt disponible.',
+          description: 'Instruction du dossier de demande de prêt.',
         },
       },
       {
@@ -120,18 +126,24 @@ export const routes: Routes = [
       },
       {
         path: 'demandes',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/loans/admin/loan-applications-list/admin-loan-applications-list.component').then(
+            (m) => m.AdminLoanApplicationsListComponent
+          ),
         data: {
           title: 'Toutes les demandes',
-          description: 'Liste de l’ensemble des demandes de prêt — bientôt disponible.',
+          description: "Liste de l’ensemble des demandes de prêt.",
         },
       },
       {
         path: 'demandes/:id',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/loans/admin/loan-application-detail/admin-loan-application-detail.component').then(
+            (m) => m.AdminLoanApplicationDetailComponent
+          ),
         data: {
           title: 'Détail de la demande',
-          description: 'Supervision du dossier — bientôt disponible.',
+          description: 'Supervision du dossier de demande de prêt.',
         },
       },
       {

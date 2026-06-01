@@ -1,0 +1,111 @@
+<div class="admin-loan-detail">
+  <div class="toolbar">
+    <a mat-stroked-button color="primary" routerLink="/admin/demandes">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Retour à la liste</span>
+    </a>
+  </div>
+
+  <div class="state" *ngIf="loading(); else loaded">
+    <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+  </div>
+
+  <ng-template #loaded>
+    <div class="state error" *ngIf="error() as e">
+      <mat-icon color="warn">error</mat-icon>
+      <span>{{ e }}</span>
+      <a mat-stroked-button color="primary" routerLink="/admin/demandes">Retour</a>
+    </div>
+
+    <section class="card" *ngIf="!error() && loan() as l">
+      <header class="card-header">
+        <h2>
+          <mat-icon aria-hidden="true">description</mat-icon>
+          {{ l.title }}
+        </h2>
+        <div class="meta">
+          <span class="ref">Réf. {{ l.reference }}</span>
+          <span class="status">
+            <span [class]="statusClass(l.status)">
+              <mat-icon aria-hidden="true">{{ statusIcon(l.status) }}</mat-icon>
+              <span class="label">{{ l.status }}</span>
+            </span>
+          </span>
+        </div>
+      </header>
+
+      <!-- Infos clés -->
+      <div class="quick-info">
+        <div class="qi-item">
+          <mat-icon aria-hidden="true">euro</mat-icon>
+          <span>{{ l.requestedAmount | currency:'EUR':'symbol':'1.0-0' }}</span>
+        </div>
+        <div class="qi-item">
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+          <span>{{ l.requestedDurationMonths }} mois</span>
+        </div>
+        <div class="qi-item">
+          <mat-icon aria-hidden="true">sell</mat-icon>
+          <span>{{ l.purpose }}</span>
+        </div>
+        <div class="qi-item">
+          <mat-icon aria-hidden="true">update</mat-icon>
+          <span>Maj {{ l.updatedAt | date:'short' }}</span>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <div class="label">Demandeur</div>
+          <div class="value">{{ l.applicantName || '—' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Montant demandé</div>
+          <div class="value">{{ l.requestedAmount | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Durée</div>
+          <div class="value">{{ l.requestedDurationMonths }} mois</div>
+        </div>
+        <div class="field">
+          <div class="label">Objet du prêt</div>
+          <div class="value">{{ l.purpose }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Revenus mensuels</div>
+          <div class="value">{{ l.monthlyIncome | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+        <div class="field" *ngIf="l.additionalIncome != null">
+          <div class="label">Revenus complémentaires</div>
+          <div class="value">{{ l.additionalIncome | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+
+        <div class="field">
+          <div class="label">Emploi</div>
+          <div class="value">{{ l.jobTitle || '—' }} {{ l.employerName ? 'chez ' + l.employerName : '' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Loyer mensuel</div>
+          <div class="value">{{ l.monthlyRent || 0 | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Crédits en cours</div>
+          <div class="value">{{ l.monthlyLoanPayments || 0 | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Pension</div>
+          <div class="value">{{ l.monthlyAlimony || 0 | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Autres charges</div>
+          <div class="value">{{ l.monthlyOtherCharges || 0 | currency:'EUR':'symbol':'1.0-0' }}</div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Créée le {{ l.createdAt | date:'short' }}</div>
+        <div>Dernière mise à jour {{ l.updatedAt | date:'short' }}</div>
+      </div>
+    </section>
+  </ng-template>
+</div>
