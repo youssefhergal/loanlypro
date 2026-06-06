@@ -1,5 +1,5 @@
 # Stage 1 : build
-FROM eclipse-temurin:17-jdk-alpine AS build
+FROM amazoncorretto:17-alpine AS build
 WORKDIR /app
 
 # Copier le pom et télécharger les dépendances
@@ -12,7 +12,7 @@ COPY src ./src
 RUN mvn package -DskipTests -B
 
 # Stage 2 : exécution
-FROM eclipse-temurin:17-jre-alpine
+FROM amazoncorretto:17-alpine
 WORKDIR /app
 
 RUN addgroup -S spring && adduser -S spring -G spring
