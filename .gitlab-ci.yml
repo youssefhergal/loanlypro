@@ -136,6 +136,11 @@ deploy-backend-dev:
         --set-secrets="SPRING_DATASOURCE_URL=db-url-dev:latest,SPRING_DATASOURCE_PASSWORD=db-password-dev:latest" \
         --allow-unauthenticated \
         --quiet
+    - gcloud run services add-iam-policy-binding backend-dev
+        --member="allUsers"
+        --role="roles/run.invoker"
+        --region="${GCP_REGION}"
+        --quiet
   environment:
     name: dev/backend
   rules:
@@ -172,6 +177,11 @@ deploy-backend-prod:
         --set-env-vars="SPRING_PROFILES_ACTIVE=prod,SPRING_DATASOURCE_USERNAME=app" \
         --set-secrets="SPRING_DATASOURCE_URL=db-url-prod:latest,SPRING_DATASOURCE_PASSWORD=db-password-prod:latest,JWT_SECRET=jwt-secret-prod:latest" \
         --allow-unauthenticated \
+        --quiet
+    - gcloud run services add-iam-policy-binding backend-prod
+        --member="allUsers"
+        --role="roles/run.invoker"
+        --region="${GCP_REGION}"
         --quiet
   environment:
     name: prod/backend
