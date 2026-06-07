@@ -2,6 +2,7 @@ export type LoanApplicationStatus =
   | 'DRAFT'
   | 'SUBMITTED'
   | 'UNDER_REVIEW'
+  | 'OFFER_PENDING'
   | 'APPROVED'
   | 'REJECTED'
   | 'CANCELLED';

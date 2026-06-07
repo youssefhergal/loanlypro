@@ -63,6 +63,8 @@ export class AdvisorShellComponent {
 
     const routeTitle = (leaf.data['title'] as string | undefined) ?? 'Accueil';
     const routeDescription = (leaf.data['description'] as string | undefined) ?? '';
+    const routeBreadcrumb =
+      (leaf.data['breadcrumb'] as string | undefined) ?? routeTitle;
 
     let path = this.router.url.split('?')[0].split('#')[0];
     if (path === '/conseiller' || path === '/conseiller/') {
@@ -73,7 +75,7 @@ export class AdvisorShellComponent {
 
     let pageTitle = routeTitle;
     let pageDescription = routeDescription;
-    let breadcrumbCurrentLabel = routeTitle;
+    let breadcrumbCurrentLabel = routeBreadcrumb;
 
     if (isDashboard) {
       const prenom = this.auth.currentUser()?.firstName?.trim() || 'conseiller';

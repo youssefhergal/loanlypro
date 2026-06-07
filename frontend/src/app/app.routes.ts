@@ -66,8 +66,9 @@ export const routes: Routes = [
             (m) => m.AdvisorLoanApplicationDetailComponent
           ),
         data: {
-          title: 'Détail du dossier',
-          description: 'Instruction du dossier de demande de prêt.',
+          title: '',
+          description: '',
+          breadcrumb: 'Détail du dossier',
         },
       },
       {

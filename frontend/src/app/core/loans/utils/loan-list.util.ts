@@ -16,10 +16,16 @@ export const LOAN_LIST_STATUS_TABS: LoanListStatusTab[] = [
   { key: 'DRAFT', label: 'Brouillon' },
   { key: 'SUBMITTED', label: 'Soumise' },
   { key: 'UNDER_REVIEW', label: 'En analyse' },
+  { key: 'OFFER_PENDING', label: 'Offre en attente' },
   { key: 'APPROVED', label: 'Approuvée' },
   { key: 'REJECTED', label: 'Rejetée' },
   { key: 'CANCELLED', label: 'Annulée' },
 ];
+
+/** Onglets liste conseiller — sans brouillon client. */
+export const ADVISOR_LOAN_LIST_STATUS_TABS: LoanListStatusTab[] = LOAN_LIST_STATUS_TABS.filter(
+  (tab) => tab.key !== 'DRAFT'
+);
 
 export interface LoanCardStatusStyle {
   label: string;
@@ -54,6 +60,14 @@ const STATUS_STYLES: Record<LoanApplicationStatus, LoanCardStatusStyle> = {
     badgeBg: '#e3f2fd',
     badgeColor: '#1565c0',
     icon: 'analytics',
+  },
+  OFFER_PENDING: {
+    label: 'Offre en attente',
+    accent: '#e65100',
+    iconBg: '#fff3e0',
+    badgeBg: '#fff3e0',
+    badgeColor: '#e65100',
+    icon: 'mail',
   },
   APPROVED: {
     label: 'Approuvée',
@@ -182,6 +196,36 @@ export function matchesLoanSearch(loan: LoanResponseDto, query: string): boolean
     loan.title.toLowerCase().includes(q) ||
     loanPurposeLabel(loan.loanPurpose).toLowerCase().includes(q)
   );
+}
+
+export function matchesAdvisorLoanSearch(loan: LoanResponseDto, query: string): boolean {
+  if (matchesLoanSearch(loan, query)) return true;
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (loan.applicantName?.toLowerCase().includes(q) ?? false);
+}
+
+export function loanAdvisorCardMetaLine(loan: LoanResponseDto): string {
+  const parts: string[] = [];
+
+  if (loan.applicantName?.trim()) {
+    parts.push(loan.applicantName.trim());
+  }
+
+  if (loan.submittedAt) {
+    parts.push(`Soumise le ${formatDateFrLong(loan.submittedAt)}`);
+  } else {
+    const rel = formatRelativeTimeFr(loan.updatedAt);
+    if (rel) parts.push(`Modifiée ${rel}`);
+  }
+
+  parts.push(`${loan.requestedDurationMonths} mois`);
+
+  if (loan.status === 'REJECTED' && loan.decisionComment?.trim()) {
+    parts.push(loan.decisionComment.trim());
+  }
+
+  return parts.join(' · ');
 }
 
 export function sortLoans(loans: LoanResponseDto[], sort: LoanListSort): LoanResponseDto[] {

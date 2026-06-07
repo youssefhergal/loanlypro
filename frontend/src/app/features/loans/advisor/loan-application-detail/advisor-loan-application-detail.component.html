@@ -1,253 +1,520 @@
-<div class="advisor-loan-detail">
-  <div class="toolbar">
-    <a mat-stroked-button color="primary" routerLink="/conseiller/dossiers">
-      <mat-icon>arrow_back</mat-icon>
-      <span>Retour à la liste</span>
-    </a>
-  </div>
-
-  <div class="state" *ngIf="loading(); else loaded">
-    <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
-  </div>
-
-  <ng-template #loaded>
-    <div class="state error" *ngIf="error() as e">
-      <mat-icon color="warn">error</mat-icon>
-      <span>{{ e }}</span>
-      <a mat-stroked-button color="primary" routerLink="/conseiller/dossiers">Retour</a>
+<div class="advisor-detail-page">
+  @if (loading()) {
+    <div class="advisor-detail-page__loading">
+      <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
     </div>
-
-    <section class="card" *ngIf="!error() && loan() as l">
-      <header class="card-header">
-        <h2>
-          <mat-icon aria-hidden="true">description</mat-icon>
-          {{ l.title }}
-        </h2>
-        <div class="meta">
-          <span class="ref">Réf. {{ l.reference }}</span>
-          <span class="status">
-            <span [class]="statusClass(l.status)">
-              <mat-icon aria-hidden="true">{{ statusIcon(l.status) }}</mat-icon>
-              <span class="label">{{ l.status }}</span>
-            </span>
-          </span>
+  } @else if (error()) {
+    <p class="advisor-detail-page__error">{{ error() }}</p>
+    <a mat-stroked-button routerLink="/conseiller/dossiers">
+      <mat-icon>arrow_back</mat-icon>
+      Retour
+    </a>
+  } @else {
+    @if (loan(); as l) {
+      <header class="loan-detail-header">
+        <div class="loan-detail-header__main">
+          <div class="loan-detail-header__title-row">
+            <h1 class="loan-detail-header__title">Détail du dossier {{ l.reference }}</h1>
+            @if (statusStyle(); as style) {
+              <span
+                class="loan-detail-header__badge"
+                [style.background]="style.badgeBg"
+                [style.color]="style.badgeColor"
+              >
+                <span class="loan-detail-header__badge-dot" [style.background]="style.accent"></span>
+                {{ style.label }}
+              </span>
+            }
+          </div>
+          <p class="loan-detail-header__meta">
+            <span>Instruction — analyse des pièces, proposition d'offre et décision.</span>
+            @if (l.submittedAt) {
+              <span>· Soumis le {{ formatDate(l.submittedAt) }}</span>
+            }
+            <span>· Mis à jour le {{ formatDate(l.updatedAt) }}</span>
+          </p>
+        </div>
+        <div class="loan-detail-header__actions">
+          <a mat-stroked-button routerLink="/conseiller/dossiers">
+            <mat-icon>arrow_back</mat-icon>
+            Retour
+          </a>
         </div>
       </header>
 
-      <!-- Infos clés -->
-      <div class="quick-info">
-        <div class="qi-item">
-          <mat-icon aria-hidden="true">euro</mat-icon>
-          <span>{{ l.requestedAmount | currency:'EUR':'symbol':'1.0-0' }}</span>
-        </div>
-        <div class="qi-item">
-          <mat-icon aria-hidden="true">schedule</mat-icon>
-          <span>{{ l.requestedDurationMonths }} mois</span>
-        </div>
-        <div class="qi-item">
-          <mat-icon aria-hidden="true">sell</mat-icon>
-          <span>{{ l.purpose }}</span>
-        </div>
-        <div class="qi-item">
-          <mat-icon aria-hidden="true">update</mat-icon>
-          <span>Maj {{ l.updatedAt | date:'short' }}</span>
-        </div>
-      </div>
-
-      <!-- Actions conseiller -->
-      <div class="actions" style="display:flex; gap:8px; margin-bottom: 12px; flex-wrap: wrap;">
-        <button
-          type="button"
-          mat-stroked-button
-          color="primary"
-          (click)="startReview()"
-          [disabled]="actionLoading() || l.status !== 'SUBMITTED'"
-        >
-          <mat-icon>play_circle</mat-icon>
-          <span>Mettre en analyse</span>
-        </button>
-
-        <button
-          type="button"
-          mat-flat-button
-          color="primary"
-          (click)="approve()"
-          [disabled]="actionLoading() || l.status !== 'UNDER_REVIEW'"
-        >
-          <mat-icon>check_circle</mat-icon>
-          <span>Approuver</span>
-        </button>
-
-        <button
-          type="button"
-          mat-stroked-button
-          color="warn"
-          (click)="reject()"
-          [disabled]="actionLoading() || l.status !== 'UNDER_REVIEW'"
-        >
-          <mat-icon>cancel</mat-icon>
-          <span>Rejeter</span>
-        </button>
-      </div>
-
-      <div class="grid">
-        <div class="field">
-          <div class="label">Demandeur</div>
-          <div class="value">{{ l.applicantName || '—' }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Montant demandé</div>
-          <div class="value">{{ l.requestedAmount | currency:'EUR':'symbol':'1.0-0' }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Durée</div>
-          <div class="value">{{ l.requestedDurationMonths }} mois</div>
-        </div>
-        <div class="field">
-          <div class="label">Objet du prêt</div>
-          <div class="value">{{ l.purpose }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Revenus mensuels</div>
-          <div class="value">{{ l.monthlyIncome | currency:'EUR':'symbol':'1.0-0' }}</div>
-        </div>
-        <div class="field" *ngIf="l.additionalIncome != null">
-          <div class="label">Revenus complémentaires</div>
-          <div class="value">{{ l.additionalIncome | currency:'EUR':'symbol':'1.0-0' }}</div>
-        </div>
-
-        <div class="field">
-          <div class="label">Emploi</div>
-          <div class="value">{{ l.jobTitle || '—' }} {{ l.employerName ? 'chez ' + l.employerName : '' }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Loyer mensuel</div>
-          <div class="value">{{ l.monthlyRent || 0 | currency:'EUR':'symbol':'1.0-0' }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Crédits en cours</div>
-          <div class="value">{{ l.monthlyLoanPayments || 0 | currency:'EUR':'symbol':'1.0-0' }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Pension</div>
-          <div class="value">{{ l.monthlyAlimony || 0 | currency:'EUR':'symbol':'1.0-0' }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Autres charges</div>
-          <div class="value">{{ l.monthlyOtherCharges || 0 | currency:'EUR':'symbol':'1.0-0' }}</div>
-        </div>
-      </div>
-
-      <div class="footer">
-        <div>Créée le {{ l.createdAt | date:'short' }}</div>
-        <div>Dernière mise à jour {{ l.updatedAt | date:'short' }}</div>
-      </div>
-    </section>
-
-    <!-- Documents liés -->
-    <section class="card" *ngIf="!error() && loan() as l">
-      <header class="card-header">
-        <h2>
-          <mat-icon aria-hidden="true">attach_file</mat-icon>
-          Documents liés
-        </h2>
-        <div class="meta">
-          <button type="button" mat-stroked-button (click)="refreshDocuments()">
-            <mat-icon>refresh</mat-icon>
-            <span>Rafraîchir</span>
-          </button>
-        </div>
-      </header>
-
-      <div class="state" *ngIf="docsLoading()">
-        <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
-      </div>
-
-      <div class="state error" *ngIf="docsError() as de">
-        <mat-icon color="warn">error</mat-icon>
-        <span>{{ de }}</span>
-        <button type="button" mat-stroked-button color="primary" (click)="refreshDocuments()">
-          Réessayer
-        </button>
-      </div>
-
-      <div class="state empty" *ngIf="!docsLoading() && !docsError() && documents().length === 0">
-        <mat-icon>inbox</mat-icon>
-        <span>Aucun document fourni.</span>
-      </div>
-
-      <div class="documents" *ngIf="!docsLoading() && !docsError() && documents().length > 0">
-        <div class="doc-row" *ngFor="let d of documents()">
-          <div class="doc-main">
-            <mat-icon class="doc-icon" aria-hidden="true">insert_drive_file</mat-icon>
-            <div class="doc-texts">
-              <div class="doc-title">{{ docTitle(d) }}</div>
-              <div class="doc-meta">
-                <span class="chip">{{ d.documentType }}</span>
-                <span>{{ d.contentType }}</span>
-                <span>·</span>
-                <span>{{ docSize(d.fileSizeBytes) }}</span>
-                <span>·</span>
-                <span>Déposé le {{ d.uploadedAt | date:'short' }}</span>
+      <div class="advisor-detail-layout">
+        <div class="advisor-detail-layout__main">
+          <section class="advisor-card">
+            <h2 class="advisor-card__title">
+              <mat-icon>person_outline</mat-icon>
+              Informations client &amp; demande initiale
+            </h2>
+            <div class="advisor-info-grid">
+              <div class="advisor-info-block">
+                <h3>Client</h3>
+                <p class="advisor-info-block__primary">{{ l.applicantName || '—' }}</p>
+                <p class="advisor-info-block__muted">Demandeur du dossier</p>
+              </div>
+              <div class="advisor-info-block">
+                <h3>Objet du prêt</h3>
+                <p class="advisor-info-block__primary">{{ purposeLabel() }}</p>
+              </div>
+              <div class="advisor-info-block">
+                <h3>Montant demandé</h3>
+                <p class="advisor-info-block__primary advisor-info-block__amount">
+                  {{ l.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                </p>
+              </div>
+              <div class="advisor-info-block">
+                <h3>Durée demandée</h3>
+                <p class="advisor-info-block__primary">{{ l.requestedDurationMonths }} mois</p>
+              </div>
+              <div class="advisor-info-block advisor-info-block--wide">
+                <h3>Situation professionnelle</h3>
+                <p class="advisor-info-block__primary">{{ employmentLine() }}</p>
+              </div>
+              <div class="advisor-info-block advisor-info-block--debt">
+                <div class="advisor-info-block__debt-head">
+                  <h3>Taux d'endettement</h3>
+                  <strong>{{ debtRatioPercent() }} %</strong>
+                </div>
+                <div class="advisor-progress advisor-progress--debt">
+                  <div
+                    class="advisor-progress__fill"
+                    [style.width.%]="debtRatioPercent()"
+                  ></div>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="doc-actions">
-            <button type="button" mat-stroked-button color="primary" (click)="download(d)">
-              <mat-icon>download</mat-icon>
-              <span>Télécharger</span>
-            </button>
-          </div>
+
+            <div class="advisor-instruction-progress">
+              <div class="advisor-instruction-progress__head">
+                <span>Barre progression instruction</span>
+                <strong
+                  >{{ validatedRequiredCount() }}/{{ requiredDocumentCount() }} pièces
+                  validées</strong
+                >
+              </div>
+              <div class="advisor-progress advisor-progress--instruction">
+                <div
+                  class="advisor-progress__fill"
+                  [style.width.%]="instructionProgressPercent()"
+                ></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="advisor-card">
+            <div class="advisor-card__head">
+              <h2 class="advisor-card__title">
+                <mat-icon>folder_open</mat-icon>
+                Pièces justificatives
+              </h2>
+              @if (canReviewDocuments()) {
+                <span class="advisor-card__tag">À vérifier</span>
+              } @else if (l.status === 'SUBMITTED') {
+                <span class="advisor-card__tag advisor-card__tag--muted">En attente de prise en charge</span>
+              }
+            </div>
+            @if (l.status === 'SUBMITTED') {
+              <p class="advisor-card__hint advisor-card__hint--locked">
+                <mat-icon>info_outline</mat-icon>
+                Mettez le dossier en analyse pour ouvrir, valider ou rejeter les pièces.
+              </p>
+            }
+            <ul class="advisor-doc-list">
+              @for (row of documentRows(); track row.type) {
+                <li
+                  class="advisor-doc-item"
+                  [class.advisor-doc-item--rejected]="row.advisorReview?.status === 'rejected'"
+                >
+                  <div class="advisor-doc-item__row">
+                    <span class="advisor-doc-item__icon">
+                      <mat-icon>{{ docIcon(row.type) }}</mat-icon>
+                    </span>
+                    <div class="advisor-doc-item__content">
+                      <div class="advisor-doc-item__title-line">
+                        <h3>{{ row.label }}</h3>
+                        <span [class]="reviewBadgeClass(row.advisorReview?.status)">
+                          {{ reviewDisplayLabel(row.advisorReview?.status) }}
+                        </span>
+                      </div>
+                      @if (row.files[0]; as file) {
+                        <p class="advisor-doc-item__meta">{{ docFileLabel(row) }}</p>
+                      } @else {
+                        <p class="advisor-doc-item__meta">Aucun fichier déposé</p>
+                      }
+                      @if (row.advisorReview?.status === 'rejected' && row.advisorReview?.comment) {
+                        <p class="advisor-doc-item__reject-reason">
+                          Motif : {{ row.advisorReview?.comment }}
+                        </p>
+                      }
+                    </div>
+                    <div class="advisor-doc-item__actions">
+                      @if (row.files[0]; as file) {
+                        @if (canReviewDocuments()) {
+                          <button
+                            mat-stroked-button
+                            type="button"
+                            class="advisor-btn-outline"
+                            (click)="openDocumentPreview(row)"
+                          >
+                            Ouvrir
+                          </button>
+                        }
+                      }
+                      @if (
+                        canReviewDocuments() &&
+                        row.files.length &&
+                        row.advisorReview?.status === 'pending_review'
+                      ) {
+                        <button
+                          mat-flat-button
+                          type="button"
+                          color="primary"
+                          class="advisor-btn-validate"
+                          (click)="validateDocument(row)"
+                          [disabled]="actionLoading()"
+                        >
+                          Valider
+                        </button>
+                        <button
+                          mat-stroked-button
+                          type="button"
+                          class="advisor-btn-reject"
+                          (click)="rejectDocument(row)"
+                          [disabled]="actionLoading()"
+                        >
+                          Rejeter
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          </section>
+
+          <section class="advisor-card">
+            <h2 class="advisor-card__title">
+              <mat-icon>swap_horiz</mat-icon>
+              Comparatif des offres
+            </h2>
+            <p class="advisor-card__hint advisor-card__hint--green">
+              <mat-icon>info_outline</mat-icon>
+              Offre système = simulation basée sur la demande client.
+            </p>
+            <div class="advisor-offer-table-wrap">
+              <table class="advisor-offer-table">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Demande client</th>
+                    <th class="col-system">Offre système</th>
+                    <th class="col-proposed">Offre proposée</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th>Montant</th>
+                    <td>{{ l.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
+                    <td class="col-system">
+                      {{ l.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                    </td>
+                    <td class="col-proposed">
+                      @if (offerMode() === 'custom') {
+                        {{ offerForm.get('approvedAmount')?.value | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                      } @else {
+                        {{ l.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                      }
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Durée</th>
+                    <td>{{ l.requestedDurationMonths }} mois</td>
+                    <td class="col-system">{{ l.requestedDurationMonths }} mois</td>
+                    <td class="col-proposed">
+                      @if (offerMode() === 'custom') {
+                        {{ offerForm.get('approvedDurationMonths')?.value }} mois
+                      } @else {
+                        {{ l.requestedDurationMonths }} mois
+                      }
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Taux</th>
+                    <td>—</td>
+                    <td class="col-system">{{ systemRatePercent() | number: '1.2-2' }} %</td>
+                    <td class="col-proposed">
+                      @if (offerMode() === 'custom') {
+                        {{ offerForm.get('interestRate')?.value | number: '1.2-2' }} %
+                      } @else {
+                        {{ systemRatePercent() | number: '1.2-2' }} %
+                      }
+                    </td>
+                  </tr>
+                  <tr class="advisor-offer-table__monthly">
+                    <th>Mensualité</th>
+                    <td>{{ requestedMonthlyPayment() | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
+                    <td class="col-system">
+                      {{ systemMonthlyPayment() | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                    </td>
+                    <td class="col-proposed">
+                      @if (offerMode() === 'custom') {
+                        {{ proposedMonthlyPayment() | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                      } @else {
+                        {{ systemMonthlyPayment() | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                      }
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
-      </div>
-    </section>
 
-    <!-- Historique des événements -->
-    <section class="card" *ngIf="!error() && loan() as l">
-      <header class="card-header">
-        <h2>
-          <mat-icon aria-hidden="true">history</mat-icon>
-          Historique des événements
-        </h2>
-        <div class="meta">
-          <button type="button" mat-stroked-button (click)="refreshHistory()">
-            <mat-icon>refresh</mat-icon>
-            <span>Rafraîchir</span>
-          </button>
-        </div>
-      </header>
+        <aside class="advisor-detail-sidebar">
+          <section class="advisor-sidebar-card">
+            @if (statusStyle(); as style) {
+              <div
+                class="advisor-sidebar-card__header"
+                [style.background]="style.accent"
+              >
+                <h2>Décision &amp; offre</h2>
+                <p>Statut : {{ style.label }}</p>
+              </div>
+            }
 
-      <div class="state" *ngIf="historyLoading()">
-        <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
+            <div class="advisor-sidebar-card__body">
+              @if (l.status === 'SUBMITTED') {
+                <div class="advisor-sidebar-alert">
+                  Ce dossier attend votre prise en charge.
+                </div>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  class="advisor-sidebar-btn advisor-sidebar-btn--primary"
+                  (click)="startReview()"
+                  [disabled]="actionLoading()"
+                >
+                  Mettre en analyse
+                </button>
+              }
+
+              @if (showDecisionPanel()) {
+                <div class="advisor-checklist">
+                  <h3>Checklist pré-décision</h3>
+                  <ul>
+                    <li [class.advisor-checklist__ok]="checklist().allValidated">
+                      <span class="advisor-checklist__box"></span>
+                      Toutes les pièces obligatoires validées
+                    </li>
+                    <li [class.advisor-checklist__ok]="checklist().noRejected">
+                      <span class="advisor-checklist__box"></span>
+                      Aucune pièce en statut « Rejeté » sans complément
+                    </li>
+                    <li [class.advisor-checklist__ok]="checklist().offerReady">
+                      <span class="advisor-checklist__box"></span>
+                      Offre renseignée
+                    </li>
+                    <li [class.advisor-checklist__ok]="checklist().clientAccepted">
+                      <span class="advisor-checklist__box"></span>
+                      Acceptation client reçue (si contre-offre)
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="advisor-offer-form" [formGroup]="offerForm">
+                  <h3>Proposition d'offre</h3>
+                  <mat-button-toggle-group
+                    [value]="offerMode()"
+                    (change)="onOfferModeChange($any($event).value)"
+                    class="advisor-offer-toggle"
+                    [disabled]="offerFormLocked()"
+                  >
+                    <mat-button-toggle value="system">Offre système</mat-button-toggle>
+                    <mat-button-toggle value="custom">Proposer autre offre</mat-button-toggle>
+                  </mat-button-toggle-group>
+
+                  @if (offerMode() === 'custom') {
+                    <div class="advisor-offer-grid" [class.advisor-offer-grid--locked]="offerFormLocked()">
+                      <label class="advisor-field">
+                        <span>Montant (€)</span>
+                        <input type="number" formControlName="approvedAmount" [readonly]="offerFormLocked()" />
+                      </label>
+                      <label class="advisor-field">
+                        <span>Durée (mois)</span>
+                        <input
+                          type="number"
+                          formControlName="approvedDurationMonths"
+                          [readonly]="offerFormLocked()"
+                        />
+                      </label>
+                      <label class="advisor-field">
+                        <span>Taux (%)</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          formControlName="interestRate"
+                          [readonly]="offerFormLocked()"
+                        />
+                      </label>
+                      <div class="advisor-field advisor-field--readonly">
+                        <span>Mensualité</span>
+                        <strong>{{
+                          proposedMonthlyPayment() | currency: 'EUR' : 'symbol' : '1.0-0'
+                        }}</strong>
+                      </div>
+                    </div>
+                    <label class="advisor-field advisor-field--message">
+                      <span>Message au client</span>
+                      <textarea rows="3" formControlName="clientMessage" [readonly]="offerFormLocked()"></textarea>
+                    </label>
+                  } @else {
+                    <p class="advisor-offer-form__system-note">
+                      L'offre système reprend le montant et la durée demandés avec le taux indicatif
+                      {{ systemRatePercent() | number: '1.2-2' }} %.
+                    </p>
+                  }
+
+                  @if (counterOfferPending()) {
+                    <div class="advisor-sidebar-alert advisor-sidebar-alert--warn">
+                      En attente de la réponse du client sur votre contre-offre.
+                    </div>
+                  } @else if (counterOfferAccepted()) {
+                    <div class="advisor-sidebar-alert">
+                      Le client a accepté votre contre-offre. Vous pouvez approuver le dossier.
+                    </div>
+                  }
+
+                  @if (showSendProposalButton()) {
+                    <button
+                      mat-flat-button
+                      color="primary"
+                      class="advisor-sidebar-btn advisor-sidebar-btn--send"
+                      [class.advisor-sidebar-btn--muted]="!canSendProposal()"
+                      (click)="sendProposal()"
+                      [disabled]="actionLoading()"
+                    >
+                      <mat-icon>send</mat-icon>
+                      Envoyer la proposition
+                    </button>
+                    @if (!canSendProposal() && !counterOfferAccepted()) {
+                      @if (sendProposalBlockedHint(); as hint) {
+                        <p class="advisor-sidebar-hint">{{ hint }}</p>
+                      }
+                    } @else {
+                      <p class="advisor-sidebar-hint">
+                        Le client devra accepter la contre-offre avant que vous puissiez approuver le
+                        dossier.
+                      </p>
+                    }
+                  } @else if (offerMode() === 'custom' && needsClientOfferAcceptance() && !counterOfferPending()) {
+                    <p class="advisor-sidebar-hint">
+                      @if (counterOfferAccepted()) {
+                        La proposition a été acceptée : vous ne pouvez plus en envoyer une autre.
+                      } @else {
+                        Modifiez l'offre puis cliquez sur « Envoyer la proposition ». L'approbation
+                        sera possible après acceptation du client.
+                      }
+                    </p>
+                  } @else if (offerMode() === 'system') {
+                    <p class="advisor-sidebar-hint">
+                      Offre système : approuvez directement le dossier lorsque la checklist est
+                      complète.
+                    </p>
+                  }
+                </div>
+
+                @if (showApproveButton()) {
+                  <button
+                    mat-flat-button
+                    color="primary"
+                    class="advisor-sidebar-btn advisor-sidebar-btn--approve"
+                    [class.advisor-sidebar-btn--muted]="!canApprove()"
+                    (click)="approve()"
+                    [disabled]="actionLoading()"
+                  >
+                    <mat-icon>check_circle</mat-icon>
+                    Approuver le dossier
+                  </button>
+                  @if (!canApprove()) {
+                    @if (approveBlockedHint(); as hint) {
+                      <p class="advisor-sidebar-hint">{{ hint }}</p>
+                    }
+                  }
+                }
+                <button
+                  mat-stroked-button
+                  class="advisor-sidebar-btn advisor-sidebar-btn--reject"
+                  (click)="reject()"
+                  [disabled]="actionLoading()"
+                >
+                  <mat-icon>block</mat-icon>
+                  Refuser le dossier
+                </button>
+              } @else if (isReadOnly()) {
+                <p class="advisor-sidebar-readonly">Dossier clôturé — consultation seule.</p>
+              }
+            </div>
+          </section>
+
+          <section class="loan-detail-card loan-detail-card--timeline advisor-sidebar-history">
+            <h2 class="loan-detail-card__title">
+              <mat-icon>history</mat-icon>
+              Historique de la demande
+            </h2>
+            @if (!timeline().length) {
+              <p class="advisor-card__empty">Aucun événement enregistré.</p>
+            } @else {
+              <ol class="loan-detail-timeline">
+                @for (event of timeline(); track event.title + event.dateLabel) {
+                  <li
+                    class="loan-detail-timeline__item"
+                    [class.loan-detail-timeline__item--done]="event.state === 'done'"
+                    [class.loan-detail-timeline__item--current]="event.state === 'current'"
+                    [class.loan-detail-timeline__item--warn]="event.state === 'warn'"
+                  >
+                    <span class="loan-detail-timeline__dot" aria-hidden="true"></span>
+                    <div>
+                      <div class="loan-detail-timeline__head">
+                        <h3>{{ event.title }}</h3>
+                        <span class="loan-detail-timeline__date">{{ event.dateLabel }}</span>
+                      </div>
+                      <p>{{ event.description }}</p>
+                    </div>
+                  </li>
+                }
+              </ol>
+            }
+          </section>
+        </aside>
       </div>
 
-      <div class="state error" *ngIf="historyError() as he">
-        <mat-icon color="warn">error</mat-icon>
-        <span>{{ he }}</span>
-        <button type="button" mat-stroked-button color="primary" (click)="refreshHistory()">
-          Réessayer
-        </button>
-      </div>
-
-      <div class="state empty" *ngIf="!historyLoading() && !historyError() && history().length === 0">
-        <mat-icon>schedule</mat-icon>
-        <span>Aucun évènement enregistré.</span>
-      </div>
-
-      <div class="history-list" *ngIf="!historyLoading() && !historyError() && history().length > 0">
-        <div class="history-row" *ngFor="let e of history()">
-          <div class="history-icon">
-            <mat-icon aria-hidden="true">event</mat-icon>
-          </div>
-          <div class="history-main">
-            <div class="history-title">{{ e.title }}</div>
-            <div class="history-desc">{{ e.description }}</div>
-          </div>
-          <div class="history-meta">
-            <span>{{ e.occurredAt | date:'short' }}</span>
-          </div>
-        </div>
-      </div>
-    </section>
-  </ng-template>
+      <app-advisor-document-preview-panel
+        [open]="previewOpen()"
+        [row]="previewRow()"
+        [fileMeta]="previewRow() ? previewFileMeta(previewRow()!) : ''"
+        [previewUrl]="previewUrl()"
+        [contentType]="previewContentType()"
+        [loading]="previewLoading()"
+        [zoom]="previewZoom()"
+        [canReviewActions]="previewCanReviewActions(previewRow())"
+        [actionLoading]="actionLoading()"
+        [hasPrev]="previewIndex() > 0"
+        [hasNext]="previewIndex() >= 0 && previewIndex() < previewableRows().length - 1"
+        [pageLabel]="previewPageLabel()"
+        [statusBadgeClass]="reviewBadgeClass(previewRow()?.advisorReview?.status)"
+        [statusLabel]="previewPanelStatusLabel(previewRow()?.advisorReview?.status)"
+        (closed)="closeDocumentPreview()"
+        (zoomIn)="previewZoomIn()"
+        (zoomOut)="previewZoomOut()"
+        (prevDocument)="previewPrevDocument()"
+        (nextDocument)="previewNextDocument()"
+        (download)="downloadPreviewDocument()"
+        (validate)="validatePreviewDocument()"
+        (reject)="rejectPreviewDocument()"
+      />
+    }
+  }
 </div>

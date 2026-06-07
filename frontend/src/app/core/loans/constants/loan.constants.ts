@@ -76,6 +76,7 @@ export const STATUS_LABELS: Record<
   DRAFT: { label: 'Brouillon', chipClass: 'status-draft' },
   SUBMITTED: { label: 'Soumise', chipClass: 'status-submitted' },
   UNDER_REVIEW: { label: 'En étude', chipClass: 'status-review' },
+  OFFER_PENDING: { label: 'Offre en attente', chipClass: 'status-offer-pending' },
   APPROVED: { label: 'Acceptée', chipClass: 'status-approved' },
   REJECTED: { label: 'Refusée', chipClass: 'status-rejected' },
   CANCELLED: { label: 'Annulée', chipClass: 'status-cancelled' },

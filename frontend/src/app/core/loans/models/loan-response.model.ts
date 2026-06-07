@@ -34,4 +34,6 @@ export interface LoanResponseDto {
   applicantName?: string | null;
   advisorId?: number | null;
   advisorName?: string | null;
+  offerMessage?: string | null;
+  offerClientAccepted?: boolean | null;
 }

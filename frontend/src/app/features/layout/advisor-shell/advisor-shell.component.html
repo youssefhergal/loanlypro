@@ -177,14 +177,16 @@
   </header>
 
   <main class="main">
-    <header class="page-header">
-      <div class="page-header-main">
-        <h1 class="page-title">{{ pageTitle() }}</h1>
-        @if (pageDescription()) {
-          <p class="page-description">{{ pageDescription() }}</p>
-        }
-      </div>
-    </header>
+    @if (pageTitle()) {
+      <header class="page-header">
+        <div class="page-header-main">
+          <h1 class="page-title">{{ pageTitle() }}</h1>
+          @if (pageDescription()) {
+            <p class="page-description">{{ pageDescription() }}</p>
+          }
+        </div>
+      </header>
+    }
     <router-outlet />
   </main>
 </div>

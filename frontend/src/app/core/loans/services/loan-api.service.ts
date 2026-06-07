@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { LoanRequestDto } from '../models/loan-request.model';
 import { LoanResponseDto } from '../models/loan-response.model';
+import { LoanDocumentReviewResponseDto } from '../models/loan-document-review.model';
 import { LoanDocumentResponseDto } from '../models/loan-document.model';
 import { LoanApplicationStatus } from '../models/loan.enums';
 import { LoanDocumentType } from '../models/loan.enums';
@@ -132,7 +133,64 @@ export class LoanApiService {
     return this.http.post<LoanResponseDto>(`${this.baseUrl}/${id}/approve`, {});
   }
 
-  reject(id: number): Observable<LoanResponseDto> {
-    return this.http.post<LoanResponseDto>(`${this.baseUrl}/${id}/reject`, {});
+  reject(id: number, body: { comment: string }): Observable<LoanResponseDto> {
+    return this.http.post<LoanResponseDto>(`${this.baseUrl}/${id}/reject`, body);
+  }
+
+  updateSubmitted(
+    id: number,
+    body: {
+      approvedAmount?: number;
+      approvedDurationMonths?: number;
+      interestRate?: number;
+      assignedAdvisorId?: number;
+    }
+  ): Observable<LoanResponseDto> {
+    return this.http.put<LoanResponseDto>(`${this.baseUrl}/${id}/submitted`, body);
+  }
+
+  rejectDocument(
+    id: number,
+    body: { documentType: LoanDocumentType; comment: string }
+  ): Observable<LoanHistoryEventResponseDto> {
+    return this.http.post<LoanHistoryEventResponseDto>(
+      `${this.baseUrl}/${id}/documents/reject`,
+      body
+    );
+  }
+
+  proposeOffer(
+    id: number,
+    body: {
+      approvedAmount: number;
+      approvedDurationMonths: number;
+      interestRate: number;
+      clientMessage?: string;
+    }
+  ): Observable<LoanResponseDto> {
+    return this.http.post<LoanResponseDto>(`${this.baseUrl}/${id}/propose-offer`, body);
+  }
+
+  acceptOffer(id: number): Observable<LoanResponseDto> {
+    return this.http.post<LoanResponseDto>(`${this.baseUrl}/${id}/offer/accept`, {});
+  }
+
+  rejectOffer(id: number, comment?: string | null): Observable<LoanResponseDto> {
+    const body = comment?.trim() ? { comment: comment.trim() } : {};
+    return this.http.post<LoanResponseDto>(`${this.baseUrl}/${id}/offer/reject`, body);
+  }
+
+  getDocumentReviews(id: number): Observable<LoanDocumentReviewResponseDto[]> {
+    return this.http.get<LoanDocumentReviewResponseDto[]>(`${this.baseUrl}/${id}/document-reviews`);
+  }
+
+  validateDocument(
+    id: number,
+    documentType: LoanDocumentType
+  ): Observable<LoanHistoryEventResponseDto> {
+    return this.http.post<LoanHistoryEventResponseDto>(
+      `${this.baseUrl}/${id}/documents/validate`,
+      { documentType }
+    );
   }
 }
