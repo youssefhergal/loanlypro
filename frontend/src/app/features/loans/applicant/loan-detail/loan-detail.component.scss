@@ -403,6 +403,90 @@
   background: #fff8e1;
 }
 
+.loan-detail-alert--offer {
+  border-color: #ffcc80;
+  background: #fff3e0;
+
+  mat-icon {
+    color: #e65100;
+  }
+}
+
+.loan-detail-offer-alert {
+  flex: 1;
+  min-width: 0;
+}
+
+.loan-detail-offer-alert__message {
+  margin: 0.65rem 0 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-left: 3px solid #ff9800;
+  background: rgba(255, 255, 255, 0.65);
+  font-size: 0.8125rem;
+  font-style: italic;
+  color: var(--color-text, #1f2d24);
+}
+
+.loan-detail-offer-alert__intro {
+  margin: 0 0 0.5rem;
+}
+
+.loan-detail-offer-summary {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(230, 81, 0, 0.18);
+}
+
+.loan-detail-history-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  color: #6d4c00;
+
+  mat-icon {
+    flex-shrink: 0;
+    color: #f57c00;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+}
+
+.loan-detail-history-loading,
+.loan-detail-history-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #6b7c72);
+}
+
+.loan-detail-offer-alert__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+
+  button mat-icon {
+    margin-right: 0.25rem;
+    font-size: 1.125rem;
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+}
+
+.loan-detail-offer-alert__reject {
+  border-color: #ef5350;
+  color: #c62828;
+}
+
 .loan-detail-timeline {
   list-style: none;
   margin: 0;

@@ -10,6 +10,7 @@ import { AuthService } from '../../../../core/auth/services/auth.service';
 import { LoanApiService } from '../../../../core/loans/services/loan-api.service';
 import { LoanResponseDto } from '../../../../core/loans/models/loan-response.model';
 import { LoanDocumentResponseDto } from '../../../../core/loans/models/loan-document.model';
+import { LoanDocumentReviewResponseDto } from '../../../../core/loans/models/loan-document-review.model';
 import { LoanHistoryEventResponseDto } from '../../../../core/loans/models/loan-history.model';
 import {
   EMPLOYER_SECTOR_OPTIONS,
@@ -39,6 +40,8 @@ import {
   loanStatusDisplayLabel,
 } from '../../../../core/loans/utils/loan-detail.util';
 import { ConfirmDialogService } from '../../../../shared/confirm-dialog/confirm-dialog.service';
+import { AcceptCounterOfferDialogService } from '../../../../shared/accept-counter-offer-dialog/accept-counter-offer-dialog.service';
+import { RejectCounterOfferDialogService } from '../../../../shared/reject-counter-offer-dialog/reject-counter-offer-dialog.service';
 import { filter } from 'rxjs';
 import {
   formatDateFrLong,
@@ -67,15 +70,20 @@ export class LoanDetailComponent implements OnInit {
   private readonly loanApi = inject(LoanApiService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly acceptCounterOfferDialog = inject(AcceptCounterOfferDialogService);
+  private readonly rejectCounterOfferDialog = inject(RejectCounterOfferDialogService);
   readonly auth = inject(AuthService);
   readonly debtRatioMaxPercent = LOAN_DEBT_RATIO_DISPLAY_MAX * 100;
 
   readonly loan = signal<LoanResponseDto | null>(null);
   readonly documents = signal<LoanDocumentResponseDto[]>([]);
+  readonly documentReviews = signal<LoanDocumentReviewResponseDto[]>([]);
   readonly historyEvents = signal<LoanHistoryEventResponseDto[]>([]);
+  readonly historyStatus = signal<'pending' | 'loaded' | 'failed'>('pending');
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly complementUploading = signal<LoanDocumentType | null>(null);
+  readonly offerActionLoading = signal(false);
 
   readonly statusStyle = computed(() => {
     const l = this.loan();
@@ -90,7 +98,7 @@ export class LoanDetailComponent implements OnInit {
   readonly documentRows = computed(() => {
     const l = this.loan();
     if (!l) return [];
-    return loanDetailDocuments(l, this.documents(), this.historyEvents());
+    return loanDetailDocuments(l, this.documents(), this.documentReviews(), this.historyEvents());
   });
 
   readonly showAdvisorDocumentReview = computed(() => {
@@ -126,6 +134,28 @@ export class LoanDetailComponent implements OnInit {
     return this.documentsNeedingAction() > 0;
   });
 
+  readonly offerPending = computed(() => this.loan()?.status === 'OFFER_PENDING');
+
+  readonly counterOfferAmount = computed(() => {
+    const l = this.loan();
+    return l?.approvedAmount != null ? Number(l.approvedAmount) : null;
+  });
+
+  readonly counterOfferDurationMonths = computed(() => this.loan()?.approvedDurationMonths ?? null);
+
+  readonly counterOfferRate = computed(() => {
+    const l = this.loan();
+    return l?.interestRate != null ? Number(l.interestRate) : null;
+  });
+
+  readonly counterOfferMonthlyPayment = computed(() => {
+    const amount = this.counterOfferAmount();
+    const duration = this.counterOfferDurationMonths();
+    const rate = this.counterOfferRate();
+    if (amount == null || duration == null) return 0;
+    return calculateMonthlyPayment(amount, duration, rate != null ? rate / 100 : undefined);
+  });
+
   readonly canCancelLoan = computed(() => {
     const l = this.loan();
     return l ? canClientCancelLoan(l.status) : false;
@@ -133,13 +163,16 @@ export class LoanDetailComponent implements OnInit {
 
   readonly timeline = computed(() => {
     const l = this.loan();
-    if (!l) return [];
+    if (!l || this.historyStatus() === 'failed') return [];
+    if (this.historyStatus() === 'pending') return [];
     const fromApi = this.historyEvents();
     if (fromApi.length > 0) {
       return historyEventsToTimeline(fromApi);
     }
     return loanDetailTimeline(l, this.requiredProvided(), this.requiredCount());
   });
+
+  readonly historyUnavailable = computed(() => this.historyStatus() === 'failed');
 
   readonly monthlyPayment = computed(() => {
     const l = this.loan();
@@ -228,21 +261,36 @@ export class LoanDetailComponent implements OnInit {
     forkJoin({
       loan: this.loanApi.getById(id),
       documents: this.loanApi.getDocuments(id),
-      history: this.loanApi.getHistory(id),
+      documentReviews: this.loanApi.getDocumentReviews(id),
     }).subscribe({
-      next: ({ loan, documents, history }) => {
+      next: ({ loan, documents, documentReviews }) => {
         if (loan.status === 'DRAFT') {
           this.router.navigate(['/nouvelle-demande', loan.id]);
           return;
         }
         this.loan.set(loan);
         this.documents.set(documents);
-        this.historyEvents.set(history);
+        this.documentReviews.set(documentReviews);
         this.loading.set(false);
+        this.fetchHistory(id);
       },
       error: (err) => {
         this.error.set(getErrorMessage(err, 'Impossible de charger le dossier.'));
         this.loading.set(false);
+      },
+    });
+  }
+
+  private fetchHistory(loanId: number): void {
+    this.historyStatus.set('pending');
+    this.loanApi.getHistory(loanId).subscribe({
+      next: (history) => {
+        this.historyEvents.set(history);
+        this.historyStatus.set('loaded');
+      },
+      error: () => {
+        this.historyEvents.set([]);
+        this.historyStatus.set('failed');
       },
     });
   }
@@ -330,13 +378,107 @@ export class LoanDetailComponent implements OnInit {
   private reloadDocumentsAndHistory(loanId: number): void {
     forkJoin({
       documents: this.loanApi.getDocuments(loanId),
-      history: this.loanApi.getHistory(loanId),
+      documentReviews: this.loanApi.getDocumentReviews(loanId),
     }).subscribe({
-      next: ({ documents, history }) => {
+      next: ({ documents, documentReviews }) => {
         this.documents.set(documents);
-        this.historyEvents.set(history);
+        this.documentReviews.set(documentReviews);
+        this.fetchHistory(loanId);
+      },
+      error: (err) => {
+        this.snackBar.open(getErrorMessage(err, 'Actualisation impossible.'), 'Fermer', {
+          duration: 5000,
+        });
       },
     });
+  }
+
+  acceptCounterOffer(): void {
+    const loan = this.loan();
+    const amount = this.counterOfferAmount();
+    const durationMonths = this.counterOfferDurationMonths();
+    if (
+      !loan ||
+      !this.offerPending() ||
+      this.offerActionLoading() ||
+      amount == null ||
+      durationMonths == null
+    ) {
+      return;
+    }
+
+    this.acceptCounterOfferDialog
+      .open({
+        amount,
+        durationMonths,
+        rate: this.counterOfferRate(),
+        monthlyPayment: this.counterOfferMonthlyPayment(),
+        offerMessage: loan.offerMessage,
+      })
+      .pipe(filter((ok) => ok))
+      .subscribe(() => {
+        this.offerActionLoading.set(true);
+        this.loanApi.acceptOffer(loan.id).subscribe({
+          next: (updated) => {
+            this.loan.set(updated);
+            this.reloadDocumentsAndHistory(loan.id);
+            this.offerActionLoading.set(false);
+            this.snackBar.open('Contre-offre acceptée. Votre dossier reprend son analyse.', 'OK', {
+              duration: 5000,
+            });
+          },
+          error: (err) => {
+            this.offerActionLoading.set(false);
+            this.snackBar.open(getErrorMessage(err, 'Acceptation impossible.'), 'Fermer', {
+              duration: 5000,
+            });
+          },
+        });
+      });
+  }
+
+  rejectCounterOffer(): void {
+    const loan = this.loan();
+    const amount = this.counterOfferAmount();
+    const durationMonths = this.counterOfferDurationMonths();
+    if (
+      !loan ||
+      !this.offerPending() ||
+      this.offerActionLoading() ||
+      amount == null ||
+      durationMonths == null
+    ) {
+      return;
+    }
+
+    this.rejectCounterOfferDialog
+      .open({
+        amount,
+        durationMonths,
+        rate: this.counterOfferRate(),
+        monthlyPayment: this.counterOfferMonthlyPayment(),
+        offerMessage: loan.offerMessage,
+      })
+      .pipe(filter((comment): comment is string => comment !== null))
+      .subscribe((comment) => {
+        this.offerActionLoading.set(true);
+        this.loanApi.rejectOffer(loan.id, comment || undefined).subscribe({
+          next: (updated) => {
+            this.loan.set(updated);
+            this.reloadDocumentsAndHistory(loan.id);
+            this.offerActionLoading.set(false);
+            this.snackBar.open('Contre-offre refusée. Votre conseiller a été informé.', 'OK', {
+              duration: 5000,
+            });
+          },
+          error: (err) => {
+            this.offerActionLoading.set(false);
+            this.snackBar.open(getErrorMessage(err, 'Refus impossible.'), 'Fermer', {
+              duration: 5000,
+            });
+          },
+        });
+      });
   }
 
   cancelLoan(): void {

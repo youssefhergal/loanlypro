@@ -1,0 +1,88 @@
+<div class="reject-offer-dialog">
+  <header class="reject-offer-dialog__header">
+    <div class="reject-offer-dialog__title-row">
+      <span class="reject-offer-dialog__title-icon" aria-hidden="true">
+        <mat-icon>cancel</mat-icon>
+      </span>
+      <h2>Refuser cette contre-offre ?</h2>
+    </div>
+    <button
+      mat-icon-button
+      type="button"
+      class="reject-offer-dialog__close"
+      aria-label="Fermer"
+      (click)="onCancel()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="reject-offer-dialog__body">
+    <div class="reject-offer-dialog__warning">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <p>
+        Votre conseiller sera informé de votre refus. Il pourra vous proposer une autre offre
+        ou poursuivre l'étude de votre dossier.
+      </p>
+    </div>
+
+    @if (hasOfferMessage()) {
+      <blockquote class="reject-offer-dialog__message">
+        « {{ data.offerMessage }} »
+      </blockquote>
+    }
+
+    <section class="reject-offer-dialog__offer">
+      <p class="reject-offer-dialog__offer-label">Offre que vous refusez</p>
+      <dl class="reject-offer-dialog__offer-grid">
+        <div>
+          <dt>Montant</dt>
+          <dd>{{ data.amount | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+        </div>
+        <div>
+          <dt>Durée</dt>
+          <dd>{{ data.durationMonths }} mois</dd>
+        </div>
+        <div>
+          <dt>Taux fixe</dt>
+          <dd>
+            @if (data.rate != null) {
+              {{ data.rate | number: '1.2-2' }} %
+            } @else {
+              —
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Mensualité est.</dt>
+          <dd>{{ data.monthlyPayment | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <div class="reject-offer-dialog__field">
+      <div class="reject-offer-dialog__field-head">
+        <label for="reject-offer-comment">Motif du refus (optionnel)</label>
+        <span class="reject-offer-dialog__field-hint">Visible par votre conseiller</span>
+      </div>
+      <textarea
+        id="reject-offer-comment"
+        class="reject-offer-dialog__textarea"
+        rows="3"
+        [maxlength]="maxLength"
+        placeholder="Expliquez brièvement pourquoi cette offre ne vous convient pas…"
+        [ngModel]="comment()"
+        (ngModelChange)="comment.set($event)"
+      ></textarea>
+    </div>
+  </div>
+
+  <footer class="reject-offer-dialog__footer">
+    <button mat-button type="button" class="reject-offer-dialog__cancel" (click)="onCancel()">
+      Conserver l'offre
+    </button>
+    <button mat-flat-button type="button" class="reject-offer-dialog__confirm" (click)="onConfirm()">
+      Refuser l'offre
+    </button>
+  </footer>
+</div>

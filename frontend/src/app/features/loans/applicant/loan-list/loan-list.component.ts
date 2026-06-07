@@ -92,6 +92,7 @@ export class LoanListComponent implements OnInit {
       DRAFT: 0,
       SUBMITTED: 0,
       UNDER_REVIEW: 0,
+      OFFER_PENDING: 0,
       APPROVED: 0,
       REJECTED: 0,
       CANCELLED: 0,
