@@ -1,11 +1,9 @@
 package com.projetfilrouge.loanmanagement.web.dto.request;
 
-import com.projetfilrouge.loanmanagement.entity.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
-import java.util.Set;
 
 @Getter
 @Setter

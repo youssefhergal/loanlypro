@@ -48,6 +48,8 @@ public class LoanResponseDto {
     private BigDecimal approvedAmount;
     private Integer approvedDurationMonths;
     private BigDecimal interestRate;
+    private String offerMessage;
+    private Boolean offerClientAccepted;
 
     private Long applicantId;
     private String applicantName;

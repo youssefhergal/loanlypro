@@ -5,6 +5,8 @@ import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -32,6 +34,25 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
     Page<LoanApplication> findByAssignedAdvisorId(Long advisorId, Pageable pageable);
 
     Page<LoanApplication> findByAssignedAdvisorIdAndStatus(Long advisorId, LoanApplicationStatus status, Pageable pageable);
+
+    @Query("""
+            SELECT l FROM LoanApplication l
+            WHERE l.assignedAdvisor.id = :advisorId
+               OR (l.assignedAdvisor IS NULL AND l.status = com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus.SUBMITTED)
+            """)
+    Page<LoanApplication> findVisibleToAdvisor(@Param("advisorId") Long advisorId, Pageable pageable);
+
+    @Query("""
+            SELECT l FROM LoanApplication l
+            WHERE (l.assignedAdvisor.id = :advisorId
+               OR (l.assignedAdvisor IS NULL AND l.status = com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus.SUBMITTED))
+              AND l.status = :status
+            """)
+    Page<LoanApplication> findVisibleToAdvisorAndStatus(
+            @Param("advisorId") Long advisorId,
+            @Param("status") LoanApplicationStatus status,
+            Pageable pageable
+    );
 
     boolean existsByReference(String reference);
 }
