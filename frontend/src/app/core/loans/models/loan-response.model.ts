@@ -32,6 +32,7 @@ export interface LoanResponseDto {
   interestRate?: number | null;
   applicantId?: number | null;
   applicantName?: string | null;
+  applicantEmail?: string | null;
   advisorId?: number | null;
   advisorName?: string | null;
   offerMessage?: string | null;

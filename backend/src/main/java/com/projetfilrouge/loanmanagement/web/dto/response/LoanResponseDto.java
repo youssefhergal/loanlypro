@@ -53,6 +53,7 @@ public class LoanResponseDto {
 
     private Long applicantId;
     private String applicantName;
+    private String applicantEmail;
 
     private Long advisorId;
     private String advisorName;

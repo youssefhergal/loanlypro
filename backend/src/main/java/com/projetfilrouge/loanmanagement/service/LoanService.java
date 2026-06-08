@@ -1167,6 +1167,7 @@ public class LoanService {
                                 ? (loan.getApplicant().getFirstName() + " " + loan.getApplicant().getLastName()).trim()
                                 : null
                 )
+                .applicantEmail(loan.getApplicant() != null ? loan.getApplicant().getEmail() : null)
                 .advisorId(loan.getAssignedAdvisor() != null ? loan.getAssignedAdvisor().getId() : null)
                 .advisorName(
                         loan.getAssignedAdvisor() != null
