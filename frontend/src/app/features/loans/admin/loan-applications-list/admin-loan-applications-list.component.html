@@ -1,67 +1,200 @@
-<div class="admin-loans">
-  <div class="header">
-    <button type="button" mat-stroked-button (click)="load()" matTooltip="Rafraîchir">
-      <mat-icon>refresh</mat-icon>
-      <span>Rafraîchir</span>
+<div class="admin-loans-page">
+  <p class="admin-loans-info">
+    <mat-icon aria-hidden="true">visibility</mat-icon>
+    <span>
+      <strong>Mode supervision</strong> — Vous consultez tous les dossiers. L'instruction reste du
+      ressort des conseillers. Les dossiers non affectés sont assignés automatiquement (cron) ou via
+      le bouton « Affecter conseillers ».
+    </span>
+  </p>
+
+  <div class="loan-list-toolbar">
+    <mat-form-field appearance="outline" class="loan-list-search">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        placeholder="Recherche (référence, nom client, email…)"
+        [value]="searchQuery()"
+        (input)="onSearchInput($any($event.target).value)"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="loan-list-advisor-filter">
+      <mat-select
+        placeholder="Conseiller"
+        [value]="advisorFilter() === 'ALL' ? 'ALL' : '' + advisorFilter()"
+        (selectionChange)="onAdvisorFilterChange($event.value)"
+      >
+        <mat-option value="ALL">Tous</mat-option>
+        @for (advisor of advisorOptions(); track advisor.id) {
+          <mat-option [value]="'' + advisor.id">{{ advisor.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <button
+      mat-stroked-button
+      type="button"
+      class="loan-list-toolbar__btn loan-list-toolbar__btn--assign"
+      (click)="runAdvisorAssignment()"
+      [disabled]="assigning()"
+      matTooltip="Affectation automatique horaire + déclenchement manuel"
+    >
+      @if (assigning()) {
+        <mat-icon class="loan-list-toolbar__spin">sync</mat-icon>
+      } @else {
+        <mat-icon>group_add</mat-icon>
+      }
+      Affecter conseillers
     </button>
+
+    <button
+      mat-stroked-button
+      type="button"
+      class="loan-list-toolbar__btn"
+      [matMenuTriggerFor]="sortMenu"
+    >
+      <mat-icon>swap_vert</mat-icon>
+      Trier par : {{ sortLabel() }}
+    </button>
+    <mat-menu #sortMenu="matMenu">
+      <button mat-menu-item type="button" (click)="setSort('updatedDesc')">Date MAJ (récent)</button>
+      <button mat-menu-item type="button" (click)="setSort('updatedAsc')">Date MAJ (ancien)</button>
+      <button mat-menu-item type="button" (click)="setSort('amountDesc')">Montant décroissant</button>
+      <button mat-menu-item type="button" (click)="setSort('amountAsc')">Montant croissant</button>
+    </mat-menu>
   </div>
 
-  <div class="state" *ngIf="loading(); else loaded">
-    <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
-  </div>
-
-  <ng-template #loaded>
-    <div class="state error" *ngIf="error() as e">
-      <mat-icon color="warn">error</mat-icon>
-      <span>{{ e }}</span>
-      <button type="button" mat-stroked-button color="primary" (click)="load()">
-        Réessayer
+  <nav class="loan-list-tabs" aria-label="Filtrer par statut">
+    @for (tab of statusTabs; track tab.key) {
+      <button
+        type="button"
+        class="loan-list-tabs__tab"
+        [class.loan-list-tabs__tab--active]="isStatusTabActive(tab.key)"
+        (click)="selectStatus(tab.key)"
+      >
+        <span>{{ tab.label }}</span>
+        <span class="loan-list-tabs__count">{{ tabCount(tab.key) }}</span>
       </button>
-    </div>
+    }
+    <button
+      type="button"
+      class="loan-list-tabs__tab loan-list-tabs__tab--warn"
+      [class.loan-list-tabs__tab--active]="listMode() === 'UNASSIGNED'"
+      (click)="selectUnassigned()"
+    >
+      <span>Non affectés</span>
+      <span class="loan-list-tabs__count">{{ unassignedCount() }}</span>
+    </button>
+  </nav>
 
-    <div class="state empty" *ngIf="!error() && loans().length === 0">
+  @if (loading()) {
+    <div class="admin-loans-loading" aria-busy="true" aria-label="Chargement">
+      <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+    </div>
+  } @else if (!totalElements()) {
+    <div class="loan-list-empty">
       <mat-icon>inbox</mat-icon>
-      <p>Aucune demande trouvée.</p>
+      <p>Aucune demande ne correspond à vos filtres.</p>
+    </div>
+  } @else {
+    <div class="admin-loans-table-wrap">
+      <table mat-table [dataSource]="loans()" class="admin-loans-table">
+        <ng-container matColumnDef="reference">
+          <th mat-header-cell *matHeaderCellDef>Réf. dossier</th>
+          <td mat-cell *matCellDef="let loan">
+            <span class="admin-loans-table__ref">#{{ loan.reference }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="client">
+          <th mat-header-cell *matHeaderCellDef>Client</th>
+          <td mat-cell *matCellDef="let loan">
+            <div class="admin-loans-table__client">
+              <span class="admin-loans-table__client-name">{{ loan.applicantName || '—' }}</span>
+              @if (loan.applicantEmail) {
+                <span class="admin-loans-table__client-email">{{ loan.applicantEmail }}</span>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="advisor">
+          <th mat-header-cell *matHeaderCellDef>Conseiller</th>
+          <td mat-cell *matCellDef="let loan">
+            @if (loan.advisorName) {
+              <div class="admin-loans-table__advisor">
+                <span class="admin-loans-table__avatar" aria-hidden="true">{{
+                  advisorInitials(loan.advisorName)
+                }}</span>
+                <span>{{ loan.advisorName }}</span>
+              </div>
+            } @else {
+              <span class="admin-loans-table__unassigned">Non affecté</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>Intitulé</th>
+          <td mat-cell *matCellDef="let loan">
+            <span class="admin-loans-table__title">{{ loan.title }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="requestedAmount">
+          <th mat-header-cell *matHeaderCellDef>Montant</th>
+          <td mat-cell *matCellDef="let loan">
+            {{ loan.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Statut</th>
+          <td mat-cell *matCellDef="let loan">
+            @let style = statusStyle(loan.status);
+            <span
+              class="loan-status-badge"
+              [style.background]="style.badgeBg"
+              [style.color]="style.badgeColor"
+            >
+              <span class="loan-status-badge__dot" [style.background]="style.accent"></span>
+              <mat-icon aria-hidden="true">{{ style.icon }}</mat-icon>
+              {{ style.label }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="submittedAt">
+          <th mat-header-cell *matHeaderCellDef>Soumise le</th>
+          <td mat-cell *matCellDef="let loan">{{ formatSubmittedAt(loan.submittedAt) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="updatedAt">
+          <th mat-header-cell *matHeaderCellDef>MAJ</th>
+          <td mat-cell *matCellDef="let loan">{{ formatUpdatedAt(loan.updatedAt) }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          class="admin-loans-table__row"
+          (click)="open(row)"
+        ></tr>
+      </table>
     </div>
 
-    <table mat-table [dataSource]="loans()" *ngIf="!error() && loans().length > 0" class="mat-elevation-z1">
-      <ng-container matColumnDef="reference">
-        <th mat-header-cell *matHeaderCellDef>Référence</th>
-        <td mat-cell *matCellDef="let loan">{{ loan.reference }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="applicantName">
-        <th mat-header-cell *matHeaderCellDef>Demandeur</th>
-        <td mat-cell *matCellDef="let loan">{{ loan.applicantName || '—' }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="title">
-        <th mat-header-cell *matHeaderCellDef>Intitulé</th>
-        <td mat-cell *matCellDef="let loan">{{ loan.title }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="requestedAmount">
-        <th mat-header-cell *matHeaderCellDef>Montant</th>
-        <td mat-cell *matCellDef="let loan">{{ loan.requestedAmount | currency:'EUR':'symbol':'1.0-0' }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="status">
-        <th mat-header-cell *matHeaderCellDef>Statut</th>
-        <td mat-cell *matCellDef="let loan">{{ loan.status }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="updatedAt">
-        <th mat-header-cell *matHeaderCellDef>Modifiée le</th>
-        <td mat-cell *matCellDef="let loan">{{ loan.updatedAt | date:'short' }}</td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr
-        mat-row
-        *matRowDef="let row; columns: displayedColumns"
-        class="row-link"
-        (click)="open(row.id)"
-      ></tr>
-    </table>
-  </ng-template>
+    <footer class="loan-list-footer">
+      <p class="loan-list-footer__summary">{{ pageRangeLabel() }}</p>
+      <mat-paginator
+        [length]="totalElements()"
+        [pageSize]="pageSize()"
+        [pageIndex]="pageIndex()"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onPage($event)"
+        aria-label="Pagination des demandes"
+      />
+    </footer>
+  }
 </div>

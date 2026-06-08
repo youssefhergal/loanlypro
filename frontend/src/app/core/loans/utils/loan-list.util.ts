@@ -257,3 +257,59 @@ export function countByStatus(
   if (status === 'ALL') return loans.length;
   return loans.filter((l) => l.status === status).length;
 }
+
+export function isUnassignedLoan(loan: LoanResponseDto): boolean {
+  return loan.advisorId == null && loan.status !== 'DRAFT';
+}
+
+export function countUnassignedLoans(loans: LoanResponseDto[]): number {
+  return loans.filter(isUnassignedLoan).length;
+}
+
+export function matchesAdminLoanSearch(loan: LoanResponseDto, query: string): boolean {
+  if (matchesAdvisorLoanSearch(loan, query)) return true;
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    (loan.applicantEmail?.toLowerCase().includes(q) ?? false) ||
+    (loan.advisorName?.toLowerCase().includes(q) ?? false)
+  );
+}
+
+export function advisorInitials(name: string | null | undefined): string {
+  if (!name?.trim()) return '?';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+export function formatAdminListSubmittedAt(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+}
+
+export function formatAdminListUpdatedAt(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfYesterday = new Date(startOfToday);
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+  const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  if (startOfDate.getTime() === startOfToday.getTime()) {
+    const rel = formatRelativeTimeFr(iso);
+    return rel || "Aujourd'hui";
+  }
+  if (startOfDate.getTime() === startOfYesterday.getTime()) {
+    return 'Hier';
+  }
+  return formatAdminListSubmittedAt(iso);
+}

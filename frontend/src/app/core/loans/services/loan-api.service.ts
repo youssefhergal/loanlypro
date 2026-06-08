@@ -10,6 +10,10 @@ import { LoanApplicationStatus } from '../models/loan.enums';
 import { LoanDocumentType } from '../models/loan.enums';
 import { LoanHistoryEventResponseDto } from '../models/loan-history.model';
 import { Page } from '../models/page.model';
+import {
+  AdminLoanListSortApi,
+  AdminLoanListSummary,
+} from '../models/admin-loan-list-summary.model';
 
 @Injectable({ providedIn: 'root' })
 export class LoanApiService {
@@ -41,6 +45,46 @@ export class LoanApiService {
       httpParams = httpParams.set('status', params.status);
     }
     return this.http.get<Page<LoanResponseDto>>(this.baseUrl, { params: httpParams });
+  }
+
+  listAdmin(params: {
+    page?: number;
+    size?: number;
+    search?: string;
+    advisorId?: number;
+    unassignedOnly?: boolean;
+    status?: LoanApplicationStatus;
+    sort?: AdminLoanListSortApi;
+  }): Observable<Page<LoanResponseDto>> {
+    let httpParams = new HttpParams()
+      .set('page', String(params.page ?? 0))
+      .set('size', String(params.size ?? 10));
+    if (params.search?.trim()) {
+      httpParams = httpParams.set('search', params.search.trim());
+    }
+    if (params.advisorId != null) {
+      httpParams = httpParams.set('advisorId', String(params.advisorId));
+    }
+    if (params.unassignedOnly) {
+      httpParams = httpParams.set('unassignedOnly', 'true');
+    }
+    if (params.status) {
+      httpParams = httpParams.set('status', params.status);
+    }
+    if (params.sort) {
+      httpParams = httpParams.set('sort', params.sort);
+    }
+    return this.http.get<Page<LoanResponseDto>>(`${this.baseUrl}/admin`, { params: httpParams });
+  }
+
+  getAdminSummary(params?: { search?: string }): Observable<AdminLoanListSummary> {
+    let httpParams = new HttpParams();
+    if (params?.search?.trim()) {
+      httpParams = httpParams.set('search', params.search.trim());
+    }
+    return this.http.get<AdminLoanListSummary>(`${this.baseUrl}/admin/summary`, {
+      params: httpParams,
+    });
   }
 
   submit(id: number): Observable<LoanResponseDto> {
