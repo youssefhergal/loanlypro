@@ -45,6 +45,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -918,7 +919,10 @@ public class LoanService {
         if (isApplicant(loan, currentUser)) {
             return;
         }
-        if (!hasRole(currentUser, ROLE_CONSEILLER) && !hasRole(currentUser, ROLE_ADMIN)) {
+        if (hasRole(currentUser, ROLE_ADMIN)) {
+            return;
+        }
+        if (!hasRole(currentUser, ROLE_CONSEILLER)) {
             return;
         }
         if (loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
