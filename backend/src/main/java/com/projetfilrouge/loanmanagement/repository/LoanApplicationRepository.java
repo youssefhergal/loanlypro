@@ -5,6 +5,7 @@ import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface LoanApplicationRepository extends JpaRepository<LoanApplication, Long> {
+public interface LoanApplicationRepository extends JpaRepository<LoanApplication, Long>, JpaSpecificationExecutor<LoanApplication> {
 
     Optional<LoanApplication> findByReference(String reference);
 
@@ -55,4 +56,23 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
     );
 
     boolean existsByReference(String reference);
+
+    @Query("""
+            SELECT l FROM LoanApplication l
+            WHERE l.status = com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus.SUBMITTED
+              AND l.assignedAdvisor IS NULL
+            ORDER BY l.submittedAt ASC, l.createdAt ASC
+            """)
+    List<LoanApplication> findUnassignedSubmittedOrderBySubmittedAtAsc();
+
+    @Query("""
+            SELECT COUNT(l) FROM LoanApplication l
+            WHERE l.assignedAdvisor.id = :advisorId
+              AND l.status IN (
+                com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus.SUBMITTED,
+                com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus.UNDER_REVIEW,
+                com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus.OFFER_PENDING
+              )
+            """)
+    long countActiveAssignments(@Param("advisorId") Long advisorId);
 }

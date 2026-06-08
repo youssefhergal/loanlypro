@@ -9,7 +9,14 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
+
+# En dev : exécution toutes les 5 minutes (prod reste horaire via application.yml)
+app:
+  advisor-assignment:
+    scheduler:
+      enabled: true
+      cron: "0 */5 * * * *"

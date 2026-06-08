@@ -10,3 +10,9 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: false
+
+app:
+  advisor-assignment:
+    scheduler:
+      enabled: true
+      cron: "0 0 * * * *"

@@ -12,7 +12,7 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
 
 server:
-  port: 8081
+  port: 8080
 
 app:
   jwt:
@@ -20,6 +20,10 @@ app:
     expiration-ms: 86400000
   storage:
     loan-documents-dir: ${LOAN_DOCUMENTS_DIR:uploads/loan-documents}
+  advisor-assignment:
+    scheduler:
+      enabled: true
+      cron: "0 0 * * * *"
 
 springdoc:
   api-docs:

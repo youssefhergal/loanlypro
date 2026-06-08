@@ -305,12 +305,13 @@ public class LoanApplicationHistoryService {
                 String prefix = complement ? "Nouveau dépôt — " : "";
                 return file != null ? prefix + uploadLabel + " — " + file : prefix + uploadLabel + " reçu.";
             case ADVISOR_ASSIGNED:
-                String name = event.getActorDisplayName();
-                if (name == null || name.isBlank()) {
-                    name = stringVal(payload.get("advisorName"));
+                String advisorName = stringVal(payload.get("advisorName"));
+                if (advisorName != null && !advisorName.isBlank()) {
+                    return advisorName + " est désormais en charge de votre dossier.";
                 }
-                return name != null && !name.isBlank()
-                        ? name + " est désormais en charge de votre dossier."
+                String actorName = event.getActorDisplayName();
+                return actorName != null && !actorName.isBlank()
+                        ? actorName + " est désormais en charge de votre dossier."
                         : "Un conseiller a été affecté à votre dossier.";
             case REVIEW_STARTED:
                 return "Votre dossier est en cours d'analyse. Durée estimée : 2 à 5 jours ouvrés.";
