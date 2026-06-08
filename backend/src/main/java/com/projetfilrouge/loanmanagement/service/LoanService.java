@@ -11,8 +11,10 @@ import com.projetfilrouge.loanmanagement.entity.LoanPurpose;
 import com.projetfilrouge.loanmanagement.entity.User;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationEventRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
+import com.projetfilrouge.loanmanagement.repository.LoanApplicationSpecifications;
 import com.projetfilrouge.loanmanagement.repository.LoanDocumentRepository;
 import com.projetfilrouge.loanmanagement.repository.UserRepository;
+import com.projetfilrouge.loanmanagement.web.dto.request.AdminLoanListSort;
 import com.projetfilrouge.loanmanagement.web.dto.request.CancelLoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanSubmittedUpdateDto;
@@ -21,10 +23,13 @@ import com.projetfilrouge.loanmanagement.web.dto.request.RejectDocumentRequestDt
 import com.projetfilrouge.loanmanagement.web.dto.request.RejectOfferRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.RejectLoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.ValidateDocumentRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.AdminAdvisorOptionDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.AdminLoanListSummaryDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentReviewResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanHistoryEventResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
+import org.springframework.data.jpa.domain.Specification;
 import com.projetfilrouge.loanmanagement.web.exception.BusinessRuleException;
 import com.projetfilrouge.loanmanagement.web.exception.ForbiddenOperationException;
 import com.projetfilrouge.loanmanagement.web.exception.ResourceNotFoundException;
@@ -118,6 +123,71 @@ public class LoanService {
         }
 
         return loans.map(this::mapToResponseDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<LoanResponseDto> getAdminApplications(
+            String currentUserEmail,
+            String search,
+            Long advisorId,
+            boolean unassignedOnly,
+            LoanApplicationStatus status,
+            AdminLoanListSort sort,
+            int page,
+            int size
+    ) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        ensureAdmin(currentUser);
+
+        LoanApplicationStatus statusFilter = unassignedOnly ? null : status;
+        Specification<LoanApplication> spec = LoanApplicationSpecifications.adminList(
+                search,
+                advisorId,
+                unassignedOnly,
+                statusFilter
+        );
+        Pageable pageable = PageRequest.of(page, size, adminListSort(sort));
+        return loanRepository.findAll(spec, pageable).map(this::mapToResponseDto);
+    }
+
+    @Transactional(readOnly = true)
+    public AdminLoanListSummaryDto getAdminListSummary(String currentUserEmail, String search) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        ensureAdmin(currentUser);
+
+        long totalCount = loanRepository.count(
+                LoanApplicationSpecifications.adminList(search, null, false, null)
+        );
+        long unassignedCount = loanRepository.count(
+                LoanApplicationSpecifications.adminList(search, null, true, null)
+        );
+
+        Map<LoanApplicationStatus, Long> statusCounts = new EnumMap<>(LoanApplicationStatus.class);
+        for (LoanApplicationStatus applicationStatus : LoanApplicationStatus.values()) {
+            if (applicationStatus == LoanApplicationStatus.DRAFT) {
+                continue;
+            }
+            statusCounts.put(
+                    applicationStatus,
+                    loanRepository.count(
+                            LoanApplicationSpecifications.adminList(search, null, false, applicationStatus)
+                    )
+            );
+        }
+
+        List<AdminAdvisorOptionDto> advisors = userRepository.findAllConseillers().stream()
+                .map(user -> AdminAdvisorOptionDto.builder()
+                        .id(user.getId())
+                        .name(displayName(user))
+                        .build())
+                .toList();
+
+        return AdminLoanListSummaryDto.builder()
+                .totalCount(totalCount)
+                .unassignedCount(unassignedCount)
+                .statusCounts(statusCounts)
+                .advisors(advisors)
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -913,6 +983,22 @@ public class LoanService {
 
     private String displayName(User user) {
         return (user.getFirstName() + " " + user.getLastName()).trim();
+    }
+
+    private void ensureAdmin(User user) {
+        if (!hasRole(user, ROLE_ADMIN)) {
+            throw new ForbiddenOperationException("Accès réservé aux administrateurs.");
+        }
+    }
+
+    private Sort adminListSort(AdminLoanListSort sort) {
+        AdminLoanListSort resolved = sort == null ? AdminLoanListSort.UPDATED_DESC : sort;
+        return switch (resolved) {
+            case UPDATED_ASC -> Sort.by(Sort.Direction.ASC, "updatedAt");
+            case AMOUNT_DESC -> Sort.by(Sort.Direction.DESC, "requestedAmount");
+            case AMOUNT_ASC -> Sort.by(Sort.Direction.ASC, "requestedAmount");
+            case UPDATED_DESC -> Sort.by(Sort.Direction.DESC, "updatedAt");
+        };
     }
 
     private void recordInitialDocumentsBundle(LoanApplication loan, User client, Instant submittedAt) {

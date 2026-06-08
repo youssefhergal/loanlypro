@@ -3,6 +3,7 @@ package com.projetfilrouge.loanmanagement.web.controller;
 import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
 import com.projetfilrouge.loanmanagement.entity.LoanDocumentType;
 import com.projetfilrouge.loanmanagement.service.LoanService;
+import com.projetfilrouge.loanmanagement.web.dto.request.AdminLoanListSort;
 import com.projetfilrouge.loanmanagement.web.dto.request.CancelLoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanSubmittedUpdateDto;
@@ -11,6 +12,7 @@ import com.projetfilrouge.loanmanagement.web.dto.request.RejectDocumentRequestDt
 import com.projetfilrouge.loanmanagement.web.dto.request.RejectOfferRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.RejectLoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.ValidateDocumentRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.AdminLoanListSummaryDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentReviewResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanHistoryEventResponseDto;
@@ -65,6 +67,47 @@ public class LoanController {
             @RequestParam(defaultValue = "10") int size
     ) {
         return ResponseEntity.ok(loanService.getAllApplications(authentication.getName(), status, page, size));
+    }
+
+    @GetMapping("/admin")
+    @Operation(
+            summary = "Lister les demandes (admin)",
+            description = "Liste paginée avec filtres pour la supervision admin."
+    )
+    @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès")
+    public ResponseEntity<Page<LoanResponseDto>> getAdminList(
+            Authentication authentication,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long advisorId,
+            @RequestParam(defaultValue = "false") boolean unassignedOnly,
+            @RequestParam(required = false) LoanApplicationStatus status,
+            @RequestParam(defaultValue = "UPDATED_DESC") AdminLoanListSort sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(loanService.getAdminApplications(
+                authentication.getName(),
+                search,
+                advisorId,
+                unassignedOnly,
+                status,
+                sort,
+                page,
+                size
+        ));
+    }
+
+    @GetMapping("/admin/summary")
+    @Operation(
+            summary = "Synthèse liste admin",
+            description = "Compteurs par statut, non affectés et conseillers pour la liste admin."
+    )
+    @ApiResponse(responseCode = "200", description = "Synthèse récupérée avec succès")
+    public ResponseEntity<AdminLoanListSummaryDto> getAdminSummary(
+            Authentication authentication,
+            @RequestParam(required = false) String search
+    ) {
+        return ResponseEntity.ok(loanService.getAdminListSummary(authentication.getName(), search));
     }
 
     @GetMapping("/{id}")
