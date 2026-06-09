@@ -19,6 +19,14 @@ import java.util.*;
 @RequiredArgsConstructor
 public class LoanApplicationHistoryService {
 
+    private static final Set<LoanDocumentType> REQUIRED_DOCUMENT_TYPES = EnumSet.of(
+            LoanDocumentType.IDENTITY,
+            LoanDocumentType.PAYSLIPS,
+            LoanDocumentType.TAX_NOTICE,
+            LoanDocumentType.BANK_STATEMENTS,
+            LoanDocumentType.PROOF_OF_ADDRESS
+    );
+
     private static final Map<LoanDocumentType, String> DOCUMENT_LABELS = Map.of(
             LoanDocumentType.IDENTITY, "Pièce d'identité",
             LoanDocumentType.PAYSLIPS, "Bulletins de salaire",
@@ -148,14 +156,6 @@ public class LoanApplicationHistoryService {
                 .build();
     }
 
-    private static final Set<LoanDocumentType> REQUIRED_DOCUMENT_TYPES = EnumSet.of(
-            LoanDocumentType.IDENTITY,
-            LoanDocumentType.PAYSLIPS,
-            LoanDocumentType.TAX_NOTICE,
-            LoanDocumentType.BANK_STATEMENTS,
-            LoanDocumentType.PROOF_OF_ADDRESS
-    );
-
     private void appendProjectedEvents(LoanApplication loan, List<LoanHistoryEventResponseDto> result) {
         if (loan.getStatus() == LoanApplicationStatus.UNDER_REVIEW) {
             result.add(LoanHistoryEventResponseDto.builder()
@@ -252,90 +252,115 @@ public class LoanApplicationHistoryService {
     }
 
     private String resolveTitle(LoanApplicationEvent event, Map<String, Object> payload, LoanApplication loan) {
-        return switch (event.getEventType()) {
-            case APPLICATION_CREATED -> "Brouillon créé";
-            case APPLICATION_SUBMITTED -> "Demande soumise";
-            case DOCUMENT_UPLOADED -> Boolean.TRUE.equals(payload.get("bundled"))
-                    ? "Pièces justificatives déposées"
-                    : "Document déposé";
-            case ADVISOR_ASSIGNED -> "Conseiller affecté";
-            case REVIEW_STARTED -> "Analyse financière";
-            case DOCUMENT_REJECTED -> "Complément demandé";
-            case DOCUMENT_VALIDATED -> "Document validé";
-            case APPLICATION_APPROVED -> "Demande approuvée";
-            case APPLICATION_REJECTED -> "Demande refusée";
-            case APPLICATION_CANCELLED -> "Demande annulée";
-            case FUNDS_RELEASED -> "Fonds débloqués";
-        };
+        switch (event.getEventType()) {
+            case APPLICATION_CREATED:
+                return "Brouillon créé";
+            case APPLICATION_SUBMITTED:
+                return "Demande soumise";
+            case DOCUMENT_UPLOADED:
+                return Boolean.TRUE.equals(payload.get("bundled"))
+                        ? "Pièces justificatives déposées"
+                        : "Document déposé";
+            case ADVISOR_ASSIGNED:
+                return "Conseiller affecté";
+            case REVIEW_STARTED:
+                return "Analyse financière";
+            case DOCUMENT_REJECTED:
+                return "Complément demandé";
+            case DOCUMENT_VALIDATED:
+                return "Document validé";
+            case OFFER_PROPOSED:
+                return "Contre-offre proposée";
+            case OFFER_ACCEPTED:
+                return "Contre-offre acceptée";
+            case OFFER_REJECTED:
+                return "Contre-offre refusée";
+            case APPLICATION_APPROVED:
+                return "Demande approuvée";
+            case APPLICATION_REJECTED:
+                return "Demande refusée";
+            case APPLICATION_CANCELLED:
+                return "Demande annulée";
+            case FUNDS_RELEASED:
+                return "Fonds débloqués";
+            default:
+                return "Événement";
+        }
     }
 
     private String resolveDescription(LoanApplicationEvent event, Map<String, Object> payload, LoanApplication loan) {
-        return switch (event.getEventType()) {
-            case APPLICATION_CREATED -> "Votre demande a été enregistrée. Référence : #" + loan.getReference() + ".";
-            case APPLICATION_SUBMITTED ->
-                    "Votre dossier a été transmis pour étude. Référence : #" + loan.getReference() + ".";
-            case DOCUMENT_UPLOADED -> {
+        switch (event.getEventType()) {
+            case APPLICATION_CREATED:
+                return "Votre demande a été enregistrée. Référence : #" + loan.getReference() + ".";
+            case APPLICATION_SUBMITTED:
+                return "Votre dossier a été transmis pour étude. Référence : #" + loan.getReference() + ".";
+            case DOCUMENT_UPLOADED:
                 if (Boolean.TRUE.equals(payload.get("bundled"))) {
                     int count = intVal(payload.get("documentCount"), REQUIRED_DOCUMENT_TYPES.size());
-                    yield bundledDocumentsDescription(count, REQUIRED_DOCUMENT_TYPES.size());
+                    return bundledDocumentsDescription(count, REQUIRED_DOCUMENT_TYPES.size());
                 }
-                String label = documentLabel(payload);
+                String uploadLabel = documentLabel(payload);
                 String file = stringVal(payload.get("fileName"));
                 boolean complement = Boolean.TRUE.equals(payload.get("complement"));
                 String prefix = complement ? "Nouveau dépôt — " : "";
-                yield file != null ? prefix + label + " — " + file : prefix + label + " reçu.";
-            }
-            case ADVISOR_ASSIGNED -> {
-                String name = event.getActorDisplayName();
-                if (name == null || name.isBlank()) {
-                    name = stringVal(payload.get("advisorName"));
+                return file != null ? prefix + uploadLabel + " — " + file : prefix + uploadLabel + " reçu.";
+            case ADVISOR_ASSIGNED:
+                String advisorName = stringVal(payload.get("advisorName"));
+                if (advisorName != null && !advisorName.isBlank()) {
+                    return advisorName + " est désormais en charge de votre dossier.";
                 }
-                yield name != null && !name.isBlank()
-                        ? name + " est désormais en charge de votre dossier."
+                String actorName = event.getActorDisplayName();
+                return actorName != null && !actorName.isBlank()
+                        ? actorName + " est désormais en charge de votre dossier."
                         : "Un conseiller a été affecté à votre dossier.";
-            }
-            case REVIEW_STARTED ->
-                    "Votre dossier est en cours d'analyse. Durée estimée : 2 à 5 jours ouvrés.";
-            case DOCUMENT_REJECTED -> {
-                String label = documentLabel(payload);
-                String comment = stringVal(payload.get("comment"));
-                yield comment != null
-                        ? label + " : " + comment
-                        : label + " doit être remplacé ou complété.";
-            }
-            case DOCUMENT_VALIDATED -> documentLabel(payload) + " a été validé par le conseiller.";
-            case APPLICATION_APPROVED -> {
-                String comment = stringVal(payload.get("comment"));
-                if (comment != null) {
-                    yield comment;
-                } else if (loan.getDecisionComment() != null) {
-                    yield loan.getDecisionComment();
-                } else {
-                    yield "Votre demande a été acceptée.";
-                }
-            }
-            case APPLICATION_REJECTED -> {
-                String comment = stringVal(payload.get("comment"));
-                if (comment != null) {
-                    yield comment;
-                } else if (loan.getDecisionComment() != null) {
-                    yield loan.getDecisionComment();
-                } else {
-                    yield "Votre demande n'a pas pu être acceptée.";
-                }
-            }
-            case APPLICATION_CANCELLED -> {
-                String comment = stringVal(payload.get("comment"));
-                if (comment != null) {
-                    yield comment;
-                } else if (loan.getDecisionComment() != null) {
-                    yield loan.getDecisionComment();
-                } else {
-                    yield "Cette demande a été annulée.";
-                }
-            }
-            case FUNDS_RELEASED -> "Les fonds sont disponibles sur votre compte.";
-        };
+            case REVIEW_STARTED:
+                return "Votre dossier est en cours d'analyse. Durée estimée : 2 à 5 jours ouvrés.";
+            case DOCUMENT_REJECTED:
+                String rejectLabel = documentLabel(payload);
+                String rejectComment = stringVal(payload.get("comment"));
+                return rejectComment != null
+                        ? rejectLabel + " : " + rejectComment
+                        : rejectLabel + " doit être remplacé ou complété.";
+            case DOCUMENT_VALIDATED:
+                return documentLabel(payload) + " a été validé par le conseiller.";
+            case OFFER_PROPOSED:
+                String offerMsg = stringVal(payload.get("clientMessage"));
+                return offerMsg != null && !offerMsg.isBlank()
+                        ? "Votre conseiller vous propose une nouvelle offre : " + offerMsg
+                        : "Votre conseiller vous a proposé une contre-offre. Merci de l'accepter ou de la refuser.";
+            case OFFER_ACCEPTED:
+                return "Vous avez accepté la contre-offre proposée par votre conseiller.";
+            case OFFER_REJECTED:
+                String offerRejectComment = stringVal(payload.get("comment"));
+                return offerRejectComment != null && !offerRejectComment.isBlank()
+                        ? "Vous avez refusé la contre-offre : " + offerRejectComment
+                        : "Vous avez refusé la contre-offre proposée.";
+            case APPLICATION_APPROVED:
+                return resolveDecisionDescription(payload, loan, "Votre demande a été acceptée.");
+            case APPLICATION_REJECTED:
+                return resolveDecisionDescription(payload, loan, "Votre demande n'a pas pu être acceptée.");
+            case APPLICATION_CANCELLED:
+                return resolveDecisionDescription(payload, loan, "Cette demande a été annulée.");
+            case FUNDS_RELEASED:
+                return "Les fonds sont disponibles sur votre compte.";
+            default:
+                return "";
+        }
+    }
+
+    private String resolveDecisionDescription(
+            Map<String, Object> payload,
+            LoanApplication loan,
+            String fallback
+    ) {
+        String comment = stringVal(payload.get("comment"));
+        if (comment != null) {
+            return comment;
+        }
+        if (loan.getDecisionComment() != null) {
+            return loan.getDecisionComment();
+        }
+        return fallback;
     }
 
     private String resolveState(LoanApplicationEvent event, LoanApplication loan, int index, int total) {

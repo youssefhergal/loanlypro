@@ -106,3 +106,9 @@ a {
   background-color: var(--color-primary-light) !important;
   transition: background-color 0.2s ease;
 }
+
+/* Advisor document preview panel uses z-index 1201 — dialogs must render above it */
+.cdk-overlay-container:has(.validate-document-dialog-panel),
+.cdk-overlay-container:has(.reject-document-dialog-panel) {
+  z-index: 1300 !important;
+}

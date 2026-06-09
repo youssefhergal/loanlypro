@@ -3,10 +3,17 @@ package com.projetfilrouge.loanmanagement.web.controller;
 import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
 import com.projetfilrouge.loanmanagement.entity.LoanDocumentType;
 import com.projetfilrouge.loanmanagement.service.LoanService;
+import com.projetfilrouge.loanmanagement.web.dto.request.AdminLoanListSort;
 import com.projetfilrouge.loanmanagement.web.dto.request.CancelLoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanSubmittedUpdateDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.ProposeOfferRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.RejectDocumentRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.RejectOfferRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.RejectLoanRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.ValidateDocumentRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.AdminLoanListSummaryDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentReviewResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanHistoryEventResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
@@ -60,6 +67,47 @@ public class LoanController {
             @RequestParam(defaultValue = "10") int size
     ) {
         return ResponseEntity.ok(loanService.getAllApplications(authentication.getName(), status, page, size));
+    }
+
+    @GetMapping("/admin")
+    @Operation(
+            summary = "Lister les demandes (admin)",
+            description = "Liste paginée avec filtres pour la supervision admin."
+    )
+    @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès")
+    public ResponseEntity<Page<LoanResponseDto>> getAdminList(
+            Authentication authentication,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long advisorId,
+            @RequestParam(defaultValue = "false") boolean unassignedOnly,
+            @RequestParam(required = false) LoanApplicationStatus status,
+            @RequestParam(defaultValue = "UPDATED_DESC") AdminLoanListSort sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(loanService.getAdminApplications(
+                authentication.getName(),
+                search,
+                advisorId,
+                unassignedOnly,
+                status,
+                sort,
+                page,
+                size
+        ));
+    }
+
+    @GetMapping("/admin/summary")
+    @Operation(
+            summary = "Synthèse liste admin",
+            description = "Compteurs par statut, non affectés et conseillers pour la liste admin."
+    )
+    @ApiResponse(responseCode = "200", description = "Synthèse récupérée avec succès")
+    public ResponseEntity<AdminLoanListSummaryDto> getAdminSummary(
+            Authentication authentication,
+            @RequestParam(required = false) String search
+    ) {
+        return ResponseEntity.ok(loanService.getAdminListSummary(authentication.getName(), search));
     }
 
     @GetMapping("/{id}")
@@ -154,6 +202,35 @@ public class LoanController {
         return ResponseEntity.ok(loanService.submitApplication(id, authentication.getName()));
     }
 
+    @PostMapping("/{id}/propose-offer")
+    @Operation(summary = "Proposer une contre-offre", description = "Conseiller : envoie une offre ajustée en attente d'acceptation client.")
+    public ResponseEntity<LoanResponseDto> proposeOffer(
+            @PathVariable Long id,
+            @Valid @RequestBody ProposeOfferRequestDto request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.proposeCounterOffer(id, request, authentication.getName()));
+    }
+
+    @PostMapping("/{id}/offer/accept")
+    @Operation(summary = "Accepter la contre-offre", description = "Client : accepte la proposition du conseiller.")
+    public ResponseEntity<LoanResponseDto> acceptOffer(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.acceptOffer(id, authentication.getName()));
+    }
+
+    @PostMapping("/{id}/offer/reject")
+    @Operation(summary = "Refuser la contre-offre", description = "Client : refuse la proposition du conseiller.")
+    public ResponseEntity<LoanResponseDto> rejectOffer(
+            @PathVariable Long id,
+            @RequestBody(required = false) @Valid RejectOfferRequestDto request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.rejectOffer(id, request, authentication.getName()));
+    }
+
     @PostMapping("/{id}/approve")
     @Operation(summary = "Approuver une demande", description = "Action réservée au rôle ROLE_CONSEILLER.")
     @ApiResponses({
@@ -196,6 +273,16 @@ public class LoanController {
         return ResponseEntity.ok(loanService.rejectDocument(id, request, authentication.getName()));
     }
 
+    @PostMapping("/{id}/documents/validate")
+    @Operation(summary = "Valider un document", description = "Conseiller : valide une pièce justificative.")
+    public ResponseEntity<LoanHistoryEventResponseDto> validateDocument(
+            @PathVariable Long id,
+            @Valid @RequestBody ValidateDocumentRequestDto request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.validateDocument(id, request, authentication.getName()));
+    }
+
     @PostMapping("/{id}/reject")
     @Operation(summary = "Rejeter une demande", description = "Action réservée au rôle ROLE_CONSEILLER.")
     @ApiResponses({
@@ -205,9 +292,10 @@ public class LoanController {
     })
     public ResponseEntity<LoanResponseDto> reject(
             @PathVariable Long id,
+            @Valid @RequestBody RejectLoanRequestDto request,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(loanService.rejectApplication(id, authentication.getName()));
+        return ResponseEntity.ok(loanService.rejectApplication(id, request, authentication.getName()));
     }
 
     @PostMapping("/{id}/cancel")
@@ -261,6 +349,15 @@ public class LoanController {
         LoanDocumentResponseDto response = loanService.uploadComplementDocument(
                 id, documentType, file, displayName, authentication.getName());
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}/document-reviews")
+    @Operation(summary = "Statuts de revue des pièces", description = "Source de vérité pour la validation conseiller par type de document.")
+    public ResponseEntity<List<LoanDocumentReviewResponseDto>> getDocumentReviews(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(loanService.getDocumentReviews(id, authentication.getName()));
     }
 
     @GetMapping("/{id}/documents")

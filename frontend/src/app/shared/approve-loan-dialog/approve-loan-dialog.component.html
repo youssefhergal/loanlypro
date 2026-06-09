@@ -1,0 +1,69 @@
+<div class="approve-loan-dialog">
+  <header class="approve-loan-dialog__header">
+    <div class="approve-loan-dialog__title-row">
+      <span class="approve-loan-dialog__title-icon" aria-hidden="true">
+        <mat-icon>check</mat-icon>
+      </span>
+      <h2>Approuver ce dossier ?</h2>
+    </div>
+    <button
+      mat-icon-button
+      type="button"
+      class="approve-loan-dialog__close"
+      aria-label="Fermer"
+      (click)="onCancel()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="approve-loan-dialog__body">
+    <section class="approve-loan-dialog__offer">
+      <p class="approve-loan-dialog__offer-label">Offre retenue</p>
+      <dl class="approve-loan-dialog__offer-grid">
+        <div>
+          <dt>Montant</dt>
+          <dd>{{ data.amount | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+        </div>
+        <div>
+          <dt>Durée</dt>
+          <dd>{{ data.durationMonths }} mois</dd>
+        </div>
+        <div>
+          <dt>Taux</dt>
+          <dd>{{ data.rate | number: '1.2-2' }} %</dd>
+        </div>
+        <div>
+          <dt>Mensualité</dt>
+          <dd class="approve-loan-dialog__payment">
+            {{ data.monthlyPayment | currency: 'EUR' : 'symbol' : '1.0-0' }}
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <label class="approve-loan-dialog__confirm-box">
+      <mat-checkbox
+        [checked]="documentsConfirmed()"
+        (change)="documentsConfirmed.set($event.checked)"
+      />
+      <span>Je confirme que toutes les pièces justificatives ont été vérifiées et validées.</span>
+    </label>
+  </div>
+
+  <footer class="approve-loan-dialog__footer">
+    <button mat-button type="button" class="approve-loan-dialog__cancel" (click)="onCancel()">
+      Annuler
+    </button>
+    <button
+      mat-flat-button
+      type="button"
+      class="approve-loan-dialog__confirm"
+      [disabled]="!canConfirm()"
+      (click)="onConfirm()"
+    >
+      <mat-icon aria-hidden="true">check_circle</mat-icon>
+      Approuver définitivement
+    </button>
+  </footer>
+</div>

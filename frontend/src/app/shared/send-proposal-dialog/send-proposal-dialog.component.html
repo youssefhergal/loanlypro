@@ -1,0 +1,90 @@
+<div class="send-proposal-dialog">
+  <header class="send-proposal-dialog__header">
+    <div class="send-proposal-dialog__title-row">
+      <mat-icon class="send-proposal-dialog__title-icon" aria-hidden="true">send</mat-icon>
+      <h2>Envoyer la proposition au client ?</h2>
+    </div>
+    <button
+      mat-icon-button
+      type="button"
+      class="send-proposal-dialog__close"
+      aria-label="Fermer"
+      (click)="onCancel()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="send-proposal-dialog__body">
+    <div class="send-proposal-dialog__compare-wrap">
+      <table class="send-proposal-dialog__compare">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Demande initiale</th>
+            <th class="send-proposal-dialog__compare-offer">Contre-offre</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th>Montant</th>
+            <td>{{ data.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
+            <td class="send-proposal-dialog__compare-offer">
+              {{ data.approvedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}
+            </td>
+          </tr>
+          <tr>
+            <th>Durée</th>
+            <td>{{ data.requestedDurationMonths }} mois</td>
+            <td class="send-proposal-dialog__compare-offer">{{ data.approvedDurationMonths }} mois</td>
+          </tr>
+          <tr>
+            <th>Taux</th>
+            <td>—</td>
+            <td class="send-proposal-dialog__compare-offer">
+              {{ data.approvedRate | number: '1.2-2' }} %
+            </td>
+          </tr>
+          <tr>
+            <th>Mensualité</th>
+            <td>{{ data.requestedMonthlyPayment | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
+            <td class="send-proposal-dialog__compare-offer">
+              {{ data.approvedMonthlyPayment | currency: 'EUR' : 'symbol' : '1.0-0' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="send-proposal-dialog__field">
+      <label for="send-proposal-message">Message au client (Optionnel)</label>
+      <textarea
+        id="send-proposal-message"
+        class="send-proposal-dialog__textarea"
+        rows="3"
+        [maxlength]="maxMessageLength"
+        placeholder="Expliquez les ajustements proposés au client…"
+        [ngModel]="clientMessage()"
+        (ngModelChange)="clientMessage.set($event)"
+      ></textarea>
+    </div>
+
+    <div class="send-proposal-dialog__alert">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <p>
+        Le client devra accepter ou refuser cette offre depuis son espace personnel.
+        <strong>Vous ne pourrez approuver le dossier qu'après son acceptation.</strong>
+      </p>
+    </div>
+  </div>
+
+  <footer class="send-proposal-dialog__footer">
+    <button mat-button type="button" class="send-proposal-dialog__cancel" (click)="onCancel()">
+      Annuler
+    </button>
+    <button mat-flat-button type="button" class="send-proposal-dialog__confirm" (click)="onConfirm()">
+      <mat-icon aria-hidden="true">send</mat-icon>
+      Envoyer la proposition
+    </button>
+  </footer>
+</div>

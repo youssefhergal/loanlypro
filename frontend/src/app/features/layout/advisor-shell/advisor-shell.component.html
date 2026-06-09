@@ -48,14 +48,13 @@
               routerLink="/conseiller/dossiers"
               routerLinkActive="active"
               [routerLinkActiveOptions]="{ exact: true }"
-              class="nav-item nav-item--muted"
-              matTooltip="Mes dossiers (bientôt)"
+              class="nav-item"
+              matTooltip="Mes dossiers"
               [matTooltipDisabled]="!sidebarCollapsed()"
               matTooltipPosition="right"
             >
               <mat-icon>folder_open</mat-icon>
               <span>Mes dossiers</span>
-              <span class="badge-soon">Bientôt</span>
             </a>
             <a
               routerLink="/conseiller/prets"
@@ -178,14 +177,16 @@
   </header>
 
   <main class="main">
-    <header class="page-header">
-      <div class="page-header-main">
-        <h1 class="page-title">{{ pageTitle() }}</h1>
-        @if (pageDescription()) {
-          <p class="page-description">{{ pageDescription() }}</p>
-        }
-      </div>
-    </header>
+    @if (pageTitle()) {
+      <header class="page-header">
+        <div class="page-header-main">
+          <h1 class="page-title">{{ pageTitle() }}</h1>
+          @if (pageDescription()) {
+            <p class="page-description">{{ pageDescription() }}</p>
+          }
+        </div>
+      </header>
+    }
     <router-outlet />
   </main>
 </div>

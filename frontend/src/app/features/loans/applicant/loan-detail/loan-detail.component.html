@@ -86,6 +86,71 @@
 
         <div class="loan-detail-layout">
           <div class="loan-detail-layout__main">
+            @if (offerPending()) {
+              <section class="loan-detail-alert loan-detail-alert--offer">
+                <mat-icon>local_offer</mat-icon>
+                <div class="loan-detail-offer-alert">
+                  <h2>Contre-offre de votre conseiller</h2>
+                  <p class="loan-detail-offer-alert__intro">
+                    Votre conseiller vous propose des conditions différentes de votre demande initiale
+                    (voir « Détails du prêt »). Acceptez ou refusez cette proposition pour poursuivre
+                    l'étude de votre dossier.
+                  </p>
+                  @if (l.offerMessage?.trim()) {
+                    <blockquote class="loan-detail-offer-alert__message">
+                      « {{ l.offerMessage }} »
+                    </blockquote>
+                  }
+                  <dl class="loan-detail-dl loan-detail-dl--grid loan-detail-offer-summary">
+                    <div>
+                      <dt>Montant proposé</dt>
+                      <dd class="loan-detail-dl__accent">
+                        {{ counterOfferAmount() | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Durée</dt>
+                      <dd>
+                        {{ counterOfferDurationMonths() }} mois
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Taux fixe</dt>
+                      <dd>{{ counterOfferRate() | number: '1.2-2' }} %</dd>
+                    </div>
+                    <div>
+                      <dt>Mensualité est.</dt>
+                      <dd class="loan-detail-dl__accent">
+                        {{ counterOfferMonthlyPayment() | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                      </dd>
+                    </div>
+                  </dl>
+                  <div class="loan-detail-offer-alert__actions">
+                    <button
+                      mat-flat-button
+                      color="primary"
+                      type="button"
+                      (click)="acceptCounterOffer()"
+                      [disabled]="offerActionLoading()"
+                    >
+                      <mat-icon>check_circle</mat-icon>
+                      Accepter l'offre
+                    </button>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      class="loan-detail-offer-alert__reject"
+                      (click)="rejectCounterOffer()"
+                      [disabled]="offerActionLoading()"
+                    >
+                      <mat-icon>cancel</mat-icon>
+                      Refuser
+                    </button>
+                  </div>
+                </div>
+              </section>
+            }
+
             <section class="loan-detail-card">
               <h2 class="loan-detail-card__title">
                 <mat-icon>summarize</mat-icon>
@@ -275,25 +340,39 @@
                 <mat-icon>history</mat-icon>
                 Historique de la demande
               </h2>
-              <ol class="loan-detail-timeline">
-                @for (event of timeline(); track event.title + event.dateLabel) {
-                  <li
-                    class="loan-detail-timeline__item"
-                    [class.loan-detail-timeline__item--done]="event.state === 'done'"
-                    [class.loan-detail-timeline__item--current]="event.state === 'current'"
-                    [class.loan-detail-timeline__item--warn]="event.state === 'warn'"
-                  >
-                    <span class="loan-detail-timeline__dot" aria-hidden="true"></span>
-                    <div>
-                      <div class="loan-detail-timeline__head">
-                        <h3>{{ event.title }}</h3>
-                        <span class="loan-detail-timeline__date">{{ event.dateLabel }}</span>
+              @if (historyUnavailable()) {
+                <div class="loan-detail-history-banner" role="status">
+                  <mat-icon>cloud_off</mat-icon>
+                  <p>
+                    Historique indisponible pour le moment. Les autres informations de votre dossier
+                    restent affichées.
+                  </p>
+                </div>
+              } @else if (historyStatus() === 'pending') {
+                <p class="loan-detail-history-loading">Chargement de l'historique…</p>
+              } @else if (!timeline().length) {
+                <p class="loan-detail-history-empty">Aucun événement enregistré.</p>
+              } @else {
+                <ol class="loan-detail-timeline">
+                  @for (event of timeline(); track event.title + event.dateLabel) {
+                    <li
+                      class="loan-detail-timeline__item"
+                      [class.loan-detail-timeline__item--done]="event.state === 'done'"
+                      [class.loan-detail-timeline__item--current]="event.state === 'current'"
+                      [class.loan-detail-timeline__item--warn]="event.state === 'warn'"
+                    >
+                      <span class="loan-detail-timeline__dot" aria-hidden="true"></span>
+                      <div>
+                        <div class="loan-detail-timeline__head">
+                          <h3>{{ event.title }}</h3>
+                          <span class="loan-detail-timeline__date">{{ event.dateLabel }}</span>
+                        </div>
+                        <p>{{ event.description }}</p>
                       </div>
-                      <p>{{ event.description }}</p>
-                    </div>
-                  </li>
-                }
-              </ol>
+                    </li>
+                  }
+                </ol>
+              }
             </section>
 
             @if (l.advisorName) {

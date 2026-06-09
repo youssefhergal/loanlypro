@@ -11,15 +11,25 @@ import com.projetfilrouge.loanmanagement.entity.LoanPurpose;
 import com.projetfilrouge.loanmanagement.entity.User;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationEventRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
+import com.projetfilrouge.loanmanagement.repository.LoanApplicationSpecifications;
 import com.projetfilrouge.loanmanagement.repository.LoanDocumentRepository;
 import com.projetfilrouge.loanmanagement.repository.UserRepository;
+import com.projetfilrouge.loanmanagement.web.dto.request.AdminLoanListSort;
 import com.projetfilrouge.loanmanagement.web.dto.request.CancelLoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanSubmittedUpdateDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.ProposeOfferRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.RejectDocumentRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.RejectOfferRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.RejectLoanRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.ValidateDocumentRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.AdminAdvisorOptionDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.AdminLoanListSummaryDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentReviewResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanHistoryEventResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
+import org.springframework.data.jpa.domain.Specification;
 import com.projetfilrouge.loanmanagement.web.exception.BusinessRuleException;
 import com.projetfilrouge.loanmanagement.web.exception.ForbiddenOperationException;
 import com.projetfilrouge.loanmanagement.web.exception.ResourceNotFoundException;
@@ -35,6 +45,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -57,12 +68,14 @@ public class LoanService {
             LoanDocumentType.BANK_STATEMENTS,
             LoanDocumentType.PROOF_OF_ADDRESS
     );
+    private static final BigDecimal SYSTEM_INTEREST_RATE = new BigDecimal("3.85");
 
     private final LoanApplicationRepository loanRepository;
     private final LoanDocumentRepository loanDocumentRepository;
     private final LoanApplicationEventRepository eventRepository;
     private final UserRepository userRepository;
     private final LoanApplicationHistoryService historyService;
+    private final DocumentReviewService documentReviewService;
     private final LoanDocumentStorageService documentStorage;
 
     public record DownloadedLoanDocument(String fileName, String contentType, byte[] content) {}
@@ -102,8 +115,8 @@ public class LoanService {
                     : loanRepository.findByStatus(status, pageable);
         } else if (hasRole(currentUser, ROLE_CONSEILLER)) {
             loans = status == null
-                    ? loanRepository.findByAssignedAdvisorId(currentUser.getId(), pageable)
-                    : loanRepository.findByAssignedAdvisorIdAndStatus(currentUser.getId(), status, pageable);
+                    ? loanRepository.findVisibleToAdvisor(currentUser.getId(), pageable)
+                    : loanRepository.findVisibleToAdvisorAndStatus(currentUser.getId(), status, pageable);
         } else {
             loans = status == null
                     ? loanRepository.findByApplicantEmail(currentUserEmail, pageable)
@@ -111,6 +124,71 @@ public class LoanService {
         }
 
         return loans.map(this::mapToResponseDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<LoanResponseDto> getAdminApplications(
+            String currentUserEmail,
+            String search,
+            Long advisorId,
+            boolean unassignedOnly,
+            LoanApplicationStatus status,
+            AdminLoanListSort sort,
+            int page,
+            int size
+    ) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        ensureAdmin(currentUser);
+
+        LoanApplicationStatus statusFilter = unassignedOnly ? null : status;
+        Specification<LoanApplication> spec = LoanApplicationSpecifications.adminList(
+                search,
+                advisorId,
+                unassignedOnly,
+                statusFilter
+        );
+        Pageable pageable = PageRequest.of(page, size, adminListSort(sort));
+        return loanRepository.findAll(spec, pageable).map(this::mapToResponseDto);
+    }
+
+    @Transactional(readOnly = true)
+    public AdminLoanListSummaryDto getAdminListSummary(String currentUserEmail, String search) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        ensureAdmin(currentUser);
+
+        long totalCount = loanRepository.count(
+                LoanApplicationSpecifications.adminList(search, null, false, null)
+        );
+        long unassignedCount = loanRepository.count(
+                LoanApplicationSpecifications.adminList(search, null, true, null)
+        );
+
+        Map<LoanApplicationStatus, Long> statusCounts = new EnumMap<>(LoanApplicationStatus.class);
+        for (LoanApplicationStatus applicationStatus : LoanApplicationStatus.values()) {
+            if (applicationStatus == LoanApplicationStatus.DRAFT) {
+                continue;
+            }
+            statusCounts.put(
+                    applicationStatus,
+                    loanRepository.count(
+                            LoanApplicationSpecifications.adminList(search, null, false, applicationStatus)
+                    )
+            );
+        }
+
+        List<AdminAdvisorOptionDto> advisors = userRepository.findAllConseillers().stream()
+                .map(user -> AdminAdvisorOptionDto.builder()
+                        .id(user.getId())
+                        .name(displayName(user))
+                        .build())
+                .toList();
+
+        return AdminLoanListSummaryDto.builder()
+                .totalCount(totalCount)
+                .unassignedCount(unassignedCount)
+                .statusCounts(statusCounts)
+                .advisors(advisors)
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -170,9 +248,10 @@ public class LoanService {
             throw new ForbiddenOperationException("Accès refusé à cette demande");
         }
 
-        if (loan.getStatus() != LoanApplicationStatus.SUBMITTED) {
+        if (loan.getStatus() != LoanApplicationStatus.SUBMITTED
+                && loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
             throw new BusinessRuleException(
-                    "Mise à jour impossible : seul un dossier soumis (SUBMITTED) peut être modifié."
+                    "Mise à jour impossible : seul un dossier soumis ou en analyse peut être modifié."
             );
         }
 
@@ -224,6 +303,7 @@ public class LoanService {
 
         LoanApplication saved = loanRepository.save(loan);
         recordInitialDocumentsBundle(saved, currentUser, saved.getSubmittedAt());
+        documentReviewService.initializePendingReviews(saved);
         historyService.recordEvent(
                 saved,
                 LoanApplicationEventType.APPLICATION_SUBMITTED,
@@ -258,8 +338,24 @@ public class LoanService {
             return mapToResponseDto(loan);
         }
 
+        boolean assigned = false;
+        if (hasRole(currentUser, ROLE_CONSEILLER)) {
+            assigned = assignAdvisorIfNeeded(loan, currentUser);
+        }
+
         loan.setStatus(LoanApplicationStatus.UNDER_REVIEW);
         LoanApplication saved = loanRepository.save(loan);
+
+        if (assigned) {
+            historyService.recordEvent(
+                    saved,
+                    LoanApplicationEventType.ADVISOR_ASSIGNED,
+                    actorTypeFor(currentUser),
+                    currentUser.getEmail(),
+                    displayName(currentUser),
+                    Map.of("advisorName", displayName(currentUser))
+            );
+        }
 
         if (previousStatus == LoanApplicationStatus.SUBMITTED) {
             historyService.recordEvent(
@@ -288,12 +384,13 @@ public class LoanService {
             throw new ForbiddenOperationException("Accès refusé");
         }
 
-        if (loan.getStatus() != LoanApplicationStatus.SUBMITTED
-                && loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
+        if (loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
             throw new BusinessRuleException(
-                    "Rejet de document impossible pour ce statut de dossier."
+                    "Rejet de document impossible : le dossier doit être en analyse (UNDER_REVIEW)."
             );
         }
+
+        documentReviewService.markRejected(loan, request.getDocumentType(), request.getComment());
 
         LoanApplicationEvent event = historyService.recordEvent(
                 loan,
@@ -310,6 +407,42 @@ public class LoanService {
         return historyService.mapEventToDisplayDto(event);
     }
 
+    @Transactional
+    public LoanHistoryEventResponseDto validateDocument(
+            Long id,
+            ValidateDocumentRequestDto request,
+            String currentUserEmail
+    ) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+
+        if (!(hasRole(currentUser, ROLE_CONSEILLER) || hasRole(currentUser, ROLE_ADMIN))) {
+            throw new ForbiddenOperationException("Accès refusé");
+        }
+
+        if (loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
+            throw new BusinessRuleException(
+                    "Validation de document impossible : le dossier doit être en analyse (UNDER_REVIEW)."
+            );
+        }
+
+        ensureDocumentFilePresent(loan.getId(), request.getDocumentType());
+
+        documentReviewService.markValidated(loan, request.getDocumentType());
+
+        LoanApplicationEvent event = historyService.recordEvent(
+                loan,
+                LoanApplicationEventType.DOCUMENT_VALIDATED,
+                actorTypeFor(currentUser),
+                currentUser.getEmail(),
+                displayName(currentUser),
+                Map.of("documentType", request.getDocumentType().name())
+        );
+
+        return historyService.mapEventToDisplayDto(event);
+    }
+
     @Transactional(readOnly = true)
     public List<LoanHistoryEventResponseDto> getApplicationHistory(Long id, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
@@ -317,6 +450,127 @@ public class LoanService {
                 .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
         ensureCanAccessLoan(loan, currentUser);
         return historyService.getHistory(id);
+    }
+
+    @Transactional
+    public LoanResponseDto proposeCounterOffer(Long id, ProposeOfferRequestDto request, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        if (!(hasRole(currentUser, ROLE_CONSEILLER) || hasRole(currentUser, ROLE_ADMIN))) {
+            throw new ForbiddenOperationException("Accès refusé");
+        }
+
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+        ensureAdvisorCanManage(loan, currentUser);
+
+        if (loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
+            throw new BusinessRuleException(
+                    "Contre-offre impossible : le dossier doit être en analyse (UNDER_REVIEW)."
+            );
+        }
+
+        ensureRequiredDocumentsPresent(loan.getId());
+        documentReviewService.ensureRequiredDocumentsReadyForDecision(loan.getId(), "Contre-offre impossible");
+
+        loan.setApprovedAmount(request.getApprovedAmount());
+        loan.setApprovedDurationMonths(request.getApprovedDurationMonths());
+        loan.setInterestRate(request.getInterestRate());
+        loan.setOfferMessage(request.getClientMessage() != null ? request.getClientMessage().trim() : null);
+
+        if (!isCounterOffer(loan)) {
+            throw new BusinessRuleException(
+                    "Cette proposition correspond à l'offre système. Utilisez « Approuver le dossier » directement."
+            );
+        }
+
+        loan.setOfferClientAccepted(false);
+        loan.setStatus(LoanApplicationStatus.OFFER_PENDING);
+        LoanApplication saved = loanRepository.save(loan);
+
+        historyService.recordEvent(
+                saved,
+                LoanApplicationEventType.OFFER_PROPOSED,
+                actorTypeFor(currentUser),
+                currentUser.getEmail(),
+                displayName(currentUser),
+                Map.of(
+                        "approvedAmount", saved.getApprovedAmount(),
+                        "approvedDurationMonths", saved.getApprovedDurationMonths(),
+                        "interestRate", saved.getInterestRate(),
+                        "clientMessage", saved.getOfferMessage() != null ? saved.getOfferMessage() : ""
+                )
+        );
+        return mapToResponseDto(saved);
+    }
+
+    @Transactional
+    public LoanResponseDto acceptOffer(Long id, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+
+        if (!isApplicant(loan, currentUser)) {
+            throw new ForbiddenOperationException("Seul le demandeur peut accepter l'offre.");
+        }
+
+        if (loan.getStatus() != LoanApplicationStatus.OFFER_PENDING) {
+            throw new BusinessRuleException("Aucune contre-offre en attente de votre réponse.");
+        }
+
+        loan.setOfferClientAccepted(true);
+        loan.setStatus(LoanApplicationStatus.UNDER_REVIEW);
+        LoanApplication saved = loanRepository.save(loan);
+
+        historyService.recordEvent(
+                saved,
+                LoanApplicationEventType.OFFER_ACCEPTED,
+                LoanEventActorType.CLIENT,
+                currentUser.getEmail(),
+                displayName(currentUser),
+                Map.of()
+        );
+        return mapToResponseDto(saved);
+    }
+
+    @Transactional
+    public LoanResponseDto rejectOffer(Long id, RejectOfferRequestDto request, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+
+        if (!isApplicant(loan, currentUser)) {
+            throw new ForbiddenOperationException("Seul le demandeur peut refuser l'offre.");
+        }
+
+        if (loan.getStatus() != LoanApplicationStatus.OFFER_PENDING) {
+            throw new BusinessRuleException("Aucune contre-offre en attente de votre réponse.");
+        }
+
+        String comment = request != null && request.getComment() != null
+                ? request.getComment().trim()
+                : null;
+        if (comment != null && comment.isBlank()) {
+            comment = null;
+        }
+
+        loan.setOfferClientAccepted(false);
+        loan.setApprovedAmount(null);
+        loan.setApprovedDurationMonths(null);
+        loan.setInterestRate(null);
+        loan.setOfferMessage(null);
+        loan.setStatus(LoanApplicationStatus.UNDER_REVIEW);
+        LoanApplication saved = loanRepository.save(loan);
+
+        Map<String, Object> payload = comment != null ? Map.of("comment", comment) : Map.of();
+        historyService.recordEvent(
+                saved,
+                LoanApplicationEventType.OFFER_REJECTED,
+                LoanEventActorType.CLIENT,
+                currentUser.getEmail(),
+                displayName(currentUser),
+                payload
+        );
+        return mapToResponseDto(saved);
     }
 
     @Transactional
@@ -329,11 +583,35 @@ public class LoanService {
             throw new ForbiddenOperationException("Accès refusé à cette demande");
         }
 
-        if (!(loan.getStatus() == LoanApplicationStatus.SUBMITTED
-                || loan.getStatus() == LoanApplicationStatus.UNDER_REVIEW)) {
+        ensureAdvisorCanManage(loan, currentUser);
+
+        if (loan.getStatus() == LoanApplicationStatus.OFFER_PENDING) {
             throw new BusinessRuleException(
-                    "Approbation impossible : le dossier doit être en statut SUBMITTED ou UNDER_REVIEW."
+                    "Approbation impossible : en attente de la réponse du client sur la contre-offre."
             );
+        }
+
+        if (loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
+            throw new BusinessRuleException(
+                    "Approbation impossible : le dossier doit être en analyse (UNDER_REVIEW)."
+            );
+        }
+
+        if (isCounterOffer(loan) && !Boolean.TRUE.equals(loan.getOfferClientAccepted())) {
+            throw new BusinessRuleException(
+                    "Approbation impossible : le client doit accepter la contre-offre avant approbation."
+            );
+        }
+
+        ensureRequiredDocumentsPresent(loan.getId());
+        documentReviewService.ensureRequiredDocumentsReadyForDecision(loan.getId(), "Approbation impossible");
+
+        if (hasRole(currentUser, ROLE_CONSEILLER)) {
+            assignAdvisorIfNeeded(loan, currentUser);
+        }
+
+        if (!isCounterOffer(loan)) {
+            applySystemOffer(loan);
         }
 
         if (!isCompleteForApproval(loan)) {
@@ -358,7 +636,7 @@ public class LoanService {
     }
 
     @Transactional
-    public LoanResponseDto rejectApplication(Long id, String currentUserEmail) {
+    public LoanResponseDto rejectApplication(Long id, RejectLoanRequestDto request, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
@@ -367,15 +645,20 @@ public class LoanService {
             throw new ForbiddenOperationException("Accès refusé à cette demande");
         }
 
+        ensureAdvisorCanManage(loan, currentUser);
+
         if (!(loan.getStatus() == LoanApplicationStatus.SUBMITTED
-                || loan.getStatus() == LoanApplicationStatus.UNDER_REVIEW)) {
+                || loan.getStatus() == LoanApplicationStatus.UNDER_REVIEW
+                || loan.getStatus() == LoanApplicationStatus.OFFER_PENDING)) {
             throw new BusinessRuleException(
-                    "Rejet impossible : le dossier doit être en statut SUBMITTED ou UNDER_REVIEW."
+                    "Rejet impossible : le dossier doit être en cours d'instruction."
             );
         }
 
+        String comment = request.getComment().trim();
         loan.setStatus(LoanApplicationStatus.REJECTED);
         loan.setDecidedAt(Instant.now());
+        loan.setDecisionComment(comment);
 
         LoanApplication saved = loanRepository.save(loan);
         historyService.recordEvent(
@@ -384,7 +667,7 @@ public class LoanService {
                 actorTypeFor(currentUser),
                 currentUser.getEmail(),
                 displayName(currentUser),
-                Map.of("comment", saved.getDecisionComment() != null ? saved.getDecisionComment() : "")
+                Map.of("comment", comment)
         );
         return mapToResponseDto(saved);
     }
@@ -405,9 +688,10 @@ public class LoanService {
         }
 
         if (loan.getStatus() != LoanApplicationStatus.SUBMITTED
-                && loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
+                && loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW
+                && loan.getStatus() != LoanApplicationStatus.OFFER_PENDING) {
             throw new BusinessRuleException(
-                    "Annulation impossible : seuls les dossiers soumis (SUBMITTED) ou en analyse (UNDER_REVIEW) peuvent être annulés."
+                    "Annulation impossible : seuls les dossiers soumis, en analyse ou en attente d'offre peuvent être annulés."
             );
         }
 
@@ -493,6 +777,7 @@ public class LoanService {
                 .build();
 
         LoanDocument savedDoc = loanDocumentRepository.save(document);
+        documentReviewService.markPendingReview(loan, documentType);
         historyService.recordEvent(
                 loan,
                 LoanApplicationEventType.DOCUMENT_UPLOADED,
@@ -506,6 +791,15 @@ public class LoanService {
                 )
         );
         return mapToDocumentResponse(savedDoc);
+    }
+
+    @Transactional(readOnly = true)
+    public List<LoanDocumentReviewResponseDto> getDocumentReviews(Long loanId, String currentUserEmail) {
+        User currentUser = getRequiredUser(currentUserEmail);
+        LoanApplication loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+        ensureCanAccessLoan(loan, currentUser);
+        return documentReviewService.getDocumentReviews(loan);
     }
 
     @Transactional(readOnly = true)
@@ -546,6 +840,7 @@ public class LoanService {
         LoanApplication loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
         ensureCanAccessLoan(loan, currentUser);
+        ensureAdvisorCanAccessDocuments(loan, currentUser);
 
         LoanDocument document = loanDocumentRepository.findByIdAndLoanApplicationId(documentId, loanId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
@@ -589,13 +884,79 @@ public class LoanService {
         if (hasRole(currentUser, ROLE_ADMIN)) {
             return;
         }
-        if (hasRole(currentUser, ROLE_CONSEILLER) && isAssignedAdvisor(loan, currentUser)) {
-            return;
+        if (hasRole(currentUser, ROLE_CONSEILLER)) {
+            if (isAssignedAdvisor(loan, currentUser)) {
+                return;
+            }
+            if (loan.getStatus() == LoanApplicationStatus.SUBMITTED && loan.getAssignedAdvisor() == null) {
+                return;
+            }
+            throw new ForbiddenOperationException("Accès refusé à cette demande");
         }
         if (isApplicant(loan, currentUser)) {
             return;
         }
         throw new ForbiddenOperationException("Accès refusé à cette demande");
+    }
+
+    private void ensureAdvisorCanManage(LoanApplication loan, User currentUser) {
+        if (hasRole(currentUser, ROLE_ADMIN)) {
+            return;
+        }
+        if (!hasRole(currentUser, ROLE_CONSEILLER)) {
+            throw new ForbiddenOperationException("Accès refusé à cette demande");
+        }
+        if (isAssignedAdvisor(loan, currentUser)) {
+            return;
+        }
+        if (loan.getStatus() == LoanApplicationStatus.SUBMITTED && loan.getAssignedAdvisor() == null) {
+            return;
+        }
+        throw new ForbiddenOperationException("Accès refusé à cette demande");
+    }
+
+    private void ensureAdvisorCanAccessDocuments(LoanApplication loan, User currentUser) {
+        if (isApplicant(loan, currentUser)) {
+            return;
+        }
+        if (hasRole(currentUser, ROLE_ADMIN)) {
+            return;
+        }
+        if (!hasRole(currentUser, ROLE_CONSEILLER)) {
+            return;
+        }
+        if (loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
+            throw new BusinessRuleException(
+                    "Consultation des pièces impossible : le dossier doit être en analyse (UNDER_REVIEW)."
+            );
+        }
+    }
+
+    private boolean assignAdvisorIfNeeded(LoanApplication loan, User advisor) {
+        if (loan.getAssignedAdvisor() != null) {
+            return false;
+        }
+        loan.setAssignedAdvisor(advisor);
+        return true;
+    }
+
+    private void applySystemOffer(LoanApplication loan) {
+        loan.setApprovedAmount(loan.getRequestedAmount());
+        loan.setApprovedDurationMonths(loan.getRequestedDurationMonths());
+        loan.setInterestRate(SYSTEM_INTEREST_RATE);
+        loan.setOfferMessage(null);
+        loan.setOfferClientAccepted(null);
+    }
+
+    private boolean isCounterOffer(LoanApplication loan) {
+        if (loan.getApprovedAmount() == null
+                || loan.getApprovedDurationMonths() == null
+                || loan.getInterestRate() == null) {
+            return false;
+        }
+        return loan.getApprovedAmount().compareTo(loan.getRequestedAmount()) != 0
+                || !loan.getApprovedDurationMonths().equals(loan.getRequestedDurationMonths())
+                || loan.getInterestRate().compareTo(SYSTEM_INTEREST_RATE) != 0;
     }
 
     private void ensureCanSubmit(LoanApplication loan) {
@@ -626,6 +987,22 @@ public class LoanService {
 
     private String displayName(User user) {
         return (user.getFirstName() + " " + user.getLastName()).trim();
+    }
+
+    private void ensureAdmin(User user) {
+        if (!hasRole(user, ROLE_ADMIN)) {
+            throw new ForbiddenOperationException("Accès réservé aux administrateurs.");
+        }
+    }
+
+    private Sort adminListSort(AdminLoanListSort sort) {
+        AdminLoanListSort resolved = sort == null ? AdminLoanListSort.UPDATED_DESC : sort;
+        return switch (resolved) {
+            case UPDATED_ASC -> Sort.by(Sort.Direction.ASC, "updatedAt");
+            case AMOUNT_DESC -> Sort.by(Sort.Direction.DESC, "requestedAmount");
+            case AMOUNT_ASC -> Sort.by(Sort.Direction.ASC, "requestedAmount");
+            case UPDATED_DESC -> Sort.by(Sort.Direction.DESC, "updatedAt");
+        };
     }
 
     private void recordInitialDocumentsBundle(LoanApplication loan, User client, Instant submittedAt) {
@@ -672,6 +1049,19 @@ public class LoanService {
                         "Soumission impossible : le document obligatoire « " + required + " » est manquant."
                 );
             }
+        }
+    }
+
+    private void ensureDocumentFilePresent(Long loanId, LoanDocumentType documentType) {
+        if (documentType == null) {
+            throw new BusinessRuleException("Validation impossible : le type de document est obligatoire.");
+        }
+        boolean present = loanDocumentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(loanId).stream()
+                .anyMatch(document -> document.getDocumentType() == documentType);
+        if (!present) {
+            throw new BusinessRuleException(
+                    "Validation impossible : aucune pièce « " + documentType + " » n'a été déposée pour ce dossier."
+            );
         }
     }
 
@@ -769,12 +1159,15 @@ public class LoanService {
                 .approvedAmount(loan.getApprovedAmount())
                 .approvedDurationMonths(loan.getApprovedDurationMonths())
                 .interestRate(loan.getInterestRate())
+                .offerMessage(loan.getOfferMessage())
+                .offerClientAccepted(loan.getOfferClientAccepted())
                 .applicantId(loan.getApplicant() != null ? loan.getApplicant().getId() : null)
                 .applicantName(
                         loan.getApplicant() != null
                                 ? (loan.getApplicant().getFirstName() + " " + loan.getApplicant().getLastName()).trim()
                                 : null
                 )
+                .applicantEmail(loan.getApplicant() != null ? loan.getApplicant().getEmail() : null)
                 .advisorId(loan.getAssignedAdvisor() != null ? loan.getAssignedAdvisor().getId() : null)
                 .advisorName(
                         loan.getAssignedAdvisor() != null

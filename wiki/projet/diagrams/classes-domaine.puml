@@ -1,0 +1,169 @@
+@startuml classes-domaine-loanlyfans
+' Diagramme de classes — domaine JPA (demande de prêt + utilisateurs)
+' Prévisualisation : https://www.plantuml.com/plantuml/uml/
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+top to bottom direction
+
+' ---------- Énumérations ----------
+
+enum LoanApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum LoanPurpose {
+  SOFTWARE
+  VEHICLE
+  HOME_IMPROVEMENT
+  PERSONAL
+  EDUCATION
+  OTHER
+}
+
+enum EmploymentStatus {
+  CDI
+  CDD
+  FREELANCE
+  PUBLIC_SECTOR
+  UNEMPLOYED
+  RETIRED
+  STUDENT
+}
+
+enum LoanDocumentType {
+  IDENTITY
+  PAYSLIPS
+  TAX_NOTICE
+  BANK_STATEMENTS
+  PROOF_OF_ADDRESS
+  OTHER
+}
+
+enum LoanApplicationEventType {
+  APPLICATION_CREATED
+  APPLICATION_SUBMITTED
+  DOCUMENT_UPLOADED
+  ADVISOR_ASSIGNED
+  REVIEW_STARTED
+  DOCUMENT_REJECTED
+  DOCUMENT_VALIDATED
+  APPLICATION_APPROVED
+  APPLICATION_REJECTED
+  APPLICATION_CANCELLED
+  FUNDS_RELEASED
+}
+
+enum LoanEventActorType {
+  CLIENT
+  ADVISOR
+  ADMIN
+  SYSTEM
+}
+
+' ---------- Entités ----------
+
+class User {
+  - Long id
+  - String email
+  - String passwordHash
+  - String firstName
+  - String lastName
+}
+
+class Role {
+  - Long id
+  - String name
+}
+
+class LoanApplication {
+  - Long id
+  - String reference
+  - LoanApplicationStatus status
+  - String title
+  - LoanPurpose loanPurpose
+  - String purpose
+  - BigDecimal requestedAmount
+  - Integer requestedDurationMonths
+  - String comment
+  - BigDecimal monthlyIncome
+  - BigDecimal additionalIncome
+  - EmploymentStatus employmentStatus
+  - String employerName
+  - String jobTitle
+  - String employerSector
+  - LocalDate hireDate
+  - Integer seniorityMonths
+  - BigDecimal monthlyRent
+  - BigDecimal monthlyLoanPayments
+  - BigDecimal monthlyAlimony
+  - BigDecimal monthlyOtherCharges
+  - BigDecimal approvedAmount
+  - Integer approvedDurationMonths
+  - BigDecimal interestRate
+  - String decisionComment
+  - Instant submittedAt
+  - Instant decidedAt
+  - Instant createdAt
+  - Instant updatedAt
+}
+
+class LoanDocument {
+  - Long id
+  - LoanDocumentType documentType
+  - String originalFileName
+  - String displayName
+  - String storedFileName
+  - String contentType
+  - Long fileSizeBytes
+  - String storagePath
+  - Instant uploadedAt
+}
+
+class LoanApplicationEvent {
+  - Long id
+  - LoanApplicationEventType eventType
+  - Instant occurredAt
+  - LoanEventActorType actorType
+  - String actorEmail
+  - String actorDisplayName
+  - String payloadJson
+}
+
+' ---------- Relations ----------
+
+User "1" -- "0..*" LoanApplication : applicant >
+User "1" -- "0..*" LoanApplication : assignedAdvisor >
+User "0..*" -- "0..*" Role : roles >
+
+LoanApplication "1" *-- "0..*" LoanDocument : documents
+LoanApplication "1" *-- "0..*" LoanApplicationEvent : events
+
+LoanApplication --> LoanApplicationStatus
+LoanApplication --> LoanPurpose
+LoanApplication --> EmploymentStatus
+LoanDocument --> LoanDocumentType
+LoanApplicationEvent --> LoanApplicationEventType
+LoanApplicationEvent --> LoanEventActorType
+
+note bottom of LoanApplication
+  Table : loan_applications
+  Référence unique (ex. LOAN-XXXXXXXX)
+end note
+
+note bottom of LoanDocument
+  Table : loan_documents
+  Fichier physique via storagePath
+end note
+
+note bottom of LoanApplicationEvent
+  Table : loan_application_events
+  payloadJson : métadonnées JSON
+end note
+
+@enduml

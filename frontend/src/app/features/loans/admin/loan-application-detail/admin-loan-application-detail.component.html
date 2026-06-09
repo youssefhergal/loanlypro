@@ -1,0 +1,353 @@
+<div class="admin-detail-page">
+  @if (loading()) {
+    <div class="admin-detail-page__loading" aria-busy="true">
+      <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+    </div>
+  } @else if (error()) {
+    <div class="admin-detail-page__error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error() }}</p>
+      <a mat-stroked-button routerLink="/admin/demandes">
+        <mat-icon>arrow_back</mat-icon>
+        Retour à la liste
+      </a>
+    </div>
+  } @else {
+    @if (loan(); as l) {
+    <p class="admin-detail-banner">
+      <mat-icon aria-hidden="true">visibility</mat-icon>
+      <span>
+        <strong>Mode supervision</strong> — Consultation seule. L'instruction et les décisions
+        restent du ressort des conseillers.
+      </span>
+    </p>
+
+    <header class="admin-detail-header">
+      <div class="admin-detail-header__main">
+        <div class="admin-detail-header__title-row">
+          <h1>Dossier #{{ l.reference }}</h1>
+          @if (statusStyle(); as style) {
+            <span
+              class="admin-detail-header__badge"
+              [style.background]="style.badgeBg"
+              [style.color]="style.badgeColor"
+            >
+              <span class="admin-detail-header__badge-dot" [style.background]="style.accent"></span>
+              {{ style.label }}
+            </span>
+          }
+        </div>
+        <p class="admin-detail-header__meta">
+          <span>{{ l.title }}</span>
+          @if (l.submittedAt) {
+            <span>· Soumis le {{ formatDate(l.submittedAt) }}</span>
+          }
+          <span>· Mis à jour le {{ formatDate(l.updatedAt) }}</span>
+        </p>
+      </div>
+      <div class="admin-detail-header__actions">
+        <a mat-stroked-button routerLink="/admin/demandes">
+          <mat-icon>arrow_back</mat-icon>
+          Retour
+        </a>
+      </div>
+    </header>
+
+    <div class="admin-detail-layout">
+      <div class="admin-detail-layout__main">
+        <section class="admin-detail-card">
+          <h2 class="admin-detail-card__title">
+            <mat-icon>person_outline</mat-icon>
+            Client &amp; demande
+          </h2>
+          <dl class="admin-detail-dl">
+            <div>
+              <dt>Client</dt>
+              <dd>{{ l.applicantName || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Email</dt>
+              <dd>{{ l.applicantEmail || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Objet du prêt</dt>
+              <dd>{{ purposeLabel() }}</dd>
+            </div>
+            <div>
+              <dt>Montant demandé</dt>
+              <dd>{{ l.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+            </div>
+            <div>
+              <dt>Durée demandée</dt>
+              <dd>{{ l.requestedDurationMonths }} mois</dd>
+            </div>
+            <div>
+              <dt>Situation professionnelle</dt>
+              <dd>{{ employmentLine() }}</dd>
+            </div>
+            @if (l.comment?.trim()) {
+              <div class="admin-detail-dl__wide">
+                <dt>Commentaire client</dt>
+                <dd>{{ l.comment }}</dd>
+              </div>
+            }
+          </dl>
+        </section>
+
+        <section class="admin-detail-card">
+          <h2 class="admin-detail-card__title">
+            <mat-icon>account_balance_wallet</mat-icon>
+            Situation financière
+          </h2>
+          <dl class="admin-detail-dl">
+            <div>
+              <dt>Revenus mensuels nets</dt>
+              <dd>{{ l.monthlyIncome | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+            </div>
+            @if (l.additionalIncome != null) {
+              <div>
+                <dt>Revenus complémentaires</dt>
+                <dd>{{ l.additionalIncome | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+              </div>
+            }
+            <div>
+              <dt>Loyer / charges logement</dt>
+              <dd>{{ l.monthlyRent || 0 | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+            </div>
+            <div>
+              <dt>Crédits en cours</dt>
+              <dd>{{ l.monthlyLoanPayments || 0 | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+            </div>
+            <div>
+              <dt>Pension alimentaire</dt>
+              <dd>{{ l.monthlyAlimony || 0 | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+            </div>
+            <div>
+              <dt>Autres charges</dt>
+              <dd>{{ l.monthlyOtherCharges || 0 | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+            </div>
+            <div>
+              <dt>Taux d'endettement</dt>
+              <dd class="admin-detail-dl__accent">{{ debtRatioPercent() }} %</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="admin-detail-card">
+          <div class="admin-detail-card__head">
+            <h2 class="admin-detail-card__title">
+              <mat-icon>folder_open</mat-icon>
+              Pièces justificatives
+            </h2>
+            <span class="admin-detail-card__tag">
+              {{ requiredProvided() }}/{{ requiredCount() }} obligatoires
+            </span>
+          </div>
+
+          @if (l.status === 'DRAFT') {
+            <p class="admin-detail-card__hint">Dossier en brouillon — aucun document soumis.</p>
+          } @else {
+            <ul class="admin-detail-docs">
+              @for (row of documentRows(); track row.type) {
+                <li
+                  class="admin-detail-docs__item"
+                  [class.admin-detail-docs__item--missing]="row.status === 'missing'"
+                  [class.admin-detail-docs__item--rejected]="row.advisorReview?.status === 'rejected'"
+                  [class.admin-detail-docs__item--validated]="row.advisorReview?.status === 'validated'"
+                >
+                  <span class="admin-detail-docs__icon" aria-hidden="true">
+                    <mat-icon>{{ docIcon(row.type) }}</mat-icon>
+                  </span>
+                  <div class="admin-detail-docs__body">
+                    <div class="admin-detail-docs__title-line">
+                      <h3>{{ row.label }}</h3>
+                      @if (row.advisorReview?.status; as reviewStatus) {
+                        <span [class]="reviewBadgeClass(reviewStatus)">
+                          {{ reviewLabel(reviewStatus) }}
+                        </span>
+                      }
+                    </div>
+                    @if (row.files[0]; as file) {
+                      <p class="admin-detail-docs__meta">
+                        {{ displayFileName(row) }} · {{ docSize(file.fileSizeBytes) }}
+                      </p>
+                    } @else if (row.required) {
+                      <p class="admin-detail-docs__meta admin-detail-docs__meta--muted">
+                        Document requis — non fourni
+                      </p>
+                    } @else {
+                      <p class="admin-detail-docs__meta admin-detail-docs__meta--muted">
+                        Facultatif — non fourni
+                      </p>
+                    }
+                    @if (row.advisorReview?.status === 'rejected' && row.advisorReview?.comment) {
+                      <p class="admin-detail-docs__reject">
+                        Motif : {{ row.advisorReview?.comment }}
+                      </p>
+                    }
+                  </div>
+                  @if (row.files[0]; as file) {
+                    <div class="admin-detail-docs__actions">
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        class="admin-detail-docs__open"
+                        (click)="openDocumentPreview(row)"
+                      >
+                        <mat-icon>open_in_new</mat-icon>
+                        Ouvrir
+                      </button>
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        class="admin-detail-docs__download"
+                        (click)="downloadDocument(file)"
+                      >
+                        <mat-icon>download</mat-icon>
+                        Télécharger
+                      </button>
+                    </div>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+
+      <aside class="admin-detail-layout__aside">
+        <section class="admin-detail-card admin-detail-card--sidebar">
+          <h2 class="admin-detail-card__title">
+            <mat-icon>supervisor_account</mat-icon>
+            Affectation
+          </h2>
+          @if (l.advisorName) {
+            <div class="admin-detail-advisor">
+              <span class="admin-detail-advisor__avatar" aria-hidden="true">
+                {{ advisorInitials(l.advisorName) }}
+              </span>
+              <div>
+                <p class="admin-detail-advisor__name">{{ l.advisorName }}</p>
+                <p class="admin-detail-advisor__hint">Conseiller assigné au dossier</p>
+              </div>
+            </div>
+          } @else {
+            <p class="admin-detail-unassigned">
+              <mat-icon>person_off</mat-icon>
+              Non affecté — en attente d'un conseiller
+            </p>
+          }
+        </section>
+
+        @if (hasOfferTerms()) {
+          <section class="admin-detail-card admin-detail-card--sidebar">
+            <h2 class="admin-detail-card__title">
+              <mat-icon>local_offer</mat-icon>
+              Conditions proposées
+            </h2>
+            @if (isCounterOffer()) {
+              <p class="admin-detail-card__hint admin-detail-card__hint--warn">
+                Contre-offre
+                @if (l.status === 'OFFER_PENDING') {
+                  — en attente de réponse client
+                } @else if (l.offerClientAccepted === true) {
+                  — acceptée par le client
+                } @else if (l.offerClientAccepted === false) {
+                  — refusée par le client
+                }
+              </p>
+            }
+            <dl class="admin-detail-dl admin-detail-dl--compact">
+              <div>
+                <dt>Montant</dt>
+                <dd>{{ l.approvedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+              </div>
+              <div>
+                <dt>Durée</dt>
+                <dd>{{ l.approvedDurationMonths }} mois</dd>
+              </div>
+              @if (l.interestRate != null) {
+                <div>
+                  <dt>Taux</dt>
+                  <dd>{{ l.interestRate | number: '1.2-2' }} %</dd>
+                </div>
+              }
+            </dl>
+            @if (l.offerMessage?.trim()) {
+              <blockquote class="admin-detail-offer-msg">{{ l.offerMessage }}</blockquote>
+            }
+          </section>
+        }
+
+        @if (l.decidedAt) {
+          <section class="admin-detail-card admin-detail-card--sidebar">
+            <h2 class="admin-detail-card__title">
+              <mat-icon>gavel</mat-icon>
+              Décision
+            </h2>
+            <p class="admin-detail-decision">
+              Rendue le {{ formatDate(l.decidedAt) }}
+            </p>
+            @if (l.decisionComment?.trim()) {
+              <blockquote class="admin-detail-offer-msg">{{ l.decisionComment }}</blockquote>
+            }
+          </section>
+        }
+
+        <section class="admin-detail-card admin-detail-card--sidebar">
+          <h2 class="admin-detail-card__title">
+            <mat-icon>history</mat-icon>
+            Historique
+          </h2>
+          @if (!timeline().length) {
+            <p class="admin-detail-card__hint">Aucun événement enregistré.</p>
+          } @else {
+            <ol class="admin-detail-timeline">
+              @for (event of timeline(); track event.title + event.dateLabel) {
+                <li
+                  class="admin-detail-timeline__item"
+                  [class.admin-detail-timeline__item--done]="event.state === 'done'"
+                  [class.admin-detail-timeline__item--current]="event.state === 'current'"
+                  [class.admin-detail-timeline__item--warn]="event.state === 'warn'"
+                >
+                  <span class="admin-detail-timeline__dot" aria-hidden="true"></span>
+                  <div>
+                    <div class="admin-detail-timeline__head">
+                      <h3>{{ event.title }}</h3>
+                      <span>{{ event.dateLabel }}</span>
+                    </div>
+                    <p>{{ event.description }}</p>
+                  </div>
+                </li>
+              }
+            </ol>
+          }
+        </section>
+      </aside>
+    </div>
+
+    <app-advisor-document-preview-panel
+      [open]="previewOpen()"
+      [row]="previewRow()"
+      [fileMeta]="previewRow() ? previewFileMeta(previewRow()!) : ''"
+      [previewUrl]="previewUrl()"
+      [contentType]="previewContentType()"
+      [loading]="previewLoading()"
+      [zoom]="previewZoom()"
+      [canReviewActions]="false"
+      [actionLoading]="false"
+      [hasPrev]="previewIndex() > 0"
+      [hasNext]="previewIndex() >= 0 && previewIndex() < previewableRows().length - 1"
+      [pageLabel]="previewPageLabel()"
+      [statusBadgeClass]="previewStatusBadgeClass(previewRow()?.advisorReview?.status)"
+      [statusLabel]="previewPanelStatusLabel(previewRow()?.advisorReview?.status)"
+      (closed)="closeDocumentPreview()"
+      (zoomIn)="previewZoomIn()"
+      (zoomOut)="previewZoomOut()"
+      (prevDocument)="previewPrevDocument()"
+      (nextDocument)="previewNextDocument()"
+      (download)="downloadPreviewDocument()"
+    />
+    }
+  }
+</div>

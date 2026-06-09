@@ -113,6 +113,13 @@ public class LoanApplication {
     @Column(name = "interest_rate", precision = 5, scale = 2)
     private BigDecimal interestRate;
 
+    @Column(name = "offer_message", length = 500)
+    private String offerMessage;
+
+    /** null = offre système ; false = contre-offre en attente ; true = acceptée par le client. */
+    @Column(name = "offer_client_accepted")
+    private Boolean offerClientAccepted;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;

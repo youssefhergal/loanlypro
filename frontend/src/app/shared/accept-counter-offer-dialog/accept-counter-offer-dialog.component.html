@@ -1,0 +1,85 @@
+<div class="accept-offer-dialog">
+  <header class="accept-offer-dialog__header">
+    <div class="accept-offer-dialog__title-row">
+      <span class="accept-offer-dialog__title-icon" aria-hidden="true">
+        <mat-icon>local_offer</mat-icon>
+      </span>
+      <h2>Accepter cette contre-offre ?</h2>
+    </div>
+    <button
+      mat-icon-button
+      type="button"
+      class="accept-offer-dialog__close"
+      aria-label="Fermer"
+      (click)="onCancel()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="accept-offer-dialog__body">
+    @if (hasOfferMessage()) {
+      <blockquote class="accept-offer-dialog__message">
+        « {{ data.offerMessage }} »
+      </blockquote>
+    }
+
+    <section class="accept-offer-dialog__offer">
+      <p class="accept-offer-dialog__offer-label">Offre proposée par votre conseiller</p>
+      <dl class="accept-offer-dialog__offer-grid">
+        <div>
+          <dt>Montant</dt>
+          <dd>{{ data.amount | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+        </div>
+        <div>
+          <dt>Durée</dt>
+          <dd>{{ data.durationMonths }} mois</dd>
+        </div>
+        <div>
+          <dt>Taux fixe</dt>
+          <dd>
+            @if (data.rate != null) {
+              {{ data.rate | number: '1.2-2' }} %
+            } @else {
+              —
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Mensualité est.</dt>
+          <dd class="accept-offer-dialog__payment">
+            {{ data.monthlyPayment | currency: 'EUR' : 'symbol' : '1.0-0' }}
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <p class="accept-offer-dialog__hint">
+      Votre dossier reprendra son analyse avant la décision finale de votre conseiller.
+    </p>
+
+    <label class="accept-offer-dialog__confirm-box">
+      <mat-checkbox
+        [checked]="termsConfirmed()"
+        (change)="termsConfirmed.set($event.checked)"
+      />
+      <span>Je confirme accepter les conditions proposées par mon conseiller.</span>
+    </label>
+  </div>
+
+  <footer class="accept-offer-dialog__footer">
+    <button mat-button type="button" class="accept-offer-dialog__cancel" (click)="onCancel()">
+      Annuler
+    </button>
+    <button
+      mat-flat-button
+      type="button"
+      class="accept-offer-dialog__confirm"
+      [disabled]="!canConfirm()"
+      (click)="onConfirm()"
+    >
+      <mat-icon aria-hidden="true">check_circle</mat-icon>
+      Accepter l'offre
+    </button>
+  </footer>
+</div>

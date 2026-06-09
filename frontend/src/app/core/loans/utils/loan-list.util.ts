@@ -16,10 +16,16 @@ export const LOAN_LIST_STATUS_TABS: LoanListStatusTab[] = [
   { key: 'DRAFT', label: 'Brouillon' },
   { key: 'SUBMITTED', label: 'Soumise' },
   { key: 'UNDER_REVIEW', label: 'En analyse' },
+  { key: 'OFFER_PENDING', label: 'Offre en attente' },
   { key: 'APPROVED', label: 'Approuvée' },
   { key: 'REJECTED', label: 'Rejetée' },
   { key: 'CANCELLED', label: 'Annulée' },
 ];
+
+/** Onglets liste conseiller — sans brouillon client. */
+export const ADVISOR_LOAN_LIST_STATUS_TABS: LoanListStatusTab[] = LOAN_LIST_STATUS_TABS.filter(
+  (tab) => tab.key !== 'DRAFT'
+);
 
 export interface LoanCardStatusStyle {
   label: string;
@@ -54,6 +60,14 @@ const STATUS_STYLES: Record<LoanApplicationStatus, LoanCardStatusStyle> = {
     badgeBg: '#e3f2fd',
     badgeColor: '#1565c0',
     icon: 'analytics',
+  },
+  OFFER_PENDING: {
+    label: 'Offre en attente',
+    accent: '#e65100',
+    iconBg: '#fff3e0',
+    badgeBg: '#fff3e0',
+    badgeColor: '#e65100',
+    icon: 'mail',
   },
   APPROVED: {
     label: 'Approuvée',
@@ -184,6 +198,36 @@ export function matchesLoanSearch(loan: LoanResponseDto, query: string): boolean
   );
 }
 
+export function matchesAdvisorLoanSearch(loan: LoanResponseDto, query: string): boolean {
+  if (matchesLoanSearch(loan, query)) return true;
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (loan.applicantName?.toLowerCase().includes(q) ?? false);
+}
+
+export function loanAdvisorCardMetaLine(loan: LoanResponseDto): string {
+  const parts: string[] = [];
+
+  if (loan.applicantName?.trim()) {
+    parts.push(loan.applicantName.trim());
+  }
+
+  if (loan.submittedAt) {
+    parts.push(`Soumise le ${formatDateFrLong(loan.submittedAt)}`);
+  } else {
+    const rel = formatRelativeTimeFr(loan.updatedAt);
+    if (rel) parts.push(`Modifiée ${rel}`);
+  }
+
+  parts.push(`${loan.requestedDurationMonths} mois`);
+
+  if (loan.status === 'REJECTED' && loan.decisionComment?.trim()) {
+    parts.push(loan.decisionComment.trim());
+  }
+
+  return parts.join(' · ');
+}
+
 export function sortLoans(loans: LoanResponseDto[], sort: LoanListSort): LoanResponseDto[] {
   const copy = [...loans];
   copy.sort((a, b) => {
@@ -212,4 +256,60 @@ export function countByStatus(
 ): number {
   if (status === 'ALL') return loans.length;
   return loans.filter((l) => l.status === status).length;
+}
+
+export function isUnassignedLoan(loan: LoanResponseDto): boolean {
+  return loan.advisorId == null && loan.status !== 'DRAFT';
+}
+
+export function countUnassignedLoans(loans: LoanResponseDto[]): number {
+  return loans.filter(isUnassignedLoan).length;
+}
+
+export function matchesAdminLoanSearch(loan: LoanResponseDto, query: string): boolean {
+  if (matchesAdvisorLoanSearch(loan, query)) return true;
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    (loan.applicantEmail?.toLowerCase().includes(q) ?? false) ||
+    (loan.advisorName?.toLowerCase().includes(q) ?? false)
+  );
+}
+
+export function advisorInitials(name: string | null | undefined): string {
+  if (!name?.trim()) return '?';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+export function formatAdminListSubmittedAt(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+}
+
+export function formatAdminListUpdatedAt(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfYesterday = new Date(startOfToday);
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+  const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  if (startOfDate.getTime() === startOfToday.getTime()) {
+    const rel = formatRelativeTimeFr(iso);
+    return rel || "Aujourd'hui";
+  }
+  if (startOfDate.getTime() === startOfYesterday.getTime()) {
+    return 'Hier';
+  }
+  return formatAdminListSubmittedAt(iso);
 }

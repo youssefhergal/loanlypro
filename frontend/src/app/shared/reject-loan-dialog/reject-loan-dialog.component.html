@@ -1,0 +1,60 @@
+<div class="reject-loan-dialog">
+  <header class="reject-loan-dialog__header">
+    <div class="reject-loan-dialog__title-row">
+      <span class="reject-loan-dialog__title-icon" aria-hidden="true">
+        <mat-icon>cancel</mat-icon>
+      </span>
+      <h2>Refuser ce dossier ?</h2>
+    </div>
+    <button
+      mat-icon-button
+      type="button"
+      class="reject-loan-dialog__close"
+      aria-label="Fermer"
+      (click)="onCancel()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="reject-loan-dialog__body">
+    <div class="reject-loan-dialog__warning">
+      <mat-icon aria-hidden="true">warning_amber</mat-icon>
+      <p>
+        Attention, cette action est <strong>définitive</strong>. Le dossier sera clôturé et le
+        client sera informé du refus.
+      </p>
+    </div>
+
+    <div class="reject-loan-dialog__field">
+      <div class="reject-loan-dialog__field-head">
+        <label for="reject-loan-comment">Motif du refus *</label>
+        <span class="reject-loan-dialog__field-hint">Visible par le client</span>
+      </div>
+      <textarea
+        id="reject-loan-comment"
+        class="reject-loan-dialog__textarea"
+        rows="4"
+        [maxlength]="maxLength"
+        placeholder="Expliquez brièvement la raison du refus (ex : Taux d'endettement trop élevé, pièces non conformes…)"
+        [ngModel]="comment()"
+        (ngModelChange)="comment.set($event)"
+      ></textarea>
+    </div>
+  </div>
+
+  <footer class="reject-loan-dialog__footer">
+    <button mat-button type="button" class="reject-loan-dialog__cancel" (click)="onCancel()">
+      Annuler
+    </button>
+    <button
+      mat-flat-button
+      type="button"
+      class="reject-loan-dialog__confirm"
+      [disabled]="!canConfirm()"
+      (click)="onConfirm()"
+    >
+      Refuser le dossier
+    </button>
+  </footer>
+</div>

@@ -47,6 +47,39 @@ cd backend
 
 (Utiliser `mvnw.cmd` sur Windows si besoin.)
 
+**Redémarrage propre du backend (après gros changements Java)**
+
+Si vous voyez des erreurs du type `ClassNotFoundException`, `NoClassDefFoundError` ou un comportement incohérent après modification du code :
+
+1. Arrêter le serveur Spring Boot (`Ctrl+C` dans le terminal).
+2. Recompiler proprement :
+
+```bash
+cd backend
+./mvnw clean compile
+./mvnw spring-boot:run
+```
+
+Sous Windows PowerShell :
+
+```powershell
+cd backend
+.\mvnw.cmd clean compile
+.\mvnw.cmd spring-boot:run
+```
+
+Évitez de relancer `spring-boot:run` sans `clean compile` après des refactors importants : des classes compilées obsolètes peuvent rester dans `target/`.
+
+**Erreur « insufficient memory » / metaspace au démarrage**
+
+Fermez les autres processus Java (anciens `spring-boot:run`, IDE qui compile en parallèle). Le projet configure déjà Maven via `backend/.mvn/jvm.config` (heap + metaspace). Si le problème persiste :
+
+```powershell
+cd backend
+$env:MAVEN_OPTS="-Xms256m -Xmx768m -XX:MaxMetaspaceSize=384m"
+.\mvnw.cmd spring-boot:run
+```
+
 **3. Lancer le frontend**
 
 Dans un autre terminal :

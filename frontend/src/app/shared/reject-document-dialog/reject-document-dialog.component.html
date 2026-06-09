@@ -1,0 +1,66 @@
+<div class="reject-doc-dialog">
+  <header class="reject-doc-dialog__header">
+    <div class="reject-doc-dialog__title-row">
+      <mat-icon class="reject-doc-dialog__title-icon" aria-hidden="true">info</mat-icon>
+      <h2>Rejeter la pièce</h2>
+    </div>
+    <button
+      mat-icon-button
+      type="button"
+      class="reject-doc-dialog__close"
+      aria-label="Fermer"
+      (click)="onCancel()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="reject-doc-dialog__body">
+    <section class="reject-doc-dialog__doc-box">
+      <p class="reject-doc-dialog__doc-label">Document concerné</p>
+      <p class="reject-doc-dialog__doc-name">
+        <mat-icon aria-hidden="true">description</mat-icon>
+        {{ documentLine() }}
+      </p>
+    </section>
+
+    <div class="reject-doc-dialog__field">
+      <div class="reject-doc-dialog__field-head">
+        <label for="reject-doc-comment">Motif du rejet *</label>
+        <span class="reject-doc-dialog__field-limit">Max {{ maxLength }} caractères</span>
+      </div>
+      <textarea
+        id="reject-doc-comment"
+        class="reject-doc-dialog__textarea"
+        rows="4"
+        [maxlength]="maxLength"
+        placeholder="Expliquez pourquoi ce document est refusé (ex : Document illisible, date expirée…)"
+        [ngModel]="comment()"
+        (ngModelChange)="comment.set($event)"
+      ></textarea>
+    </div>
+
+    <div class="reject-doc-dialog__alert">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <p>
+        Le client recevra une notification immédiate par email et pourra déposer un nouveau document
+        via son espace personnel.
+      </p>
+    </div>
+  </div>
+
+  <footer class="reject-doc-dialog__footer">
+    <button mat-button type="button" class="reject-doc-dialog__cancel" (click)="onCancel()">
+      Annuler
+    </button>
+    <button
+      mat-flat-button
+      type="button"
+      class="reject-doc-dialog__confirm"
+      [disabled]="!canConfirm()"
+      (click)="onConfirm()"
+    >
+      Confirmer le rejet
+    </button>
+  </footer>
+</div>

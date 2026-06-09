@@ -4,6 +4,7 @@ import { LoanDocumentResponseDto } from '../models/loan-document.model';
 import { DOCUMENT_SLOTS } from '../constants/loan.constants';
 import { formatDateFrLong } from './loan-list.util';
 import { loanCardStatusStyle } from './loan-list.util';
+import { LoanDocumentReviewResponseDto } from '../models/loan-document-review.model';
 import { LoanHistoryEventResponseDto } from '../models/loan-history.model';
 import {
   LoanDocumentAdvisorReview,
@@ -34,7 +35,7 @@ export function isDocumentComplementAllowed(status: LoanApplicationStatus): bool
 
 /** Le demandeur peut retirer sa demande avant décision finale. */
 export function canClientCancelLoan(status: LoanApplicationStatus): boolean {
-  return status === 'SUBMITTED' || status === 'UNDER_REVIEW';
+  return status === 'SUBMITTED' || status === 'UNDER_REVIEW' || status === 'OFFER_PENDING';
 }
 
 export interface LoanDetailDocumentRow {
@@ -63,6 +64,11 @@ export function loanDetailProgress(loan: LoanResponseDto): LoanProgressInfo {
       stepLabel = 'Analyse financière';
       percent = 60;
       break;
+    case 'OFFER_PENDING':
+      stepIndex = 3;
+      stepLabel = 'Contre-offre — votre réponse';
+      percent = 70;
+      break;
     case 'APPROVED':
     case 'REJECTED':
       stepIndex = 4;
@@ -79,7 +85,7 @@ export function loanDetailProgress(loan: LoanResponseDto): LoanProgressInfo {
   }
 
   let estimatedDecisionLabel: string | null = null;
-  if (loan.submittedAt && (loan.status === 'SUBMITTED' || loan.status === 'UNDER_REVIEW')) {
+  if (loan.submittedAt && (loan.status === 'SUBMITTED' || loan.status === 'UNDER_REVIEW' || loan.status === 'OFFER_PENDING')) {
     const d = new Date(loan.submittedAt);
     d.setDate(d.getDate() + 10);
     estimatedDecisionLabel = formatDateFrLong(d.toISOString());
@@ -94,8 +100,57 @@ export function loanDetailProgress(loan: LoanResponseDto): LoanProgressInfo {
   };
 }
 
+const REQUIRED_DOCUMENT_TYPES: LoanDocumentType[] = DOCUMENT_SLOTS.filter((s) => s.required).map(
+  (s) => s.type
+);
+
+/**
+ * Regroupe les validations pièce par pièce : une seule entrée timeline
+ * lorsque les 5 documents obligatoires sont tous validés.
+ * Les événements bruts restent disponibles pour le statut conseiller par pièce.
+ */
+export function consolidateDocumentValidatedForTimeline(
+  events: LoanHistoryEventResponseDto[]
+): LoanHistoryEventResponseDto[] {
+  const validated = new Set<LoanDocumentType>();
+  let allValidatedEmitted = false;
+  const result: LoanHistoryEventResponseDto[] = [];
+
+  for (const event of events) {
+    if (event.eventType === 'DOCUMENT_VALIDATED' && event.documentType) {
+      validated.add(event.documentType);
+      const nowAll = REQUIRED_DOCUMENT_TYPES.every((type) => validated.has(type));
+      if (nowAll && !allValidatedEmitted) {
+        result.push({
+          ...event,
+          documentType: undefined,
+          comment: undefined,
+          title: 'Pièces justificatives validées',
+          description: `Les ${REQUIRED_DOCUMENT_TYPES.length} documents obligatoires ont été validés par votre conseiller.`,
+        });
+        allValidatedEmitted = true;
+      }
+      continue;
+    }
+
+    if (event.eventType === 'DOCUMENT_REJECTED' && event.documentType) {
+      validated.delete(event.documentType);
+      allValidatedEmitted = REQUIRED_DOCUMENT_TYPES.every((type) => validated.has(type));
+    }
+
+    if (event.eventType === 'DOCUMENT_UPLOADED' && event.complement && event.documentType) {
+      validated.delete(event.documentType);
+      allValidatedEmitted = REQUIRED_DOCUMENT_TYPES.every((type) => validated.has(type));
+    }
+
+    result.push(event);
+  }
+
+  return result;
+}
+
 export function historyEventsToTimeline(events: LoanHistoryEventResponseDto[]): LoanTimelineEvent[] {
-  return events.map((e) => ({
+  return consolidateDocumentValidatedForTimeline(events).map((e) => ({
     title: e.title,
     dateLabel: e.occurredAt ? formatDateFrShort(e.occurredAt) : '—',
     description: e.description,
@@ -187,13 +242,31 @@ export function loanDetailTimeline(loan: LoanResponseDto, docsProvided: number, 
   return events;
 }
 
+export function advisorReviewsFromApi(
+  reviews: LoanDocumentReviewResponseDto[]
+): Partial<Record<LoanDocumentType, LoanDocumentAdvisorReview>> {
+  const byType: Partial<Record<LoanDocumentType, LoanDocumentAdvisorReview>> = {};
+  for (const review of reviews) {
+    byType[review.documentType] = {
+      status: review.status,
+      comment: review.comment?.trim() || undefined,
+    };
+  }
+  return byType;
+}
+
 export function loanDetailDocuments(
   loan: LoanResponseDto,
   docs: LoanDocumentResponseDto[],
+  documentReviews: LoanDocumentReviewResponseDto[] = [],
   historyEvents: LoanHistoryEventResponseDto[] = []
 ): LoanDetailDocumentRow[] {
   const showAdvisor = isAdvisorDocumentReviewVisible(loan.status);
-  const historyReviews = advisorReviewsFromHistory(historyEvents, docs, loan.status);
+  const apiReviews = advisorReviewsFromApi(documentReviews);
+  const historyReviews =
+    documentReviews.length > 0
+      ? apiReviews
+      : advisorReviewsFromHistory(historyEvents, docs, loan.status);
 
   return DOCUMENT_SLOTS.map((slot) => {
     const files = docs.filter((d) => d.documentType === slot.type);
@@ -238,7 +311,13 @@ export function loanStatusDisplayLabel(status: LoanApplicationStatus): string {
 function formatDateFrShort(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '—';
-  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(d);
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(d);
 }
 
 export function formatDocSize(bytes: number): string {
