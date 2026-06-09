@@ -1,0 +1,443 @@
+[33mcommit 368507f1a2b62369c222f53a2a48071b2e1b103d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/backend-tests[m[33m)[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Tue Jun 9 21:34:03 2026 +0100
+
+    test(backend): renforcer la couverture unitaire des services et corriger les smells Sonar
+    
+    Co-authored-by: Cursor <cursoragent@cursor.com>
+
+[33mcommit a5368fd578a8dcd41301739a3332628c80e5eab3[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Tue Jun 9 21:18:58 2026 +0100
+
+    test(backend): ajouter les tests AdvisorAssignmentService et LoanDocumentStorageService
+
+[33mcommit e0984931cd9a3f6d6b3c07cf1f12bd4dcc604eea[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Tue Jun 9 20:50:43 2026 +0100
+
+    test(backend): ajouter les tests DocumentReviewService et LoanApplicationHistoryService
+
+[33mcommit e92d5c00078a9e1264438fe495ebc97159982e0b[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Tue Jun 9 20:04:06 2026 +0100
+
+    test(backend): ajouter les tests unitaires LoanService
+
+[33mcommit 6c0a60bbfddfc4d77b14db8d37fa0bf8b7e0868e[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Tue Jun 9 19:57:26 2026 +0100
+
+    test(backend): ajouter les tests WebMvcTest pour AuthController
+
+[33mcommit 31c99e4d8e0412d3dd6e8b19e5f5941b695c3e77[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Tue Jun 9 19:51:22 2026 +0100
+
+    test(backend): ajouter les tests unitaires JwtService et AuthService
+
+[33mcommit 3ba31b79ce6e35e29b740e7de9ace34287aa7d85[m[33m ([m[1;31morigin/develop[m[33m, [m[1;32mdevelop[m[33m)[m
+Merge: 8417d13 e09cab7
+Author: Youssef  Hergal <youssefher247@gmail.com>
+Date:   Tue Jun 9 18:41:37 2026 +0000
+
+    Merge branch 'feature/sonarqube-setup' into 'develop'
+    
+    Feature/sonarqube setup
+    
+    See merge request projet-fill-rouge-team/projet-fil-rouge!16
+
+[33mcommit e09cab7e1224fadbd52ca905fb9897b45c5ce998[m[33m ([m[1;31morigin/feature/sonarqube-setup[m[33m, [m[1;32mfeature/sonarqube-setup[m[33m)[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Tue Jun 9 19:37:46 2026 +0100
+
+    refactor(backend): corriger les bugs et code smells SonarQube
+
+[33mcommit 8cabf636d35d850da4f1e64e6395f43992d42b31[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Tue Jun 9 19:37:34 2026 +0100
+
+    refactor(backend): ajouter LoanStorageException et AdminApplicationListQuery
+
+[33mcommit 6467895ee45497ab22415c2522a703af91ed5a03[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Tue Jun 9 19:37:23 2026 +0100
+
+    chore(backend): configurer JaCoCo, SonarQube et profil de test H2
+
+[33mcommit 8417d13a6b0df6f68502c6126fc5e95341dfeba3[m
+Merge: 07d336b 30d05d9
+Author: Youssef  Hergal <youssefher247@gmail.com>
+Date:   Tue Jun 9 16:50:06 2026 +0000
+
+    Merge branch 'feature/frontend-loan-advisor-admin' into 'develop'
+    
+    Feature/frontend loan advisor admin
+    
+    See merge request projet-fill-rouge-team/projet-fil-rouge!15
+
+[33mcommit 30d05d936aaa11f575cd416b25f6921689069e2a[m[33m ([m[1;31morigin/feature/frontend-loan-advisor-admin[m[33m, [m[1;32mfeature/frontend-loan-advisor-admin[m[33m)[m
+Merge: 16c345c b341dd0
+Author: Youssef  Hergal <youssefher247@gmail.com>
+Date:   Tue Jun 9 16:38:01 2026 +0000
+
+    Merge branch 'feature/frontend-loan-wizard' into 'feature/frontend-loan-advisor-admin'
+    
+    Feature/frontend loan wizard
+    
+    See merge request projet-fill-rouge-team/projet-fil-rouge!14
+
+[33mcommit 16c345cbdf2e35e3cd51696996544c71a767547e[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon Jun 8 02:18:21 2026 +0100
+
+    fix: conseiller assigné dans la réponse API et accès documents admin
+
+[33mcommit 06dea2a12a7deacff726aa21ed01ea191b0f14d0[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon Jun 8 01:58:14 2026 +0100
+
+    feat(frontend): déclenchement manuel de l'affectation conseillers
+
+[33mcommit 52932af53bb028a27235bc69daa8d17a877345e6[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon Jun 8 01:58:07 2026 +0100
+
+    feat(backend): affectation automatique et manuelle des conseillers
+
+[33mcommit 183a4ec3cc58425f8bc962437e191685e066fdba[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon Jun 8 01:57:56 2026 +0100
+
+    feat(frontend): page détail admin en supervision avec preview documents
+
+[33mcommit e660ea610ca0d42416c3f369926a4fe756761091[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon Jun 8 01:57:46 2026 +0100
+
+    feat(backend): autoriser l'admin à consulter les documents en supervision
+
+[33mcommit 0ea754dcf6c639cb98c07aeff81f12aabcd01640[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon Jun 8 01:57:08 2026 +0100
+
+    feat(frontend): liste admin paginée avec filtres et sync URL
+
+[33mcommit 0bba6a5c51f41912a21bf826a53e19d28072a77a[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon Jun 8 01:53:02 2026 +0100
+
+    feat(backend): API admin paginée avec filtres et summary
+
+[33mcommit 034f57745b4d7c2879be4e67997f7e300ce28aea[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Sun Jun 7 16:27:25 2026 +0100
+
+    Frontend client : détail dossier, contre-offre et affichage des revues documentaires
+
+[33mcommit a0a688913c96867d87a11c112fb008c13941bd9d[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Sun Jun 7 16:27:10 2026 +0100
+
+    Frontend conseiller : instruction dossier, modales, aperçu documents et retours d'erreur API
+
+[33mcommit a5a604deb4bf42aa407bc63dd9918ce4ffad93f1[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Sun Jun 7 16:26:34 2026 +0100
+
+    Config : limites mémoire Maven et guide de redémarrage du backend
+
+[33mcommit 8f916e72051637be61656ea5ff4d112a15ecdb5d[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Sun Jun 7 16:26:10 2026 +0100
+
+    Backend : parcours conseiller, revues documentaires et règles métier sur les offres
+
+[33mcommit 4ab983d134475bae67ea7a49c227225a576bb23f[m
+Author: wiziki-75 <anthony.guerrand92@gmail.com>
+Date:   Mon Jun 1 02:20:01 2026 +0200
+
+    Add basic interface for admin & advisor, with basic features
+
+[33mcommit b341dd068e7481dc465a567d4b4911aef2e190e9[m[33m ([m[1;31morigin/feature/frontend-loan-wizard[m[33m, [m[1;32mfeature/frontend-loan-wizard[m[33m)[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Fri May 29 16:13:09 2026 +0000
+
+    docs: ajouter le wiki du projet
+
+[33mcommit 90b5eefa1c1be42dc90421422865e5d29ff5146c[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Fri May 29 16:12:14 2026 +0000
+
+    docs: ajouter le wiki du projet
+
+[33mcommit 07d336ba7b78a2c8c1701c92fe228f4fe5d2fd2e[m[33m ([m[1;32mfeature/loan-offer-counter-proposal[m[33m)[m
+Merge: c93637a 8c6837f
+Author: Youssef  Hergal <youssefher247@gmail.com>
+Date:   Fri May 29 15:55:43 2026 +0000
+
+    Merge branch 'feature/frontend-loan-wizard' into 'develop'
+    
+    add paginated loan listing and standardized API error handling
+    
+    See merge request projet-fill-rouge-team/projet-fil-rouge!13
+
+[33mcommit 8c6837fbbe7b0bb1c2a6d22490bab74253de8fd1[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Fri May 29 15:54:44 2026 +0000
+
+    fix(frontend): ajouter @angular/animations pour le build Material
+
+[33mcommit 338083b4621b44931790bfde7355b4686af33118[m
+Merge: c8a92c3 c93637a
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Fri May 29 15:49:49 2026 +0000
+
+    merge: intégrer develop dans feature/frontend-loan-wizard
+
+[33mcommit c8a92c305d0a9897b59b886f7b95acd5bfb046b4[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Fri May 29 15:35:29 2026 +0000
+
+    Update gitignore file
+
+[33mcommit 39381c49e1c989b15b05230efe3d5783f3d1599b[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon May 25 01:26:25 2026 +0000
+
+    feat(frontend): parcours applicant, shells multi-rôles et routes
+
+[33mcommit 7cc64e2bd284c39ad0e496f5ea52ed01ff6c59ea[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon May 25 01:26:14 2026 +0000
+
+    refactor(frontend): core prêt et retrait ancien wizard
+
+[33mcommit af46a461d8c202277e1805883a9516e60620c208[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon May 25 01:25:05 2026 +0000
+
+    feat(backend): workflow prêt, historique API et règles métier
+
+[33mcommit 9258b32a78f3aa2b1bde234de0a61e1919b28eb4[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon May 25 01:24:45 2026 +0000
+
+    refactor(backend): stockage documents, profils Spring et seed dev
+
+[33mcommit a816d9b82f1f9b56d1b528c9cf0078b56c73d30d[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon May 25 01:23:36 2026 +0000
+
+    feat(backend): DTOs annulation, rejet document et champs prêt
+
+[33mcommit 45de36c27cae38940790a5dc3c66897315928345[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon May 25 01:23:10 2026 +0000
+
+    feat(backend): service historique et DTO événements
+
+[33mcommit 25e5faef7a0e2c7ab6ef45b01b2d8497b524ada1[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon May 25 01:22:48 2026 +0000
+
+    feat(backend): entités et repository journal dossier prêt
+
+[33mcommit cc9fccbbab567d4649c50b1d0f3cf3c9d2387926[m[33m ([m[1;32mfeature/loan_application_backend[m[33m)[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Thu May 21 15:36:48 2026 +0000
+
+    feat: wizard nouvelle demande, DTO prêt étendus et shell client
+
+[33mcommit 32af439d09d7e31c31173daca98b2a4e116f6231[m
+Merge: 9de5a0d deeed21
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Thu May 21 14:37:47 2026 +0000
+
+    merge: intégrer le remote loan_application_backend avec l'API v1 locale
+
+[33mcommit c93637a70e96dec4fa387c73a964bb7794c6a042[m
+Merge: 81d9604 74659d0
+Author: Youssef  Hergal <youssefher247@gmail.com>
+Date:   Thu May 21 13:27:21 2026 +0000
+
+    Merge branch 'feature/sidebar-client' into 'develop'
+    
+    Feature/sidebar client
+    
+    See merge request projet-fill-rouge-team/projet-fil-rouge!12
+
+[33mcommit deeed21df0780391e4bc7ab733ab1c8b5e5391f3[m[33m ([m[1;31morigin/feature/loan_application_backend[m[33m)[m
+Author: wiziki-75 <anthony.guerrand92@gmail.com>
+Date:   Thu May 21 01:08:43 2026 +0200
+
+    Add approve & reject loan routes, error handling
+
+[33mcommit 9de5a0d6c97edf20f43a0e1a8f92df7b5ed167bd[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Tue May 19 21:08:51 2026 +0000
+
+    WIP: mes derniers changements avant merge
+
+[33mcommit 28470663bb3f0a6d6f2fe56e3b65ca2b2319a582[m
+Author: wiziki-75 <anthony.guerrand92@gmail.com>
+Date:   Mon May 18 02:25:17 2026 +0200
+
+    Add LoanSubmittedUpdateDto
+
+[33mcommit 21549cc137ef0aea7a639a6b25349a7d3f9a7b0f[m
+Author: wiziki-75 <anthony.guerrand92@gmail.com>
+Date:   Mon May 18 02:21:15 2026 +0200
+
+    Add PUT & DELETE mapping
+
+[33mcommit d29ad8c03ffd9a59fce1515d10cb0a96e5e2604d[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Fri May 8 15:41:24 2026 +0000
+
+    add loan document upload/list/delete endpoints for draft applications
+    
+    Introduce loan document domain model, repository, and response DTO; add multipart upload, listing, and deletion endpoints with draft-only business rules, file type/size validation, and local file storage.
+
+[33mcommit 21a91e819e37342c42d9b1f44ebee21b10a5ffa3[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Fri May 8 15:30:29 2026 +0000
+
+    add paginated loan listing and standardized API error handling
+    
+    Implement status-filtered pagination for loan applications, introduce structured error responses with dedicated business/access/not-found exceptions, and wire controller/service/repository to the Sprint 2 API contract.
+
+[33mcommit 3e26a18eb039696922f4df4b5256e5238d99ba23[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Fri May 8 15:21:13 2026 +0000
+
+    backend: align loan API v1 + update draft + validation ranges
+
+[33mcommit 74659d08373809c11b8d03c09717981d1ea87550[m[33m ([m[1;31morigin/feature/sidebar-client[m[33m, [m[1;32mfeature/sidebar-client[m[33m)[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon Mar 23 20:16:36 2026 +0100
+
+    style(client-shell): reduce size of Nouvelle demande CTAs
+
+[33mcommit 91de3560a987ce3c49e729fa4ac8c431c81995dd[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon Mar 23 17:00:21 2026 +0100
+
+    refactor(loans): harden reference generation and align entity constraints with request validation
+
+[33mcommit 4dd976cc3754043be4e6bf1ea6c7cb1c51b65445[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon Mar 23 16:59:47 2026 +0100
+
+    fix(loans): enforce role-based access, validate submit state, and complete response mapping
+
+[33mcommit d764db6526f2f1ba12c33fc12920cbf9073ce745[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon Mar 23 16:59:26 2026 +0100
+
+    fix(security): require authentication for loan API endpoints
+
+[33mcommit 5ea864eaac0ef8b840c2142b2e0d4fc6b5e74067[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Mon Mar 23 15:22:40 2026 +0100
+
+    style(client-shell): fix collapsed sidebar alignment and scroll behavior
+
+[33mcommit c302795e7f39a180080935da0f5b3103f89b8d06[m
+Author: Anthony <anthony.guerrand92@gmail.com>
+Date:   Mon Mar 23 15:12:01 2026 +0100
+
+    init feature
+
+[33mcommit a38786f0a238505385802deaa16328e3a9b04c5c[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Sun Mar 22 19:19:26 2026 +0100
+
+    chore: mises à jour espaces admin et conseiller
+
+[33mcommit eded52c277fabc348a5c464115895bc7299b88d0[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Sun Mar 22 19:18:46 2026 +0100
+
+    style: thème global et barre de navigation
+
+[33mcommit 30cde2006264cfba9f10c3e41baa98fe89ff4714[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Sun Mar 22 19:17:30 2026 +0100
+
+    chore(app): composant racine pour le routage des zones
+
+[33mcommit fa0cdf6d1da65755d553b914a591e414493d8672[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Sun Mar 22 19:15:49 2026 +0100
+
+    feat(auth): ajustements login, register et vérification email
+
+[33mcommit 6982d0359e3ed6d1de7f4a1b4b5f73a1a6d3e6dc[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Sun Mar 22 19:14:09 2026 +0100
+
+    feat(layout): client-shell, placeholders client et dashboard
+
+[33mcommit eaa5b19e01c61237ee81ad961a7a29683e20d619[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Sun Mar 22 19:11:44 2026 +0100
+
+    feat(auth): guard espace client et routes dédiées
+
+[33mcommit 81d9604a1f2194281d8d383ed5ff4c2712e81526[m
+Merge: 40c4789 bcf6964
+Author: Youssef  Hergal <youssefher247@gmail.com>
+Date:   Wed Mar 18 12:40:28 2026 +0000
+
+    Merge branch 'feature/frontend-register' into 'develop'
+    
+    feat: register client + correction rôle + verify-email statique
+    
+    See merge request projet-fill-rouge-team/projet-fil-rouge!10
+
+[33mcommit bcf696467bd7f6cd61eb279477c251f1a1543e56[m[33m ([m[1;31morigin/feature/frontend-register[m[33m, [m[1;32mfeature/frontend-register[m[33m)[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Wed Mar 18 13:34:22 2026 +0100
+
+    feat(frontend): connect register and keep static verify-email (000000)
+
+[33mcommit bbb09f8864263801683ebc0128e105d242368d69[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Wed Mar 18 13:33:14 2026 +0100
+
+    fix(backend): assign ROLE_CLIENT on register
+
+[33mcommit 40c4789992f3281bf7bd22014574626810ca4c47[m
+Merge: 294e664 7aaca5d
+Author: Youssef  Hergal <youssefher247@gmail.com>
+Date:   Wed Mar 18 11:25:09 2026 +0000
+
+    Merge branch 'feature/register-backend' into 'develop'
+    
+    feat(backend): inscription client (POST /api/auth/register)
+    
+    See merge request projet-fill-rouge-team/projet-fil-rouge!9
+
+[33mcommit 7aaca5d54ac2cacfb31568677da7212f96c1aebd[m
+Author: Anthony <anthony.guerrand92@gmail.com>
+Date:   Wed Mar 18 12:09:42 2026 +0100
+
+    Add register route
+
+[33mcommit 294e6649bd51272c245ddb2603480460fd3686bb[m
+Merge: ef832a6 c222402
+Author: Youssef  Hergal <youssefher247@gmail.com>
+Date:   Tue Mar 17 23:59:28 2026 +0000
+
+    Merge branch 'feature/frontend-login' into 'develop'
+    
+    feat: liaison login fronten <--> backend + utilisateurs de test conseiller/admin
+    
+    See merge request projet-fill-rouge-team/projet-fil-rouge!8
+
+[33mcommit c222402295b4f152d7998404c01dd6b4eb62374b[m[33m ([m[1;31morigin/feature/frontend-login[m[33m, [m[1;32mfeature/frontend-login[m[33m)[m
+Author: Youssef Hergal <youssefher247@gmail.com>
+Date:   Wed Mar 18 00:50:36 2026 +0100
+
+    chore(backend): add conseiller and admin test users in InitialDataLoader

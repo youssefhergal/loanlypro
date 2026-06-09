@@ -25,7 +25,6 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -73,12 +72,12 @@ class AdvisorAssignmentServiceTest {
         assertThat(result.getAssignments().get(0).getAdvisorId()).isEqualTo(20L);
         assertThat(result.getMessage()).contains("Affectation manuelle");
         verify(historyService).recordEvent(
-                eq(loan),
-                eq(LoanApplicationEventType.ADVISOR_ASSIGNED),
-                eq(LoanEventActorType.ADMIN),
-                eq("admin@test.com"),
-                eq("Alice Admin"),
-                eq(Map.of("advisorName", "Marie Conseil", "automatic", true))
+                loan,
+                LoanApplicationEventType.ADVISOR_ASSIGNED,
+                LoanEventActorType.ADMIN,
+                "admin@test.com",
+                "Alice Admin",
+                Map.of("advisorName", "Marie Conseil", "automatic", true)
         );
     }
 
@@ -142,12 +141,12 @@ class AdvisorAssignmentServiceTest {
         assertThat(result.getAssignedCount()).isEqualTo(1);
         assertThat(result.getMessage()).contains("Affectation automatique");
         verify(historyService).recordEvent(
-                eq(loan),
-                eq(LoanApplicationEventType.ADVISOR_ASSIGNED),
-                eq(LoanEventActorType.SYSTEM),
-                eq("system@loanlyfans"),
-                eq("Affectation automatique"),
-                eq(Map.of("advisorName", "Marie Conseil", "automatic", true))
+                loan,
+                LoanApplicationEventType.ADVISOR_ASSIGNED,
+                LoanEventActorType.SYSTEM,
+                "system@loanlyfans",
+                "Affectation automatique",
+                Map.of("advisorName", "Marie Conseil", "automatic", true)
         );
     }
 

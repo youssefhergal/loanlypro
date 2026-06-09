@@ -2,6 +2,8 @@ package com.projetfilrouge.loanmanagement.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.projetfilrouge.loanmanagement.entity.LoanApplication;
+import com.projetfilrouge.loanmanagement.entity.LoanApplicationEvent;
+import com.projetfilrouge.loanmanagement.entity.LoanApplicationEventType;
 import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
 import com.projetfilrouge.loanmanagement.entity.LoanDocument;
 import com.projetfilrouge.loanmanagement.entity.LoanDocumentReview;
@@ -25,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -202,7 +205,136 @@ class DocumentReviewServiceTest {
         when(reviewRepository.findByLoanApplicationIdOrderByDocumentTypeAsc(1L))
                 .thenReturn(allValidatedReviews());
 
-        documentReviewService.ensureRequiredDocumentsReadyForDecision(1L, "Approbation impossible");
+        assertThatCode(
+                () -> documentReviewService.ensureRequiredDocumentsReadyForDecision(1L, "Approbation impossible")
+        ).doesNotThrowAnyException();
+    }
+
+    @Test
+    void markPendingReview_upsertsPendingStatus() {
+        LoanApplication loan = loan(1L, LoanApplicationStatus.UNDER_REVIEW);
+
+        when(reviewRepository.findByLoanApplicationIdAndDocumentType(1L, LoanDocumentType.OTHER))
+                .thenReturn(Optional.empty());
+        when(reviewRepository.save(any(LoanDocumentReview.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        documentReviewService.markPendingReview(loan, LoanDocumentType.OTHER);
+
+        ArgumentCaptor<LoanDocumentReview> captor = ArgumentCaptor.forClass(LoanDocumentReview.class);
+        verify(reviewRepository).save(captor.capture());
+        assertThat(captor.getValue().getReviewStatus()).isEqualTo(LoanDocumentReviewStatus.PENDING_REVIEW);
+    }
+
+    @Test
+    void getDocumentReviews_derivesRejectedStatusFromHistory() {
+        LoanApplication loan = loan(1L, LoanApplicationStatus.UNDER_REVIEW);
+
+        when(documentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(1L))
+                .thenReturn(List.of(document(LoanDocumentType.IDENTITY)));
+        when(reviewRepository.findByLoanApplicationIdOrderByDocumentTypeAsc(1L))
+                .thenReturn(List.of());
+        when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
+                .thenReturn(List.of(historyEvent(
+                        LoanApplicationEventType.DOCUMENT_REJECTED,
+                        "{\"documentType\":\"IDENTITY\",\"comment\":\"Illisible\"}"
+                )));
+
+        List<LoanDocumentReviewResponseDto> reviews = documentReviewService.getDocumentReviews(loan);
+
+        assertThat(reviews.stream().filter(r -> r.getDocumentType() == LoanDocumentType.IDENTITY).findFirst())
+                .get()
+                .satisfies(identity -> {
+                    assertThat(identity.getStatus()).isEqualTo("rejected");
+                    assertThat(identity.getComment()).isEqualTo("Illisible");
+                });
+    }
+
+    @Test
+    void getDocumentReviews_showsMissingUploadForRequiredDocuments() {
+        LoanApplication loan = loan(1L, LoanApplicationStatus.DRAFT);
+
+        when(documentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(1L))
+                .thenReturn(List.of());
+        when(reviewRepository.findByLoanApplicationIdOrderByDocumentTypeAsc(1L))
+                .thenReturn(List.of());
+        when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
+                .thenReturn(List.of());
+
+        List<LoanDocumentReviewResponseDto> reviews = documentReviewService.getDocumentReviews(loan);
+
+        assertThat(reviews).hasSize(5);
+        assertThat(reviews)
+                .allMatch(review -> "missing_upload".equals(review.getStatus()));
+    }
+
+    @Test
+    void getDocumentReviews_includesOtherDocumentWhenUploaded() {
+        LoanApplication loan = loan(1L, LoanApplicationStatus.UNDER_REVIEW);
+
+        when(documentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(1L))
+                .thenReturn(List.of(document(LoanDocumentType.OTHER)));
+        when(reviewRepository.findByLoanApplicationIdOrderByDocumentTypeAsc(1L))
+                .thenReturn(List.of());
+        when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
+                .thenReturn(List.of());
+
+        List<LoanDocumentReviewResponseDto> reviews = documentReviewService.getDocumentReviews(loan);
+
+        assertThat(reviews).hasSize(6);
+        assertThat(reviews.stream().filter(r -> r.getDocumentType() == LoanDocumentType.OTHER).findFirst())
+                .get()
+                .extracting(LoanDocumentReviewResponseDto::getStatus)
+                .isEqualTo("pending_review");
+    }
+
+    @Test
+    void getDocumentReviews_returnsRejectedStatusFromStoredReview() {
+        LoanApplication loan = loan(1L, LoanApplicationStatus.UNDER_REVIEW);
+        LoanDocumentReview rejected = existingReview(LoanDocumentType.PAYSLIPS, LoanDocumentReviewStatus.REJECTED);
+        rejected.setReviewComment("Document expiré");
+
+        when(documentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(1L))
+                .thenReturn(allRequiredDocuments());
+        when(reviewRepository.findByLoanApplicationIdOrderByDocumentTypeAsc(1L))
+                .thenReturn(List.of(rejected));
+
+        List<LoanDocumentReviewResponseDto> reviews = documentReviewService.getDocumentReviews(loan);
+
+        assertThat(reviews.stream().filter(r -> r.getDocumentType() == LoanDocumentType.PAYSLIPS).findFirst())
+                .get()
+                .satisfies(payslips -> {
+                    assertThat(payslips.getStatus()).isEqualTo("rejected");
+                    assertThat(payslips.getComment()).isEqualTo("Document expiré");
+                });
+    }
+
+    @Test
+    void getDocumentReviews_validatesByDefaultOnApprovedLoan() {
+        LoanApplication loan = loan(1L, LoanApplicationStatus.APPROVED);
+
+        when(documentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(1L))
+                .thenReturn(allRequiredDocuments());
+        when(reviewRepository.findByLoanApplicationIdOrderByDocumentTypeAsc(1L))
+                .thenReturn(List.of());
+        when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
+                .thenReturn(List.of(historyEvent(
+                        LoanApplicationEventType.DOCUMENT_VALIDATED,
+                        "{\"documentType\":\"IDENTITY\"}"
+                )));
+
+        List<LoanDocumentReviewResponseDto> reviews = documentReviewService.getDocumentReviews(loan);
+
+        assertThat(reviews.stream().filter(r -> r.getDocumentType() == LoanDocumentType.IDENTITY).findFirst())
+                .get()
+                .extracting(LoanDocumentReviewResponseDto::getStatus)
+                .isEqualTo("validated");
+    }
+
+    private static LoanApplicationEvent historyEvent(LoanApplicationEventType type, String payloadJson) {
+        return LoanApplicationEvent.builder()
+                .eventType(type)
+                .payloadJson(payloadJson)
+                .build();
     }
 
     private static LoanApplication loan(Long id, LoanApplicationStatus status) {

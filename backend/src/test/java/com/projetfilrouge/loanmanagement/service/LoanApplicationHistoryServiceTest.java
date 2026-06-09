@@ -216,6 +216,196 @@ class LoanApplicationHistoryServiceTest {
         assertThat(history.get(1).getState()).isEqualTo("current");
     }
 
+    @Test
+    void recordEvent_withoutOccurredAt_delegatesToCurrentInstant() {
+        LoanApplication loan = sampleLoan(LoanApplicationStatus.DRAFT);
+
+        when(eventRepository.save(any(LoanApplicationEvent.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LoanApplicationEvent result = historyService.recordEvent(
+                loan,
+                LoanApplicationEventType.APPLICATION_SUBMITTED,
+                LoanEventActorType.CLIENT,
+                "client@test.com",
+                "Jean Dupont",
+                Map.of("reference", "LOAN-TEST")
+        );
+
+        assertThat(result.getOccurredAt()).isNotNull();
+        assertThat(result.getPayloadJson()).contains("LOAN-TEST");
+    }
+
+    @Test
+    void getHistory_resolvesSubmittedAndOfferEvents() {
+        LoanApplication loan = sampleLoan(LoanApplicationStatus.UNDER_REVIEW);
+        LoanApplicationEvent submitted = event(
+                2L,
+                loan,
+                LoanApplicationEventType.APPLICATION_SUBMITTED,
+                "{\"reference\":\"LOAN-TEST\"}",
+                Instant.parse("2026-01-11T10:00:00Z")
+        );
+        LoanApplicationEvent offer = event(
+                3L,
+                loan,
+                LoanApplicationEventType.OFFER_PROPOSED,
+                "{\"clientMessage\":\"Meilleur taux\"}",
+                Instant.parse("2026-01-14T10:00:00Z")
+        );
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
+                .thenReturn(List.of(submitted, offer));
+
+        List<LoanHistoryEventResponseDto> history = historyService.getHistory(1L);
+
+        assertThat(history.get(0).getTitle()).isEqualTo("Demande soumise");
+        assertThat(history.get(0).getDescription()).contains("LOAN-TEST");
+        assertThat(history.get(1).getTitle()).isEqualTo("Contre-offre proposée");
+        assertThat(history.get(1).getDescription()).contains("Meilleur taux");
+    }
+
+    @Test
+    void getHistory_resolvesAdvisorAssignedAndValidatedDocument() {
+        LoanApplication loan = sampleLoan(LoanApplicationStatus.UNDER_REVIEW);
+        LoanApplicationEvent assigned = event(
+                4L,
+                loan,
+                LoanApplicationEventType.ADVISOR_ASSIGNED,
+                "{\"advisorName\":\"Marie Conseil\"}",
+                Instant.parse("2026-01-12T09:00:00Z")
+        );
+        LoanApplicationEvent validated = event(
+                5L,
+                loan,
+                LoanApplicationEventType.DOCUMENT_VALIDATED,
+                "{\"documentType\":\"PAYSLIPS\"}",
+                Instant.parse("2026-01-12T10:00:00Z")
+        );
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
+                .thenReturn(List.of(assigned, validated));
+
+        List<LoanHistoryEventResponseDto> history = historyService.getHistory(1L);
+
+        assertThat(history.get(0).getDescription()).contains("Marie Conseil");
+        assertThat(history.get(1).getTitle()).isEqualTo("Document validé");
+        assertThat(history.get(1).getDescription()).contains("Bulletins de salaire");
+    }
+
+    @Test
+    void getHistory_resolvesRejectedAndCancelledApplications() {
+        LoanApplication loan = sampleLoan(LoanApplicationStatus.REJECTED);
+        loan.setDecisionComment("Dossier incomplet");
+        LoanApplicationEvent rejected = event(
+                6L,
+                loan,
+                LoanApplicationEventType.APPLICATION_REJECTED,
+                "{\"comment\":\"Revenus insuffisants\"}",
+                Instant.parse("2026-01-18T10:00:00Z")
+        );
+        LoanApplicationEvent cancelled = event(
+                7L,
+                loan,
+                LoanApplicationEventType.APPLICATION_CANCELLED,
+                "{}",
+                Instant.parse("2026-01-19T10:00:00Z")
+        );
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
+                .thenReturn(List.of(rejected, cancelled));
+
+        List<LoanHistoryEventResponseDto> history = historyService.getHistory(1L);
+
+        assertThat(history.get(0).getTitle()).isEqualTo("Demande refusée");
+        assertThat(history.get(0).getDescription()).isEqualTo("Revenus insuffisants");
+        assertThat(history.get(0).getState()).isEqualTo("warn");
+        assertThat(history.get(1).getTitle()).isEqualTo("Demande annulée");
+        assertThat(history.get(1).getState()).isEqualTo("warn");
+    }
+
+    @Test
+    void getHistory_resolvesBundledAndComplementUploads() {
+        LoanApplication loan = sampleLoan(LoanApplicationStatus.UNDER_REVIEW);
+        LoanApplicationEvent bundled = event(
+                8L,
+                loan,
+                LoanApplicationEventType.DOCUMENT_UPLOADED,
+                "{\"bundled\":true,\"documentCount\":6,\"requiredDocumentCount\":5}",
+                Instant.parse("2026-01-11T08:00:00Z")
+        );
+        LoanApplicationEvent complement = event(
+                9L,
+                loan,
+                LoanApplicationEventType.DOCUMENT_UPLOADED,
+                "{\"documentType\":\"OTHER\",\"fileName\":\"extra.pdf\",\"complement\":true}",
+                Instant.parse("2026-01-15T08:00:00Z")
+        );
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
+                .thenReturn(List.of(bundled, complement));
+
+        List<LoanHistoryEventResponseDto> history = historyService.getHistory(1L);
+
+        assertThat(history.get(0).getTitle()).isEqualTo("Pièces justificatives déposées");
+        assertThat(history.get(0).getDescription()).contains("pièces complémentaires");
+        assertThat(history.get(1).getTitle()).isEqualTo("Document déposé");
+        assertThat(history.get(1).getDescription()).startsWith("Nouveau dépôt");
+        assertThat(history.get(1).getComplement()).isTrue();
+    }
+
+    @Test
+    void getHistory_doesNotDuplicateFundsProjectionWhenAlreadyReleased() {
+        LoanApplication loan = sampleLoan(LoanApplicationStatus.APPROVED);
+        LoanApplicationEvent approved = event(
+                10L,
+                loan,
+                LoanApplicationEventType.APPLICATION_APPROVED,
+                "{}",
+                Instant.parse("2026-01-20T10:00:00Z")
+        );
+        LoanApplicationEvent funds = event(
+                11L,
+                loan,
+                LoanApplicationEventType.FUNDS_RELEASED,
+                "{}",
+                Instant.parse("2026-01-21T10:00:00Z")
+        );
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
+                .thenReturn(List.of(approved, funds));
+
+        List<LoanHistoryEventResponseDto> history = historyService.getHistory(1L);
+
+        assertThat(history).hasSize(2);
+        assertThat(history.get(1).getTitle()).isEqualTo("Fonds débloqués");
+        assertThat(history.get(1).getState()).isEqualTo("current");
+    }
+
+    @Test
+    void mapEventToDisplayDto_resolvesOfferAcceptedEvent() {
+        LoanApplication loan = sampleLoan(LoanApplicationStatus.UNDER_REVIEW);
+        LoanApplicationEvent accepted = event(
+                12L,
+                loan,
+                LoanApplicationEventType.OFFER_ACCEPTED,
+                "{}",
+                Instant.parse("2026-01-16T10:00:00Z")
+        );
+
+        when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
+                .thenReturn(List.of(accepted));
+
+        LoanHistoryEventResponseDto dto = historyService.mapEventToDisplayDto(accepted);
+
+        assertThat(dto.getTitle()).isEqualTo("Contre-offre acceptée");
+        assertThat(dto.getDescription()).contains("accepté la contre-offre");
+    }
+
     private static LoanApplication sampleLoan(LoanApplicationStatus status) {
         return LoanApplication.builder()
                 .id(1L)
