@@ -14,8 +14,13 @@ import com.projetfilrouge.loanmanagement.repository.LoanApplicationEventReposito
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanDocumentRepository;
 import com.projetfilrouge.loanmanagement.repository.UserRepository;
+import com.projetfilrouge.loanmanagement.web.dto.request.AdminApplicationListQuery;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.ProposeOfferRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.RejectLoanRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.request.RejectOfferRequestDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.AdminLoanListSummaryDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
 import com.projetfilrouge.loanmanagement.web.exception.BusinessRuleException;
 import com.projetfilrouge.loanmanagement.web.exception.ForbiddenOperationException;
@@ -25,6 +30,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -47,6 +58,7 @@ class LoanServiceTest {
 
     private static final String ROLE_CLIENT = "ROLE_CLIENT";
     private static final String ROLE_CONSEILLER = "ROLE_CONSEILLER";
+    private static final String ROLE_ADMIN = "ROLE_ADMIN";
 
     @Mock
     private LoanApplicationRepository loanRepository;
@@ -301,6 +313,236 @@ class LoanServiceTest {
     }
 
     @Test
+    void getAdminApplications_returnsPaginatedResultsForAdmin() {
+        User admin = adminUser();
+        LoanApplication loan = completeDraftLoan(clientUser());
+        loan.setStatus(LoanApplicationStatus.SUBMITTED);
+        AdminApplicationListQuery query = new AdminApplicationListQuery(null, null, false, null, null, 0, 10);
+
+        when(userRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(admin));
+        when(loanRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(loan)));
+
+        Page<LoanResponseDto> result = loanService.getAdminApplications("admin@test.com", query);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getStatus()).isEqualTo(LoanApplicationStatus.SUBMITTED);
+    }
+
+    @Test
+    void getAdminApplications_throwsForbiddenForNonAdmin() {
+        when(userRepository.findByEmail("client@test.com")).thenReturn(Optional.of(clientUser()));
+        AdminApplicationListQuery query = new AdminApplicationListQuery(null, null, false, null, null, 0, 10);
+
+        assertThatThrownBy(() -> loanService.getAdminApplications("client@test.com", query))
+                .isInstanceOf(ForbiddenOperationException.class)
+                .hasMessage("Accès réservé aux administrateurs.");
+    }
+
+    @Test
+    void getAdminListSummary_returnsCountsAndAdvisors() {
+        User admin = adminUser();
+
+        when(userRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(admin));
+        when(loanRepository.count(any(Specification.class))).thenReturn(5L, 2L, 1L, 1L, 1L, 1L, 1L, 1L);
+        when(userRepository.findAllConseillers()).thenReturn(List.of(advisorUser()));
+
+        AdminLoanListSummaryDto summary = loanService.getAdminListSummary("admin@test.com", null);
+
+        assertThat(summary.getTotalCount()).isEqualTo(5L);
+        assertThat(summary.getUnassignedCount()).isEqualTo(2L);
+        assertThat(summary.getAdvisors()).hasSize(1);
+        assertThat(summary.getStatusCounts()).isNotEmpty();
+    }
+
+    @Test
+    void proposeCounterOffer_setsOfferPendingStatus() {
+        User advisor = advisorUser();
+        LoanApplication loan = completeDraftLoan(clientUser());
+        loan.setStatus(LoanApplicationStatus.UNDER_REVIEW);
+        loan.setAssignedAdvisor(advisor);
+        ProposeOfferRequestDto request = new ProposeOfferRequestDto();
+        request.setApprovedAmount(new BigDecimal("12000"));
+        request.setApprovedDurationMonths(36);
+        request.setInterestRate(new BigDecimal("4.50"));
+        request.setClientMessage("  Offre adaptée  ");
+
+        when(userRepository.findByEmail("conseiller@test.com")).thenReturn(Optional.of(advisor));
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanDocumentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(1L))
+                .thenReturn(requiredDocuments());
+        doNothing().when(documentReviewService)
+                .ensureRequiredDocumentsReadyForDecision(1L, "Contre-offre impossible");
+        when(loanRepository.save(any(LoanApplication.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LoanResponseDto response = loanService.proposeCounterOffer(1L, request, "conseiller@test.com");
+
+        assertThat(response.getStatus()).isEqualTo(LoanApplicationStatus.OFFER_PENDING);
+        assertThat(response.getApprovedAmount()).isEqualByComparingTo("12000");
+        assertThat(response.getOfferMessage()).isEqualTo("Offre adaptée");
+        verify(historyService).recordEvent(
+                eq(loan),
+                eq(LoanApplicationEventType.OFFER_PROPOSED),
+                eq(LoanEventActorType.ADVISOR),
+                eq("conseiller@test.com"),
+                eq("Marie Conseil"),
+                any(Map.class)
+        );
+    }
+
+    @Test
+    void acceptOffer_movesLoanBackToUnderReview() {
+        User client = clientUser();
+        LoanApplication loan = completeDraftLoan(client);
+        loan.setStatus(LoanApplicationStatus.OFFER_PENDING);
+        loan.setApprovedAmount(new BigDecimal("12000"));
+        loan.setApprovedDurationMonths(36);
+        loan.setInterestRate(new BigDecimal("4.50"));
+
+        when(userRepository.findByEmail("client@test.com")).thenReturn(Optional.of(client));
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.save(any(LoanApplication.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LoanResponseDto response = loanService.acceptOffer(1L, "client@test.com");
+
+        assertThat(response.getStatus()).isEqualTo(LoanApplicationStatus.UNDER_REVIEW);
+        assertThat(response.getOfferClientAccepted()).isTrue();
+        verify(historyService).recordEvent(
+                loan,
+                LoanApplicationEventType.OFFER_ACCEPTED,
+                LoanEventActorType.CLIENT,
+                "client@test.com",
+                "Jean Dupont",
+                Map.of()
+        );
+    }
+
+    @Test
+    void rejectOffer_clearsApprovedTerms() {
+        User client = clientUser();
+        LoanApplication loan = completeDraftLoan(client);
+        loan.setStatus(LoanApplicationStatus.OFFER_PENDING);
+        loan.setApprovedAmount(new BigDecimal("12000"));
+        loan.setApprovedDurationMonths(36);
+        loan.setInterestRate(new BigDecimal("4.50"));
+        loan.setOfferMessage("Offre");
+        RejectOfferRequestDto request = new RejectOfferRequestDto();
+        request.setComment("Trop cher");
+
+        when(userRepository.findByEmail("client@test.com")).thenReturn(Optional.of(client));
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.save(any(LoanApplication.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LoanResponseDto response = loanService.rejectOffer(1L, request, "client@test.com");
+
+        assertThat(response.getStatus()).isEqualTo(LoanApplicationStatus.UNDER_REVIEW);
+        assertThat(response.getApprovedAmount()).isNull();
+        assertThat(response.getOfferMessage()).isNull();
+        verify(historyService).recordEvent(
+                loan,
+                LoanApplicationEventType.OFFER_REJECTED,
+                LoanEventActorType.CLIENT,
+                "client@test.com",
+                "Jean Dupont",
+                Map.of("comment", "Trop cher")
+        );
+    }
+
+    @Test
+    void uploadDocument_storesFileInDraftLoan() {
+        User client = clientUser();
+        LoanApplication loan = completeDraftLoan(client);
+        MultipartFile file = new MockMultipartFile(
+                "file",
+                "identity.pdf",
+                "application/pdf",
+                "pdf".getBytes()
+        );
+        LoanDocumentStorageService.StoredUpload stored = new LoanDocumentStorageService.StoredUpload(
+                "uuid-identity.pdf",
+                "/tmp/loan-1/uuid-identity.pdf",
+                "identity.pdf",
+                "application/pdf",
+                3L
+        );
+
+        when(userRepository.findByEmail("client@test.com")).thenReturn(Optional.of(client));
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(documentStorage.storeUpload(1L, file)).thenReturn(stored);
+        when(loanDocumentRepository.save(any(LoanDocument.class))).thenAnswer(invocation -> {
+            LoanDocument doc = invocation.getArgument(0);
+            doc.setId(50L);
+            return doc;
+        });
+
+        LoanDocumentResponseDto response = loanService.uploadDocument(
+                1L,
+                LoanDocumentType.IDENTITY,
+                file,
+                null,
+                "client@test.com"
+        );
+
+        assertThat(response.getId()).isEqualTo(50L);
+        assertThat(response.getDocumentType()).isEqualTo(LoanDocumentType.IDENTITY);
+        assertThat(response.getOriginalFileName()).isEqualTo("identity.pdf");
+    }
+
+    @Test
+    void getAllApplications_returnsClientLoans() {
+        User client = clientUser();
+        LoanApplication loan = completeDraftLoan(client);
+
+        when(userRepository.findByEmail("client@test.com")).thenReturn(Optional.of(client));
+        when(loanRepository.findByApplicantEmail(eq("client@test.com"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(loan)));
+
+        Page<LoanResponseDto> result = loanService.getAllApplications("client@test.com", null, 0, 10);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getApplicantEmail()).isEqualTo("client@test.com");
+    }
+
+    @Test
+    void deleteApplication_deletesDraftForClient() {
+        User client = clientUser();
+        LoanApplication loan = completeDraftLoan(client);
+        LoanDocument document = LoanDocument.builder()
+                .id(5L)
+                .storagePath("/tmp/doc.pdf")
+                .build();
+
+        when(userRepository.findByEmail("client@test.com")).thenReturn(Optional.of(client));
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanDocumentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(1L))
+                .thenReturn(List.of(document));
+
+        loanService.deleteApplication(1L, "client@test.com");
+
+        verify(documentStorage).deleteFile("/tmp/doc.pdf");
+        verify(loanDocumentRepository).deleteAll(List.of(document));
+        verify(documentStorage).deleteLoanStorageDirectory(1L);
+        verify(eventRepository).deleteByLoanApplicationId(1L);
+        verify(loanRepository).delete(loan);
+    }
+
+    @Test
+    void deleteApplication_throwsWhenClientDeletesNonDraft() {
+        User client = clientUser();
+        LoanApplication loan = completeDraftLoan(client);
+        loan.setStatus(LoanApplicationStatus.SUBMITTED);
+
+        when(userRepository.findByEmail("client@test.com")).thenReturn(Optional.of(client));
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+
+        assertThatThrownBy(() -> loanService.deleteApplication(1L, "client@test.com"))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("brouillon");
+
+        verify(loanRepository, never()).delete(any(LoanApplication.class));
+    }
+
+    @Test
     void getApplicationById_throwsForbiddenWhenClientAccessesAnotherUsersLoan() {
         User client = clientUser();
         User otherClient = User.builder()
@@ -380,6 +622,16 @@ class LoanServiceTest {
                 .firstName("Marie")
                 .lastName("Conseil")
                 .roles(Set.of(Role.builder().id(2L).name(ROLE_CONSEILLER).build()))
+                .build();
+    }
+
+    private static User adminUser() {
+        return User.builder()
+                .id(30L)
+                .email("admin@test.com")
+                .firstName("Alice")
+                .lastName("Admin")
+                .roles(Set.of(Role.builder().id(3L).name(ROLE_ADMIN).build()))
                 .build();
     }
 }
