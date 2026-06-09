@@ -267,12 +267,12 @@ class LoanServiceTest {
         assertThat(response.getDecisionComment()).isEqualTo("Dossier incomplet");
         assertThat(response.getDecidedAt()).isNotNull();
         verify(historyService).recordEvent(
-                eq(loan),
-                eq(LoanApplicationEventType.APPLICATION_REJECTED),
-                eq(LoanEventActorType.ADVISOR),
-                eq("conseiller@test.com"),
-                eq("Marie Conseil"),
-                eq(Map.of("comment", "Dossier incomplet"))
+                loan,
+                LoanApplicationEventType.APPLICATION_REJECTED,
+                LoanEventActorType.ADVISOR,
+                "conseiller@test.com",
+                "Marie Conseil",
+                Map.of("comment", "Dossier incomplet")
         );
     }
 
@@ -291,12 +291,12 @@ class LoanServiceTest {
         assertThat(response.getStatus()).isEqualTo(LoanApplicationStatus.CANCELLED);
         assertThat(response.getDecisionComment()).isEqualTo("Annulée à la demande du client.");
         verify(historyService).recordEvent(
-                eq(loan),
-                eq(LoanApplicationEventType.APPLICATION_CANCELLED),
-                eq(LoanEventActorType.CLIENT),
-                eq("client@test.com"),
-                eq("Jean Dupont"),
-                eq(Map.of("comment", "Annulée à la demande du client."))
+                loan,
+                LoanApplicationEventType.APPLICATION_CANCELLED,
+                LoanEventActorType.CLIENT,
+                "client@test.com",
+                "Jean Dupont",
+                Map.of("comment", "Annulée à la demande du client.")
         );
     }
 
