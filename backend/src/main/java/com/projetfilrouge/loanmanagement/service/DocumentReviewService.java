@@ -26,6 +26,11 @@ public class DocumentReviewService {
             LoanDocumentType.PROOF_OF_ADDRESS
     );
 
+    private static final String STATUS_REJECTED = "rejected";
+    private static final String STATUS_VALIDATED = "validated";
+    private static final String STATUS_PENDING_REVIEW = "pending_review";
+    private static final String STATUS_MISSING_UPLOAD = "missing_upload";
+
     private static final Set<LoanDocumentType> ALL_REVIEWABLE_TYPES = EnumSet.of(
             LoanDocumentType.IDENTITY,
             LoanDocumentType.PAYSLIPS,
@@ -151,7 +156,7 @@ public class DocumentReviewService {
                 if (status != null) {
                     result.put(type, new EffectiveReview(status, state.comment(), null));
                 }
-            } else if (hasFile || required) {
+            } else {
                 result.put(type, new EffectiveReview(LoanDocumentReviewStatus.PENDING_REVIEW, null, null));
             }
         }
@@ -170,12 +175,12 @@ public class DocumentReviewService {
             switch (event.getEventType()) {
                 case DOCUMENT_REJECTED -> statuses.put(
                         type,
-                        new HistoryReviewState("rejected", stringVal(payload.get("comment")))
+                        new HistoryReviewState(STATUS_REJECTED, stringVal(payload.get("comment")))
                 );
-                case DOCUMENT_VALIDATED -> statuses.put(type, new HistoryReviewState("validated", null));
+                case DOCUMENT_VALIDATED -> statuses.put(type, new HistoryReviewState(STATUS_VALIDATED, null));
                 case DOCUMENT_UPLOADED -> {
                     if (Boolean.TRUE.equals(payload.get("complement"))) {
-                        statuses.put(type, new HistoryReviewState("pending_review", null));
+                        statuses.put(type, new HistoryReviewState(STATUS_PENDING_REVIEW, null));
                     }
                 }
                 default -> {
@@ -188,9 +193,9 @@ public class DocumentReviewService {
 
     private LoanDocumentReviewStatus mapHistoryStatus(String status) {
         return switch (status) {
-            case "validated" -> LoanDocumentReviewStatus.VALIDATED;
-            case "rejected" -> LoanDocumentReviewStatus.REJECTED;
-            case "pending_review" -> LoanDocumentReviewStatus.PENDING_REVIEW;
+            case STATUS_VALIDATED -> LoanDocumentReviewStatus.VALIDATED;
+            case STATUS_REJECTED -> LoanDocumentReviewStatus.REJECTED;
+            case STATUS_PENDING_REVIEW -> LoanDocumentReviewStatus.PENDING_REVIEW;
             default -> null;
         };
     }
@@ -276,7 +281,7 @@ public class DocumentReviewService {
         if (!hasFile && REQUIRED_DOCUMENT_TYPES.contains(type)) {
             return LoanDocumentReviewResponseDto.builder()
                     .documentType(type)
-                    .status("missing_upload")
+                    .status(STATUS_MISSING_UPLOAD)
                     .comment("Document obligatoire non fourni.")
                     .build();
         }
@@ -296,12 +301,12 @@ public class DocumentReviewService {
 
     private String defaultStatusForLoan(boolean hasFile, LoanApplicationStatus loanStatus) {
         if (!hasFile) {
-            return "missing_upload";
+            return STATUS_MISSING_UPLOAD;
         }
         if (loanStatus == LoanApplicationStatus.APPROVED || loanStatus == LoanApplicationStatus.REJECTED) {
-            return "validated";
+            return STATUS_VALIDATED;
         }
-        return "pending_review";
+        return STATUS_PENDING_REVIEW;
     }
 
     private String mapReviewStatus(
@@ -310,11 +315,11 @@ public class DocumentReviewService {
             LoanApplicationStatus loanStatus
     ) {
         if (!hasFile) {
-            return "missing_upload";
+            return STATUS_MISSING_UPLOAD;
         }
         return switch (status) {
-            case VALIDATED -> "validated";
-            case REJECTED -> "rejected";
+            case VALIDATED -> STATUS_VALIDATED;
+            case REJECTED -> STATUS_REJECTED;
             case PENDING_REVIEW -> defaultStatusForLoan(true, loanStatus);
         };
     }

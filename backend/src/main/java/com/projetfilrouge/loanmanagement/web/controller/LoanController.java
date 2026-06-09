@@ -2,7 +2,9 @@ package com.projetfilrouge.loanmanagement.web.controller;
 
 import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
 import com.projetfilrouge.loanmanagement.entity.LoanDocumentType;
+import com.projetfilrouge.loanmanagement.service.LoanDocumentStorageService;
 import com.projetfilrouge.loanmanagement.service.LoanService;
+import com.projetfilrouge.loanmanagement.web.dto.request.AdminApplicationListQuery;
 import com.projetfilrouge.loanmanagement.web.dto.request.AdminLoanListSort;
 import com.projetfilrouge.loanmanagement.web.dto.request.CancelLoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
@@ -19,7 +21,6 @@ import com.projetfilrouge.loanmanagement.web.dto.response.LoanHistoryEventRespon
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,11 +45,9 @@ public class LoanController {
 
     @PostMapping
     @Operation(summary = "Créer une demande", description = "Crée un nouveau dossier de prêt lié à l'utilisateur connecté.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Demande créée avec succès"),
-            @ApiResponse(responseCode = "400", description = "Données invalides"),
-            @ApiResponse(responseCode = "401", description = "Utilisateur non authentifié")
-    })
+    @ApiResponse(responseCode = "201", description = "Demande créée avec succès")
+    @ApiResponse(responseCode = "400", description = "Données invalides")
+    @ApiResponse(responseCode = "401", description = "Utilisateur non authentifié")
     public ResponseEntity<LoanResponseDto> create(
             @Valid @RequestBody LoanRequestDto request,
             Authentication authentication
@@ -87,13 +86,7 @@ public class LoanController {
     ) {
         return ResponseEntity.ok(loanService.getAdminApplications(
                 authentication.getName(),
-                search,
-                advisorId,
-                unassignedOnly,
-                status,
-                sort,
-                page,
-                size
+                new AdminApplicationListQuery(search, advisorId, unassignedOnly, status, sort, page, size)
         ));
     }
 
@@ -112,11 +105,9 @@ public class LoanController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Consulter une demande", description = "Récupère les détails d'un dossier via son identifiant.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Dossier trouvé"),
-            @ApiResponse(responseCode = "404", description = "Dossier introuvable"),
-            @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier")
-    })
+    @ApiResponse(responseCode = "200", description = "Dossier trouvé")
+    @ApiResponse(responseCode = "404", description = "Dossier introuvable")
+    @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier")
     public ResponseEntity<LoanResponseDto> getById(
             @PathVariable Long id,
             Authentication authentication
@@ -126,12 +117,10 @@ public class LoanController {
 
     @PatchMapping("/{id}")
     @Operation(summary = "Mettre à jour un brouillon", description = "Modifie les informations d'une demande en statut DRAFT.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Dossier mis à jour"),
-            @ApiResponse(responseCode = "400", description = "Données invalides"),
-            @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier"),
-            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
-    })
+    @ApiResponse(responseCode = "200", description = "Dossier mis à jour")
+    @ApiResponse(responseCode = "400", description = "Données invalides")
+    @ApiResponse(responseCode = "403", description = "Accès refusé à ce dossier")
+    @ApiResponse(responseCode = "404", description = "Dossier introuvable")
     public ResponseEntity<LoanResponseDto> updateDraft(
             @PathVariable Long id,
             @Valid @RequestBody LoanRequestDto request,
@@ -143,12 +132,10 @@ public class LoanController {
     @PutMapping("/{id}")
     @Operation(summary = "Mettre à jour une demande (DRAFT uniquement)",
             description = "Alias PUT de la mise à jour brouillon.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Dossier mis à jour"),
-            @ApiResponse(responseCode = "400", description = "Données invalides"),
-            @ApiResponse(responseCode = "403", description = "Accès refusé"),
-            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
-    })
+    @ApiResponse(responseCode = "200", description = "Dossier mis à jour")
+    @ApiResponse(responseCode = "400", description = "Données invalides")
+    @ApiResponse(responseCode = "403", description = "Accès refusé")
+    @ApiResponse(responseCode = "404", description = "Dossier introuvable")
     public ResponseEntity<LoanResponseDto> update(
             @PathVariable Long id,
             @Valid @RequestBody LoanRequestDto request,
@@ -162,11 +149,9 @@ public class LoanController {
             summary = "Mettre à jour une demande SOUMISE (SUBMITTED)",
             description = "Mise à jour réservée aux rôles ROLE_CONSEILLER et ROLE_ADMIN."
     )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Dossier mis à jour"),
-            @ApiResponse(responseCode = "403", description = "Accès interdit"),
-            @ApiResponse(responseCode = "404", description = "Dossier ou conseiller introuvable")
-    })
+    @ApiResponse(responseCode = "200", description = "Dossier mis à jour")
+    @ApiResponse(responseCode = "403", description = "Accès interdit")
+    @ApiResponse(responseCode = "404", description = "Dossier ou conseiller introuvable")
     public ResponseEntity<LoanResponseDto> updateSubmitted(
             @PathVariable Long id,
             @RequestBody LoanSubmittedUpdateDto request,
@@ -178,11 +163,9 @@ public class LoanController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Supprimer une demande",
             description = "Un client ne peut supprimer qu'un dossier en DRAFT.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Dossier supprimé"),
-            @ApiResponse(responseCode = "403", description = "Suppression interdite"),
-            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
-    })
+    @ApiResponse(responseCode = "204", description = "Dossier supprimé")
+    @ApiResponse(responseCode = "403", description = "Suppression interdite")
+    @ApiResponse(responseCode = "404", description = "Dossier introuvable")
     public ResponseEntity<Void> delete(
             @PathVariable Long id,
             Authentication authentication
@@ -193,11 +176,9 @@ public class LoanController {
 
     @PostMapping("/{id}/submit")
     @Operation(summary = "Soumettre une demande", description = "Envoie le dossier pour étude par un conseiller.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Dossier soumis"),
-            @ApiResponse(responseCode = "403", description = "Accès refusé ou règles métier"),
-            @ApiResponse(responseCode = "404", description = "Dossier inexistant")
-    })
+    @ApiResponse(responseCode = "200", description = "Dossier soumis")
+    @ApiResponse(responseCode = "403", description = "Accès refusé ou règles métier")
+    @ApiResponse(responseCode = "404", description = "Dossier inexistant")
     public ResponseEntity<LoanResponseDto> submit(@PathVariable Long id, Authentication authentication) {
         return ResponseEntity.ok(loanService.submitApplication(id, authentication.getName()));
     }
@@ -233,11 +214,9 @@ public class LoanController {
 
     @PostMapping("/{id}/approve")
     @Operation(summary = "Approuver une demande", description = "Action réservée au rôle ROLE_CONSEILLER.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Dossier approuvé"),
-            @ApiResponse(responseCode = "403", description = "Accès interdit"),
-            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
-    })
+    @ApiResponse(responseCode = "200", description = "Dossier approuvé")
+    @ApiResponse(responseCode = "403", description = "Accès interdit")
+    @ApiResponse(responseCode = "404", description = "Dossier introuvable")
     public ResponseEntity<LoanResponseDto> approve(
             @PathVariable Long id,
             Authentication authentication
@@ -285,11 +264,9 @@ public class LoanController {
 
     @PostMapping("/{id}/reject")
     @Operation(summary = "Rejeter une demande", description = "Action réservée au rôle ROLE_CONSEILLER.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Dossier rejeté"),
-            @ApiResponse(responseCode = "403", description = "Accès interdit"),
-            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
-    })
+    @ApiResponse(responseCode = "200", description = "Dossier rejeté")
+    @ApiResponse(responseCode = "403", description = "Accès interdit")
+    @ApiResponse(responseCode = "404", description = "Dossier introuvable")
     public ResponseEntity<LoanResponseDto> reject(
             @PathVariable Long id,
             @Valid @RequestBody RejectLoanRequestDto request,
@@ -303,12 +280,10 @@ public class LoanController {
             summary = "Annuler une demande",
             description = "Le demandeur peut annuler un dossier SUBMITTED ou UNDER_REVIEW."
     )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Demande annulée"),
-            @ApiResponse(responseCode = "400", description = "Données invalides"),
-            @ApiResponse(responseCode = "403", description = "Accès interdit"),
-            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
-    })
+    @ApiResponse(responseCode = "200", description = "Demande annulée")
+    @ApiResponse(responseCode = "400", description = "Données invalides")
+    @ApiResponse(responseCode = "403", description = "Accès interdit")
+    @ApiResponse(responseCode = "404", description = "Dossier introuvable")
     public ResponseEntity<LoanResponseDto> cancel(
             @PathVariable Long id,
             @RequestBody(required = false) @Valid CancelLoanRequestDto request,
@@ -319,12 +294,10 @@ public class LoanController {
 
     @PostMapping("/{id}/documents")
     @Operation(summary = "Ajouter un document", description = "Upload d'un document pour une demande en brouillon.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Document uploadé"),
-            @ApiResponse(responseCode = "400", description = "Fichier invalide"),
-            @ApiResponse(responseCode = "403", description = "Accès refusé"),
-            @ApiResponse(responseCode = "404", description = "Dossier introuvable")
-    })
+    @ApiResponse(responseCode = "201", description = "Document uploadé")
+    @ApiResponse(responseCode = "400", description = "Fichier invalide")
+    @ApiResponse(responseCode = "403", description = "Accès refusé")
+    @ApiResponse(responseCode = "404", description = "Dossier introuvable")
     public ResponseEntity<LoanDocumentResponseDto> uploadDocument(
             @PathVariable Long id,
             @RequestParam("documentType") LoanDocumentType documentType,
@@ -387,7 +360,11 @@ public class LoanController {
             @PathVariable Long documentId,
             Authentication authentication
     ) {
-        LoanService.DownloadedLoanDocument file = loanService.downloadDocument(id, documentId, authentication.getName());
+        LoanDocumentStorageService.DownloadedFile file = loanService.downloadDocument(
+                id,
+                documentId,
+                authentication.getName()
+        );
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.fileName() + "\"")
                 .contentType(MediaType.parseMediaType(file.contentType()))

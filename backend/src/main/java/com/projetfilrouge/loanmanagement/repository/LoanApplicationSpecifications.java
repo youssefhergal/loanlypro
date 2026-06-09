@@ -13,6 +13,8 @@ import java.util.List;
 
 public final class LoanApplicationSpecifications {
 
+    private static final String FIELD_ASSIGNED_ADVISOR = "assignedAdvisor";
+
     private LoanApplicationSpecifications() {
     }
 
@@ -30,19 +32,19 @@ public final class LoanApplicationSpecifications {
             Join<LoanApplication, User> advisorJoin = null;
 
             if (unassignedOnly) {
-                predicates.add(cb.isNull(root.get("assignedAdvisor")));
+                predicates.add(cb.isNull(root.get(FIELD_ASSIGNED_ADVISOR)));
             } else if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
             }
 
             if (!unassignedOnly && advisorId != null) {
-                advisorJoin = root.join("assignedAdvisor", JoinType.INNER);
+                advisorJoin = root.join(FIELD_ASSIGNED_ADVISOR, JoinType.INNER);
                 predicates.add(cb.equal(advisorJoin.get("id"), advisorId));
             }
 
             if (search != null && !search.isBlank()) {
                 if (advisorJoin == null) {
-                    advisorJoin = root.join("assignedAdvisor", JoinType.LEFT);
+                    advisorJoin = root.join(FIELD_ASSIGNED_ADVISOR, JoinType.LEFT);
                 }
                 String term = "%" + search.trim().toLowerCase() + "%";
                 predicates.add(cb.or(

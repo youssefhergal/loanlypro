@@ -27,6 +27,12 @@ public class LoanApplicationHistoryService {
             LoanDocumentType.PROOF_OF_ADDRESS
     );
 
+    private static final String STATE_UPCOMING = "upcoming";
+    private static final String STATE_CURRENT = "current";
+    private static final String STATE_DONE = "done";
+    private static final String STATE_WARN = "warn";
+    private static final String PAYLOAD_KEY_COMMENT = "comment";
+
     private static final Map<LoanDocumentType, String> DOCUMENT_LABELS = Map.of(
             LoanDocumentType.IDENTITY, "Pièce d'identité",
             LoanDocumentType.PAYSLIPS, "Bulletins de salaire",
@@ -161,12 +167,12 @@ public class LoanApplicationHistoryService {
             result.add(LoanHistoryEventResponseDto.builder()
                     .title("Décision du comité")
                     .description("Le comité de crédit rendra sa décision après analyse complète du dossier.")
-                    .state("upcoming")
+                    .state(STATE_UPCOMING)
                     .build());
             result.add(LoanHistoryEventResponseDto.builder()
                     .title("Déblocage des fonds")
                     .description("En cas d'approbation, les fonds seront disponibles sous 24 à 48 heures.")
-                    .state("upcoming")
+                    .state(STATE_UPCOMING)
                     .build());
         } else if (loan.getStatus() == LoanApplicationStatus.APPROVED) {
             boolean hasFunds = result.stream()
@@ -175,14 +181,14 @@ public class LoanApplicationHistoryService {
                 result.add(LoanHistoryEventResponseDto.builder()
                         .title("Déblocage des fonds")
                         .description("Les fonds seront disponibles sous 24 à 48 heures.")
-                        .state("current")
+                        .state(STATE_CURRENT)
                         .build());
             }
         } else if (loan.getStatus() == LoanApplicationStatus.SUBMITTED) {
             result.add(LoanHistoryEventResponseDto.builder()
                     .title("Analyse du dossier")
                     .description("Un conseiller va examiner votre dossier sous 2 à 5 jours ouvrés.")
-                    .state("upcoming")
+                    .state(STATE_UPCOMING)
                     .build());
         }
     }
@@ -194,7 +200,7 @@ public class LoanApplicationHistoryService {
             int total
     ) {
         Map<String, Object> payload = deserializePayload(event.getPayloadJson());
-        String title = resolveTitle(event, payload, loan);
+        String title = resolveTitle(event, payload);
         String description = resolveDescription(event, payload, loan);
         String state = resolveState(event, loan, index, total);
 
@@ -239,19 +245,19 @@ public class LoanApplicationHistoryService {
 
     private String commentFromPayload(LoanApplicationEventType type, Map<String, Object> payload) {
         if (type == LoanApplicationEventType.DOCUMENT_REJECTED) {
-            return stringVal(payload.get("comment"));
+            return stringVal(payload.get(PAYLOAD_KEY_COMMENT));
         }
         return null;
     }
 
     private Boolean complementFromPayload(LoanApplicationEventType type, Map<String, Object> payload) {
-        if (type == LoanApplicationEventType.DOCUMENT_UPLOADED) {
-            return Boolean.TRUE.equals(payload.get("complement"));
+        if (type != LoanApplicationEventType.DOCUMENT_UPLOADED) {
+            return Boolean.FALSE;
         }
-        return null;
+        return Boolean.TRUE.equals(payload.get("complement"));
     }
 
-    private String resolveTitle(LoanApplicationEvent event, Map<String, Object> payload, LoanApplication loan) {
+    private String resolveTitle(LoanApplicationEvent event, Map<String, Object> payload) {
         switch (event.getEventType()) {
             case APPLICATION_CREATED:
                 return "Brouillon créé";
@@ -295,29 +301,14 @@ public class LoanApplicationHistoryService {
             case APPLICATION_SUBMITTED:
                 return "Votre dossier a été transmis pour étude. Référence : #" + loan.getReference() + ".";
             case DOCUMENT_UPLOADED:
-                if (Boolean.TRUE.equals(payload.get("bundled"))) {
-                    int count = intVal(payload.get("documentCount"), REQUIRED_DOCUMENT_TYPES.size());
-                    return bundledDocumentsDescription(count, REQUIRED_DOCUMENT_TYPES.size());
-                }
-                String uploadLabel = documentLabel(payload);
-                String file = stringVal(payload.get("fileName"));
-                boolean complement = Boolean.TRUE.equals(payload.get("complement"));
-                String prefix = complement ? "Nouveau dépôt — " : "";
-                return file != null ? prefix + uploadLabel + " — " + file : prefix + uploadLabel + " reçu.";
+                return describeDocumentUploaded(payload);
             case ADVISOR_ASSIGNED:
-                String advisorName = stringVal(payload.get("advisorName"));
-                if (advisorName != null && !advisorName.isBlank()) {
-                    return advisorName + " est désormais en charge de votre dossier.";
-                }
-                String actorName = event.getActorDisplayName();
-                return actorName != null && !actorName.isBlank()
-                        ? actorName + " est désormais en charge de votre dossier."
-                        : "Un conseiller a été affecté à votre dossier.";
+                return describeAdvisorAssigned(event, payload);
             case REVIEW_STARTED:
                 return "Votre dossier est en cours d'analyse. Durée estimée : 2 à 5 jours ouvrés.";
             case DOCUMENT_REJECTED:
                 String rejectLabel = documentLabel(payload);
-                String rejectComment = stringVal(payload.get("comment"));
+                String rejectComment = stringVal(payload.get(PAYLOAD_KEY_COMMENT));
                 return rejectComment != null
                         ? rejectLabel + " : " + rejectComment
                         : rejectLabel + " doit être remplacé ou complété.";
@@ -331,7 +322,7 @@ public class LoanApplicationHistoryService {
             case OFFER_ACCEPTED:
                 return "Vous avez accepté la contre-offre proposée par votre conseiller.";
             case OFFER_REJECTED:
-                String offerRejectComment = stringVal(payload.get("comment"));
+                String offerRejectComment = stringVal(payload.get(PAYLOAD_KEY_COMMENT));
                 return offerRejectComment != null && !offerRejectComment.isBlank()
                         ? "Vous avez refusé la contre-offre : " + offerRejectComment
                         : "Vous avez refusé la contre-offre proposée.";
@@ -348,12 +339,35 @@ public class LoanApplicationHistoryService {
         }
     }
 
+    private String describeDocumentUploaded(Map<String, Object> payload) {
+        if (Boolean.TRUE.equals(payload.get("bundled"))) {
+            int count = intVal(payload.get("documentCount"), REQUIRED_DOCUMENT_TYPES.size());
+            return bundledDocumentsDescription(count, REQUIRED_DOCUMENT_TYPES.size());
+        }
+        String uploadLabel = documentLabel(payload);
+        String file = stringVal(payload.get("fileName"));
+        boolean complement = Boolean.TRUE.equals(payload.get("complement"));
+        String prefix = complement ? "Nouveau dépôt — " : "";
+        return file != null ? prefix + uploadLabel + " — " + file : prefix + uploadLabel + " reçu.";
+    }
+
+    private String describeAdvisorAssigned(LoanApplicationEvent event, Map<String, Object> payload) {
+        String advisorName = stringVal(payload.get("advisorName"));
+        if (advisorName != null && !advisorName.isBlank()) {
+            return advisorName + " est désormais en charge de votre dossier.";
+        }
+        String actorName = event.getActorDisplayName();
+        return actorName != null && !actorName.isBlank()
+                ? actorName + " est désormais en charge de votre dossier."
+                : "Un conseiller a été affecté à votre dossier.";
+    }
+
     private String resolveDecisionDescription(
             Map<String, Object> payload,
             LoanApplication loan,
             String fallback
     ) {
-        String comment = stringVal(payload.get("comment"));
+        String comment = stringVal(payload.get(PAYLOAD_KEY_COMMENT));
         if (comment != null) {
             return comment;
         }
@@ -365,17 +379,17 @@ public class LoanApplicationHistoryService {
 
     private String resolveState(LoanApplicationEvent event, LoanApplication loan, int index, int total) {
         return switch (event.getEventType()) {
-            case DOCUMENT_REJECTED, APPLICATION_REJECTED, APPLICATION_CANCELLED -> "warn";
+            case DOCUMENT_REJECTED, APPLICATION_REJECTED, APPLICATION_CANCELLED -> STATE_WARN;
             case REVIEW_STARTED -> loan.getStatus() == LoanApplicationStatus.UNDER_REVIEW && index == total - 1
-                    ? "current"
-                    : "done";
+                    ? STATE_CURRENT
+                    : STATE_DONE;
             case APPLICATION_APPROVED -> loan.getStatus() == LoanApplicationStatus.APPROVED
                     && loan.getDecidedAt() != null
-                    && index >= total - 2
-                    ? "done"
-                    : "done";
-            case FUNDS_RELEASED -> loan.getStatus() == LoanApplicationStatus.APPROVED ? "current" : "done";
-            default -> "done";
+                    && index == total - 1
+                    ? STATE_CURRENT
+                    : STATE_DONE;
+            case FUNDS_RELEASED -> loan.getStatus() == LoanApplicationStatus.APPROVED ? STATE_CURRENT : STATE_DONE;
+            default -> STATE_DONE;
         };
     }
 
