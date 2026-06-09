@@ -7,6 +7,7 @@ npm-debug.log*
 
 # Backend
 target/
+.scannerwork/
 *.jar
 *.war
 !.mvn/wrapper/maven-wrapper.jar

@@ -17,8 +17,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.stream.Collectors;
-
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -42,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
                 var authorities = userDetails.getAuthorities().stream()
                         .map(a -> new SimpleGrantedAuthority(a.getAuthority()))
-                        .collect(Collectors.toList());
+                        .toList();
                 var authentication = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,

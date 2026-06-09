@@ -27,6 +27,7 @@ public class InitialDataLoader implements CommandLineRunner {
     private static final String ROLE_CLIENT = "ROLE_CLIENT";
     private static final String ROLE_CONSEILLER = "ROLE_CONSEILLER";
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
+    private static final String DEFAULT_TEST_PASSWORD = "password";
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
@@ -50,9 +51,9 @@ public class InitialDataLoader implements CommandLineRunner {
     }
 
     private void createTestUsersIfMissing() {
-        createUserIfMissing("client@test.com", "Jean", "Dupont", "password", ROLE_CLIENT);
-        createUserIfMissing("conseiller@test.com", "Marie", "Martin", "password", ROLE_CONSEILLER);
-        createUserIfMissing("admin@test.com", "Pierre", "Admin", "password", ROLE_ADMIN);
+        createUserIfMissing("client@test.com", "Jean", "Dupont", DEFAULT_TEST_PASSWORD, ROLE_CLIENT);
+        createUserIfMissing("conseiller@test.com", "Marie", "Martin", DEFAULT_TEST_PASSWORD, ROLE_CONSEILLER);
+        createUserIfMissing("admin@test.com", "Pierre", "Admin", DEFAULT_TEST_PASSWORD, ROLE_ADMIN);
     }
 
     private void createUserIfMissing(String email, String firstName, String lastName, String password, String roleName) {

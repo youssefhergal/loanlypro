@@ -14,6 +14,7 @@ import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationSpecifications;
 import com.projetfilrouge.loanmanagement.repository.LoanDocumentRepository;
 import com.projetfilrouge.loanmanagement.repository.UserRepository;
+import com.projetfilrouge.loanmanagement.web.dto.request.AdminApplicationListQuery;
 import com.projetfilrouge.loanmanagement.web.dto.request.AdminLoanListSort;
 import com.projetfilrouge.loanmanagement.web.dto.request.CancelLoanRequestDto;
 import com.projetfilrouge.loanmanagement.web.dto.request.LoanRequestDto;
@@ -69,6 +70,11 @@ public class LoanService {
             LoanDocumentType.PROOF_OF_ADDRESS
     );
     private static final BigDecimal SYSTEM_INTEREST_RATE = new BigDecimal("3.85");
+    private static final String MSG_DOSSIER_INTROUVABLE = "Dossier introuvable";
+    private static final String MSG_ACCES_REFUSE = "Accès refusé";
+    private static final String MSG_ACCES_REFUSE_DEMANDE = "Accès refusé à cette demande";
+    private static final String PAYLOAD_DOCUMENT_TYPE = "documentType";
+    private static final String PAYLOAD_COMMENT = "comment";
 
     private final LoanApplicationRepository loanRepository;
     private final LoanDocumentRepository loanDocumentRepository;
@@ -77,8 +83,6 @@ public class LoanService {
     private final LoanApplicationHistoryService historyService;
     private final DocumentReviewService documentReviewService;
     private final LoanDocumentStorageService documentStorage;
-
-    public record DownloadedLoanDocument(String fileName, String contentType, byte[] content) {}
 
     @Transactional
     public LoanResponseDto createApplication(LoanRequestDto request, String currentUserEmail) {
@@ -127,27 +131,18 @@ public class LoanService {
     }
 
     @Transactional(readOnly = true)
-    public Page<LoanResponseDto> getAdminApplications(
-            String currentUserEmail,
-            String search,
-            Long advisorId,
-            boolean unassignedOnly,
-            LoanApplicationStatus status,
-            AdminLoanListSort sort,
-            int page,
-            int size
-    ) {
+    public Page<LoanResponseDto> getAdminApplications(String currentUserEmail, AdminApplicationListQuery query) {
         User currentUser = getRequiredUser(currentUserEmail);
         ensureAdmin(currentUser);
 
-        LoanApplicationStatus statusFilter = unassignedOnly ? null : status;
+        LoanApplicationStatus statusFilter = query.unassignedOnly() ? null : query.status();
         Specification<LoanApplication> spec = LoanApplicationSpecifications.adminList(
-                search,
-                advisorId,
-                unassignedOnly,
+                query.search(),
+                query.advisorId(),
+                query.unassignedOnly(),
                 statusFilter
         );
-        Pageable pageable = PageRequest.of(page, size, adminListSort(sort));
+        Pageable pageable = PageRequest.of(query.page(), query.size(), adminListSort(query.sort()));
         return loanRepository.findAll(spec, pageable).map(this::mapToResponseDto);
     }
 
@@ -204,7 +199,7 @@ public class LoanService {
     public LoanResponseDto updateDraftApplication(Long id, LoanRequestDto request, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
         ensureCanAccessLoan(loan, currentUser);
         ensureCanEditDraft(loan);
 
@@ -217,7 +212,7 @@ public class LoanService {
     public void deleteApplication(Long id, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
 
         ensureCanAccessLoan(loan, currentUser);
 
@@ -242,10 +237,10 @@ public class LoanService {
     public LoanResponseDto updateSubmittedApplication(Long id, LoanSubmittedUpdateDto request, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
 
         if (!(hasRole(currentUser, ROLE_ADMIN) || hasRole(currentUser, ROLE_CONSEILLER))) {
-            throw new ForbiddenOperationException("Accès refusé à cette demande");
+            throw new ForbiddenOperationException(MSG_ACCES_REFUSE_DEMANDE);
         }
 
         if (loan.getStatus() != LoanApplicationStatus.SUBMITTED
@@ -291,7 +286,7 @@ public class LoanService {
     public LoanResponseDto submitApplication(Long id, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
         ensureCanAccessLoan(loan, currentUser);
         ensureCanSubmit(loan);
         ensureRequiredDocumentsPresent(loan.getId());
@@ -320,10 +315,10 @@ public class LoanService {
     public LoanResponseDto startReview(Long id, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
 
         if (!(hasRole(currentUser, ROLE_CONSEILLER) || hasRole(currentUser, ROLE_ADMIN))) {
-            throw new ForbiddenOperationException("Accès refusé");
+            throw new ForbiddenOperationException(MSG_ACCES_REFUSE);
         }
 
         if (loan.getStatus() != LoanApplicationStatus.SUBMITTED
@@ -378,10 +373,10 @@ public class LoanService {
     ) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
 
         if (!(hasRole(currentUser, ROLE_CONSEILLER) || hasRole(currentUser, ROLE_ADMIN))) {
-            throw new ForbiddenOperationException("Accès refusé");
+            throw new ForbiddenOperationException(MSG_ACCES_REFUSE);
         }
 
         if (loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
@@ -399,8 +394,8 @@ public class LoanService {
                 currentUser.getEmail(),
                 displayName(currentUser),
                 Map.of(
-                        "documentType", request.getDocumentType().name(),
-                        "comment", request.getComment()
+                        PAYLOAD_DOCUMENT_TYPE, request.getDocumentType().name(),
+                        PAYLOAD_COMMENT, request.getComment()
                 )
         );
 
@@ -415,10 +410,10 @@ public class LoanService {
     ) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
 
         if (!(hasRole(currentUser, ROLE_CONSEILLER) || hasRole(currentUser, ROLE_ADMIN))) {
-            throw new ForbiddenOperationException("Accès refusé");
+            throw new ForbiddenOperationException(MSG_ACCES_REFUSE);
         }
 
         if (loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
@@ -437,7 +432,7 @@ public class LoanService {
                 actorTypeFor(currentUser),
                 currentUser.getEmail(),
                 displayName(currentUser),
-                Map.of("documentType", request.getDocumentType().name())
+                Map.of(PAYLOAD_DOCUMENT_TYPE, request.getDocumentType().name())
         );
 
         return historyService.mapEventToDisplayDto(event);
@@ -447,7 +442,7 @@ public class LoanService {
     public List<LoanHistoryEventResponseDto> getApplicationHistory(Long id, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
         ensureCanAccessLoan(loan, currentUser);
         return historyService.getHistory(id);
     }
@@ -456,11 +451,11 @@ public class LoanService {
     public LoanResponseDto proposeCounterOffer(Long id, ProposeOfferRequestDto request, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         if (!(hasRole(currentUser, ROLE_CONSEILLER) || hasRole(currentUser, ROLE_ADMIN))) {
-            throw new ForbiddenOperationException("Accès refusé");
+            throw new ForbiddenOperationException(MSG_ACCES_REFUSE);
         }
 
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
         ensureAdvisorCanManage(loan, currentUser);
 
         if (loan.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
@@ -507,7 +502,7 @@ public class LoanService {
     public LoanResponseDto acceptOffer(Long id, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
 
         if (!isApplicant(loan, currentUser)) {
             throw new ForbiddenOperationException("Seul le demandeur peut accepter l'offre.");
@@ -536,7 +531,7 @@ public class LoanService {
     public LoanResponseDto rejectOffer(Long id, RejectOfferRequestDto request, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
 
         if (!isApplicant(loan, currentUser)) {
             throw new ForbiddenOperationException("Seul le demandeur peut refuser l'offre.");
@@ -561,7 +556,7 @@ public class LoanService {
         loan.setStatus(LoanApplicationStatus.UNDER_REVIEW);
         LoanApplication saved = loanRepository.save(loan);
 
-        Map<String, Object> payload = comment != null ? Map.of("comment", comment) : Map.of();
+        Map<String, Object> payload = comment != null ? Map.of(PAYLOAD_COMMENT, comment) : Map.of();
         historyService.recordEvent(
                 saved,
                 LoanApplicationEventType.OFFER_REJECTED,
@@ -577,10 +572,10 @@ public class LoanService {
     public LoanResponseDto approveApplication(Long id, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
 
         if (!hasRole(currentUser, ROLE_CONSEILLER)) {
-            throw new ForbiddenOperationException("Accès refusé à cette demande");
+            throw new ForbiddenOperationException(MSG_ACCES_REFUSE_DEMANDE);
         }
 
         ensureAdvisorCanManage(loan, currentUser);
@@ -630,7 +625,7 @@ public class LoanService {
                 actorTypeFor(currentUser),
                 currentUser.getEmail(),
                 displayName(currentUser),
-                Map.of("comment", saved.getDecisionComment() != null ? saved.getDecisionComment() : "")
+                Map.of(PAYLOAD_COMMENT, saved.getDecisionComment() != null ? saved.getDecisionComment() : "")
         );
         return mapToResponseDto(saved);
     }
@@ -639,10 +634,10 @@ public class LoanService {
     public LoanResponseDto rejectApplication(Long id, RejectLoanRequestDto request, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
 
         if (!hasRole(currentUser, ROLE_CONSEILLER)) {
-            throw new ForbiddenOperationException("Accès refusé à cette demande");
+            throw new ForbiddenOperationException(MSG_ACCES_REFUSE_DEMANDE);
         }
 
         ensureAdvisorCanManage(loan, currentUser);
@@ -667,7 +662,7 @@ public class LoanService {
                 actorTypeFor(currentUser),
                 currentUser.getEmail(),
                 displayName(currentUser),
-                Map.of("comment", comment)
+                Map.of(PAYLOAD_COMMENT, comment)
         );
         return mapToResponseDto(saved);
     }
@@ -680,7 +675,7 @@ public class LoanService {
     ) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
         ensureCanAccessLoan(loan, currentUser);
 
         if (!isApplicant(loan, currentUser)) {
@@ -713,7 +708,7 @@ public class LoanService {
                 LoanEventActorType.CLIENT,
                 currentUser.getEmail(),
                 displayName(currentUser),
-                Map.of("comment", comment)
+                Map.of(PAYLOAD_COMMENT, comment)
         );
         return mapToResponseDto(saved);
     }
@@ -728,7 +723,7 @@ public class LoanService {
     ) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
         ensureCanAccessLoan(loan, currentUser);
         ensureCanEditDraft(loan);
         String resolvedDisplayName = resolveDisplayName(documentType, displayName, loanId);
@@ -759,7 +754,7 @@ public class LoanService {
     ) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
         ensureCanAccessLoan(loan, currentUser);
         ensureCanUploadComplement(loan);
         String resolvedDisplayName = resolveDisplayName(documentType, displayName, loanId);
@@ -785,7 +780,7 @@ public class LoanService {
                 currentUser.getEmail(),
                 displayName(currentUser),
                 Map.of(
-                        "documentType", documentType.name(),
+                        PAYLOAD_DOCUMENT_TYPE, documentType.name(),
                         "fileName", savedDoc.getOriginalFileName(),
                         "complement", true
                 )
@@ -797,7 +792,7 @@ public class LoanService {
     public List<LoanDocumentReviewResponseDto> getDocumentReviews(Long loanId, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
         ensureCanAccessLoan(loan, currentUser);
         return documentReviewService.getDocumentReviews(loan);
     }
@@ -806,7 +801,7 @@ public class LoanService {
     public List<LoanDocumentResponseDto> getDocuments(Long loanId, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
         ensureCanAccessLoan(loan, currentUser);
         return loanDocumentRepository.findByLoanApplicationIdOrderByUploadedAtDesc(loanId)
                 .stream()
@@ -818,7 +813,7 @@ public class LoanService {
     public void deleteDocument(Long loanId, Long documentId, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
         ensureCanAccessLoan(loan, currentUser);
         ensureCanEditDraft(loan);
 
@@ -835,22 +830,21 @@ public class LoanService {
     }
 
     @Transactional(readOnly = true)
-    public DownloadedLoanDocument downloadDocument(Long loanId, Long documentId, String currentUserEmail) {
+    public LoanDocumentStorageService.DownloadedFile downloadDocument(Long loanId, Long documentId, String currentUserEmail) {
         User currentUser = getRequiredUser(currentUserEmail);
         LoanApplication loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
         ensureCanAccessLoan(loan, currentUser);
         ensureAdvisorCanAccessDocuments(loan, currentUser);
 
         LoanDocument document = loanDocumentRepository.findByIdAndLoanApplicationId(documentId, loanId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
 
-        LoanDocumentStorageService.DownloadedFile file = documentStorage.readFile(
+        return documentStorage.readFile(
                 document.getStoragePath(),
                 document.getOriginalFileName(),
                 document.getContentType()
         );
-        return new DownloadedLoanDocument(file.fileName(), file.contentType(), file.content());
     }
 
     private String generateUniqueReference() {
@@ -860,7 +854,7 @@ public class LoanService {
                 return candidate;
             }
         }
-        throw new RuntimeException("Impossible de générer une référence unique de dossier.");
+        throw new BusinessRuleException("Impossible de générer une référence unique de dossier.");
     }
 
     private User getRequiredUser(String email) {
@@ -891,12 +885,12 @@ public class LoanService {
             if (loan.getStatus() == LoanApplicationStatus.SUBMITTED && loan.getAssignedAdvisor() == null) {
                 return;
             }
-            throw new ForbiddenOperationException("Accès refusé à cette demande");
+            throw new ForbiddenOperationException(MSG_ACCES_REFUSE_DEMANDE);
         }
         if (isApplicant(loan, currentUser)) {
             return;
         }
-        throw new ForbiddenOperationException("Accès refusé à cette demande");
+        throw new ForbiddenOperationException(MSG_ACCES_REFUSE_DEMANDE);
     }
 
     private void ensureAdvisorCanManage(LoanApplication loan, User currentUser) {
@@ -904,7 +898,7 @@ public class LoanService {
             return;
         }
         if (!hasRole(currentUser, ROLE_CONSEILLER)) {
-            throw new ForbiddenOperationException("Accès refusé à cette demande");
+            throw new ForbiddenOperationException(MSG_ACCES_REFUSE_DEMANDE);
         }
         if (isAssignedAdvisor(loan, currentUser)) {
             return;
@@ -912,7 +906,7 @@ public class LoanService {
         if (loan.getStatus() == LoanApplicationStatus.SUBMITTED && loan.getAssignedAdvisor() == null) {
             return;
         }
-        throw new ForbiddenOperationException("Accès refusé à cette demande");
+        throw new ForbiddenOperationException(MSG_ACCES_REFUSE_DEMANDE);
     }
 
     private void ensureAdvisorCanAccessDocuments(LoanApplication loan, User currentUser) {

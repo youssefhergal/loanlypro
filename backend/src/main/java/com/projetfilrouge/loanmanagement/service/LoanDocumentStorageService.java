@@ -1,6 +1,7 @@
 package com.projetfilrouge.loanmanagement.service;
 
 import com.projetfilrouge.loanmanagement.web.exception.BusinessRuleException;
+import com.projetfilrouge.loanmanagement.web.exception.LoanStorageException;
 import com.projetfilrouge.loanmanagement.web.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -11,13 +12,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @Service
 public class LoanDocumentStorageService {
 
     private static final long MAX_FILE_SIZE_BYTES = 10L * 1024 * 1024;
+    private static final String LOAN_DIRECTORY_PREFIX = "loan-";
 
     private final String loanDocumentsDir;
 
@@ -35,7 +39,36 @@ public class LoanDocumentStorageService {
             long fileSizeBytes
     ) {}
 
-    public record DownloadedFile(String fileName, String contentType, byte[] content) {}
+    public record DownloadedFile(String fileName, String contentType, byte[] content) {
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof DownloadedFile that)) {
+                return false;
+            }
+            return Objects.equals(fileName, that.fileName)
+                    && Objects.equals(contentType, that.contentType)
+                    && Arrays.equals(content, that.content);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Objects.hashCode(fileName);
+            result = 31 * result + Objects.hashCode(contentType);
+            result = 31 * result + Arrays.hashCode(content);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "DownloadedFile[fileName=" + fileName
+                    + ", contentType=" + contentType
+                    + ", content=" + Arrays.toString(content)
+                    + "]";
+        }
+    }
 
     public void validateUpload(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -44,10 +77,10 @@ public class LoanDocumentStorageService {
         if (file.getSize() > MAX_FILE_SIZE_BYTES) {
             throw new BusinessRuleException("Le fichier dépasse la limite de 10 Mo.");
         }
-        String contentType = file.getContentType() == null ? "" : file.getContentType();
-        boolean allowed = contentType.equals("application/pdf")
-                || contentType.equals("image/jpeg")
-                || contentType.equals("image/png");
+        String contentType = file.getContentType();
+        boolean allowed = "application/pdf".equals(contentType)
+                || "image/jpeg".equals(contentType)
+                || "image/png".equals(contentType);
         if (!allowed) {
             throw new BusinessRuleException("Type de fichier non autorisé. Formats acceptés : PDF, JPG, PNG.");
         }
@@ -59,11 +92,12 @@ public class LoanDocumentStorageService {
         String storedFileName = java.util.UUID.randomUUID() + "-" + sanitizedOriginal;
         Path destination = resolveLoanDirectory(loanId).resolve(storedFileName);
         writeFile(file, destination);
+        String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
         return new StoredUpload(
                 storedFileName,
                 destination.toString(),
                 sanitizedOriginal,
-                file.getContentType(),
+                contentType,
                 file.getSize()
         );
     }
@@ -78,7 +112,7 @@ public class LoanDocumentStorageService {
             String resolvedContentType = contentType == null ? "application/octet-stream" : contentType;
             return new DownloadedFile(originalFileName, resolvedContentType, content);
         } catch (IOException e) {
-            throw new RuntimeException("Impossible de lire le fichier document", e);
+            throw new LoanStorageException("Impossible de lire le fichier document", e);
         }
     }
 
@@ -86,7 +120,7 @@ public class LoanDocumentStorageService {
         try {
             Files.deleteIfExists(Paths.get(storagePath));
         } catch (IOException e) {
-            throw new RuntimeException("Impossible de supprimer le fichier stocké", e);
+            throw new LoanStorageException("Impossible de supprimer le fichier stocké", e);
         }
     }
 
@@ -94,7 +128,7 @@ public class LoanDocumentStorageService {
      * Supprime le répertoire du dossier et tout son contenu (best-effort).
      */
     public void deleteLoanStorageDirectory(Long loanId) {
-        Path loanDir = Paths.get(loanDocumentsDir).resolve("loan-" + loanId);
+        Path loanDir = Paths.get(loanDocumentsDir).resolve(LOAN_DIRECTORY_PREFIX + loanId);
         if (!Files.isDirectory(loanDir)) {
             return;
         }
@@ -113,7 +147,7 @@ public class LoanDocumentStorageService {
     }
 
     public void cleanupLoanDirectoryOrphans(Long loanId, java.util.Set<String> referencedStoredFileNames) {
-        Path loanDir = Paths.get(loanDocumentsDir).resolve("loan-" + loanId);
+        Path loanDir = Paths.get(loanDocumentsDir).resolve(LOAN_DIRECTORY_PREFIX + loanId);
         if (!Files.isDirectory(loanDir)) {
             return;
         }
@@ -133,12 +167,12 @@ public class LoanDocumentStorageService {
     }
 
     private Path resolveLoanDirectory(Long loanId) {
-        Path dir = Paths.get(loanDocumentsDir).resolve("loan-" + loanId);
+        Path dir = Paths.get(loanDocumentsDir).resolve(LOAN_DIRECTORY_PREFIX + loanId);
         try {
             Files.createDirectories(dir);
             return dir;
         } catch (IOException e) {
-            throw new RuntimeException("Impossible de créer le dossier de stockage", e);
+            throw new LoanStorageException("Impossible de créer le dossier de stockage", e);
         }
     }
 
@@ -146,7 +180,7 @@ public class LoanDocumentStorageService {
         try {
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new RuntimeException("Impossible d'enregistrer le fichier", e);
+            throw new LoanStorageException("Impossible d'enregistrer le fichier", e);
         }
     }
 

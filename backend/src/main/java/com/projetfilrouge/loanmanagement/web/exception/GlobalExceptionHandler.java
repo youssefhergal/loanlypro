@@ -57,6 +57,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildError(HttpStatus.BAD_REQUEST, "BUSINESS_RULE", e.getMessage());
     }
 
+    @ExceptionHandler(LoanStorageException.class)
+    public ResponseEntity<ApiError> handleLoanStorage(LoanStorageException e) {
+        return buildError(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_ERROR", e.getMessage());
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiError> handleRuntime(RuntimeException e) {
         return buildError(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Erreur interne du serveur");
