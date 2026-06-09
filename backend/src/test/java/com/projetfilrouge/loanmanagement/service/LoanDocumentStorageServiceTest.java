@@ -240,8 +240,10 @@ class LoanDocumentStorageServiceTest {
         LoanDocumentStorageService.DownloadedFile different =
                 new LoanDocumentStorageService.DownloadedFile("b.pdf", "application/pdf", new byte[] {1, 2});
 
-        assertThat(first).isEqualTo(same).hasSameHashCodeAs(same);
-        assertThat(first).isNotEqualTo(different);
+        assertThat(first)
+                .isEqualTo(same)
+                .hasSameHashCodeAs(same)
+                .isNotEqualTo(different);
         assertThat(first.toString()).contains("a.pdf");
     }
 }

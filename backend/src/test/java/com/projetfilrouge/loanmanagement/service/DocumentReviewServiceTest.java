@@ -262,8 +262,8 @@ class DocumentReviewServiceTest {
 
         List<LoanDocumentReviewResponseDto> reviews = documentReviewService.getDocumentReviews(loan);
 
-        assertThat(reviews).hasSize(5);
         assertThat(reviews)
+                .hasSize(5)
                 .allMatch(review -> "missing_upload".equals(review.getStatus()));
     }
 
