@@ -187,7 +187,7 @@ deploy-backend-prod:
     name: prod/backend
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "feature/ci-cd-setup"
-  when: manual
+  when: on_success
 
 deploy-frontend-prod:
   stage: deploy-prod
@@ -201,4 +201,4 @@ deploy-frontend-prod:
     name: prod/frontend
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "feature/ci-cd-setup"
-  when: manual
+  when: on_success
