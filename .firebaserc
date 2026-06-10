@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "default": "projet-fil-rouge-app"
+  },
+  "targets": {
+    "projet-fil-rouge-app": {
+      "hosting": {
+        "dev": ["pfr-dev"],
+        "prod": ["pfr-prod"]
+      }
+    }
+  }
+}
