@@ -152,8 +152,10 @@ deploy-frontend-dev:
   needs: [build-frontend]
   before_script:
     - npm install -g firebase-tools
+    - echo "$GCP_SERVICE_ACCOUNT_KEY" | base64 -d > /tmp/gcp-key.json
+    - export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json
   script:
-    - firebase deploy --only hosting:pfr-dev --project="$FIREBASE_PROJECT_ID" --token="$FIREBASE_TOKEN" --non-interactive
+    - firebase deploy --only hosting:pfr-dev --project="$FIREBASE_PROJECT_ID" --non-interactive
   environment:
     name: dev/frontend
   rules:
@@ -195,8 +197,10 @@ deploy-frontend-prod:
   needs: [build-frontend]
   before_script:
     - npm install -g firebase-tools
+    - echo "$GCP_SERVICE_ACCOUNT_KEY" | base64 -d > /tmp/gcp-key.json
+    - export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json
   script:
-    - firebase deploy --only hosting:pfr-prod --project="$FIREBASE_PROJECT_ID" --token="$FIREBASE_TOKEN" --non-interactive
+    - firebase deploy --only hosting:pfr-prod --project="$FIREBASE_PROJECT_ID" --non-interactive
   environment:
     name: prod/frontend
   rules:
