@@ -5,6 +5,10 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   application:
     name: loanmanagement
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
   jpa:
     open-in-view: false
     properties:
@@ -19,7 +23,10 @@ app:
     secret: ${JWT_SECRET:defaultSecretKeyForDevelopmentOnlyChangeInProductionMinimum32Characters}
     expiration-ms: 86400000
   storage:
+    type: ${STORAGE_TYPE:local}
     loan-documents-dir: ${LOAN_DOCUMENTS_DIR:uploads/loan-documents}
+    gcs-bucket: ${GCS_BUCKET:}
+    gcs-prefix: loan-documents
   advisor-assignment:
     scheduler:
       enabled: true

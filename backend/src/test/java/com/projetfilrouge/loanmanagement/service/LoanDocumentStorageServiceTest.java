@@ -1,5 +1,6 @@
 package com.projetfilrouge.loanmanagement.service;
 
+import com.projetfilrouge.loanmanagement.storage.LocalLoanDocumentStorageBackend;
 import com.projetfilrouge.loanmanagement.web.exception.BusinessRuleException;
 import com.projetfilrouge.loanmanagement.web.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +26,7 @@ class LoanDocumentStorageServiceTest {
 
     @BeforeEach
     void setUp() {
-        storageService = new LoanDocumentStorageService(tempDir.toString());
+        storageService = new LoanDocumentStorageService(new LocalLoanDocumentStorageBackend(tempDir.toString()));
     }
 
     @Test

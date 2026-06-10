@@ -38,6 +38,8 @@ GitLab CI/CD
 | Base PROD | `loan_prod` | Schéma validé par Hibernate |
 | Firebase Hosting DEV | `pfr-dev` | https://pfr-dev.web.app |
 | Firebase Hosting PROD | `pfr-prod` | https://pfr-prod.web.app |
+| Cloud Storage DEV | `loan-management-docs-dev` | Documents prêt (upload API) |
+| Cloud Storage PROD | `loan-management-docs-prod` | Documents prêt (upload API) |
 
 ## Secrets (Google Secret Manager)
 
@@ -75,7 +77,8 @@ pfr-dev.web.app/**      →  Angular SPA (index.html)
 |---|---|---|
 | `dev` | Cloud Run dev + local | `ddl-auto: update`, logs SQL actifs |
 | `prod` | Cloud Run prod | `ddl-auto: validate`, logs SQL désactivés |
-| `test` | Pipeline CI | `ddl-auto: create-drop`, MySQL service GitLab |
+| `test` | Pipeline CI | `ddl-auto: create-drop`, MySQL service GitLab, stockage local |
+| Stockage fichiers | Cloud Run dev/prod | `STORAGE_TYPE=gcs`, bucket GCS dédié |
 
 ## Ajouter un nouveau secret
 

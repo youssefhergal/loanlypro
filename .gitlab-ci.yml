@@ -132,7 +132,7 @@ deploy-backend-dev:
         --min-instances=0 \
         --max-instances=5 \
         --add-cloudsql-instances="projet-fil-rouge-app:europe-west1:loan-management-sql" \
-        --set-env-vars="SPRING_PROFILES_ACTIVE=dev,SPRING_DATASOURCE_USERNAME=app" \
+        --set-env-vars="SPRING_PROFILES_ACTIVE=dev,SPRING_DATASOURCE_USERNAME=app,STORAGE_TYPE=gcs,GCS_BUCKET=loan-management-docs-dev" \
         --set-secrets="SPRING_DATASOURCE_URL=db-url-dev:latest,SPRING_DATASOURCE_PASSWORD=db-password-dev:latest" \
         --allow-unauthenticated \
         --quiet
@@ -176,7 +176,7 @@ deploy-backend-prod:
         --min-instances=1 \
         --max-instances=20 \
         --add-cloudsql-instances="projet-fil-rouge-app:europe-west1:loan-management-sql" \
-        --set-env-vars="SPRING_PROFILES_ACTIVE=prod,SPRING_DATASOURCE_USERNAME=app" \
+        --set-env-vars="SPRING_PROFILES_ACTIVE=prod,SPRING_DATASOURCE_USERNAME=app,STORAGE_TYPE=gcs,GCS_BUCKET=loan-management-docs-prod" \
         --set-secrets="SPRING_DATASOURCE_URL=db-url-prod:latest,SPRING_DATASOURCE_PASSWORD=db-password-prod:latest,JWT_SECRET=jwt-secret-prod:latest" \
         --allow-unauthenticated \
         --quiet

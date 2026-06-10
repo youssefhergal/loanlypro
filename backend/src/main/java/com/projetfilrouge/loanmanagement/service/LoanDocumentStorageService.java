@@ -1,35 +1,23 @@
 package com.projetfilrouge.loanmanagement.service;
 
+import com.projetfilrouge.loanmanagement.storage.LoanDocumentStorageBackend;
 import com.projetfilrouge.loanmanagement.web.exception.BusinessRuleException;
-import com.projetfilrouge.loanmanagement.web.exception.LoanStorageException;
-import com.projetfilrouge.loanmanagement.web.exception.ResourceNotFoundException;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Objects;
-import java.util.stream.Stream;
+import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class LoanDocumentStorageService {
 
     private static final long MAX_FILE_SIZE_BYTES = 10L * 1024 * 1024;
-    private static final String LOAN_DIRECTORY_PREFIX = "loan-";
 
-    private final String loanDocumentsDir;
-
-    public LoanDocumentStorageService(
-            @Value("${app.storage.loan-documents-dir:uploads/loan-documents}") String loanDocumentsDir
-    ) {
-        this.loanDocumentsDir = loanDocumentsDir;
-    }
+    private final LoanDocumentStorageBackend storageBackend;
 
     public record StoredUpload(
             String storedFileName,
@@ -90,97 +78,32 @@ public class LoanDocumentStorageService {
         validateUpload(file);
         String sanitizedOriginal = sanitize(file.getOriginalFilename());
         String storedFileName = java.util.UUID.randomUUID() + "-" + sanitizedOriginal;
-        Path destination = resolveLoanDirectory(loanId).resolve(storedFileName);
-        writeFile(file, destination);
         String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
-        return new StoredUpload(
-                storedFileName,
-                destination.toString(),
-                sanitizedOriginal,
-                contentType,
-                file.getSize()
-        );
+        byte[] content = readMultipartContent(file);
+        return storageBackend.storeUpload(loanId, storedFileName, sanitizedOriginal, contentType, content);
     }
 
     public DownloadedFile readFile(String storagePath, String originalFileName, String contentType) {
-        Path filePath = Paths.get(storagePath);
-        if (!Files.exists(filePath)) {
-            throw new ResourceNotFoundException("Le fichier physique du document est introuvable.");
-        }
-        try {
-            byte[] content = Files.readAllBytes(filePath);
-            String resolvedContentType = contentType == null ? "application/octet-stream" : contentType;
-            return new DownloadedFile(originalFileName, resolvedContentType, content);
-        } catch (IOException e) {
-            throw new LoanStorageException("Impossible de lire le fichier document", e);
-        }
+        return storageBackend.readFile(storagePath, originalFileName, contentType);
     }
 
     public void deleteFile(String storagePath) {
-        try {
-            Files.deleteIfExists(Paths.get(storagePath));
-        } catch (IOException e) {
-            throw new LoanStorageException("Impossible de supprimer le fichier stocké", e);
-        }
+        storageBackend.deleteFile(storagePath);
     }
 
-    /**
-     * Supprime le répertoire du dossier et tout son contenu (best-effort).
-     */
     public void deleteLoanStorageDirectory(Long loanId) {
-        Path loanDir = Paths.get(loanDocumentsDir).resolve(LOAN_DIRECTORY_PREFIX + loanId);
-        if (!Files.isDirectory(loanDir)) {
-            return;
-        }
-        try (Stream<Path> walk = Files.walk(loanDir)) {
-            walk.sorted(Comparator.reverseOrder())
-                    .forEach(path -> {
-                        try {
-                            Files.deleteIfExists(path);
-                        } catch (IOException ignored) {
-                            // best-effort
-                        }
-                    });
-        } catch (IOException ignored) {
-            // best-effort
-        }
+        storageBackend.deleteLoanStorageDirectory(loanId);
     }
 
-    public void cleanupLoanDirectoryOrphans(Long loanId, java.util.Set<String> referencedStoredFileNames) {
-        Path loanDir = Paths.get(loanDocumentsDir).resolve(LOAN_DIRECTORY_PREFIX + loanId);
-        if (!Files.isDirectory(loanDir)) {
-            return;
-        }
-        try (Stream<Path> stream = Files.list(loanDir)) {
-            stream.filter(Files::isRegularFile)
-                    .filter(path -> !referencedStoredFileNames.contains(path.getFileName().toString()))
-                    .forEach(path -> {
-                        try {
-                            Files.deleteIfExists(path);
-                        } catch (IOException ignored) {
-                            // best-effort
-                        }
-                    });
-        } catch (IOException ignored) {
-            // best-effort
-        }
+    public void cleanupLoanDirectoryOrphans(Long loanId, Set<String> referencedStoredFileNames) {
+        storageBackend.cleanupLoanDirectoryOrphans(loanId, referencedStoredFileNames);
     }
 
-    private Path resolveLoanDirectory(Long loanId) {
-        Path dir = Paths.get(loanDocumentsDir).resolve(LOAN_DIRECTORY_PREFIX + loanId);
+    private byte[] readMultipartContent(MultipartFile file) {
         try {
-            Files.createDirectories(dir);
-            return dir;
+            return file.getBytes();
         } catch (IOException e) {
-            throw new LoanStorageException("Impossible de créer le dossier de stockage", e);
-        }
-    }
-
-    private void writeFile(MultipartFile file, Path destination) {
-        try {
-            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new LoanStorageException("Impossible d'enregistrer le fichier", e);
+            throw new BusinessRuleException("Impossible de lire le fichier téléversé.");
         }
     }
 
