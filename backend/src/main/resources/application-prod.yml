@@ -3,6 +3,10 @@
 app:
   cors:
     allowed-origins: ${ALLOWED_ORIGINS:https://pfr-prod.web.app}
+  advisor-assignment:
+    scheduler:
+      enabled: true
+      cron: "0 0 * * * *"
 
 spring:
   datasource:
@@ -14,9 +18,3 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
-
-app:
-  advisor-assignment:
-    scheduler:
-      enabled: true
-      cron: "0 0 * * * *"

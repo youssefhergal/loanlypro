@@ -3,6 +3,11 @@
 app:
   cors:
     allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200,https://pfr-dev.web.app}
+  # En dev : exécution toutes les 5 minutes (prod reste horaire via application.yml)
+  advisor-assignment:
+    scheduler:
+      enabled: true
+      cron: "0 */5 * * * *"
 
 spring:
   datasource:
@@ -17,10 +22,3 @@ spring:
     properties:
       hibernate:
         format_sql: false
-
-# En dev : exécution toutes les 5 minutes (prod reste horaire via application.yml)
-app:
-  advisor-assignment:
-    scheduler:
-      enabled: true
-      cron: "0 */5 * * * *"
