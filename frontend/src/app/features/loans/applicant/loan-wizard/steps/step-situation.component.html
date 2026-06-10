@@ -4,8 +4,10 @@
       <h2 class="loan-detail-card__title">
         <mat-icon>work</mat-icon>
         Statut d'emploi
+        <span class="loan-detail-card__desc loan-detail-card__desc--inline">
+          Sélectionnez votre situation professionnelle actuelle.
+        </span>
       </h2>
-      <p class="loan-detail-card__desc">Sélectionnez votre situation professionnelle actuelle.</p>
       <mat-button-toggle-group
         formControlName="employmentStatus"
         class="employment-toggle"
@@ -22,11 +24,11 @@
         <h2 class="loan-detail-card__title">
           <mat-icon>business</mat-icon>
           Employeur &amp; ancienneté
+          <span class="loan-detail-card__desc loan-detail-card__desc--inline">
+            Renseignez les informations relatives à votre employeur actuel.
+          </span>
         </h2>
-        <p class="loan-detail-card__desc">
-          Renseignez les informations relatives à votre employeur actuel.
-        </p>
-        <div class="loan-detail-card__body">
+        <div class="loan-detail-card__body loan-detail-card__body--after-title">
           <div class="row-2">
             <mat-form-field appearance="outline" class="loan-field-compact">
               <mat-label>Nom de l'employeur</mat-label>
@@ -78,12 +80,12 @@
       <h2 class="loan-detail-card__title">
         <mat-icon>account_balance_wallet</mat-icon>
         Revenus &amp; charges mensuels
+        <span class="loan-detail-card__desc loan-detail-card__desc--inline">
+          Indiquez vos revenus nets et vos charges mensuelles actuelles.
+        </span>
       </h2>
-      <p class="loan-detail-card__desc">
-        Indiquez vos revenus nets et vos charges mensuelles actuelles.
-      </p>
 
-      <div class="loan-detail-card__body">
+      <div class="loan-detail-card__body loan-detail-card__body--after-title">
         <div class="row-2">
           <mat-form-field appearance="outline" class="loan-field-compact">
             <mat-label>Revenu net mensuel</mat-label>

@@ -18,6 +18,10 @@
   font-weight: 700;
   color: var(--color-text, #1a2e22);
 
+  &:has(.loan-detail-card__desc--inline) {
+    margin-bottom: 0.5rem;
+  }
+
   mat-icon {
     font-size: 1.15rem;
     width: 1.15rem;
@@ -38,12 +42,28 @@
   font-size: 0.8125rem;
   line-height: 1.4;
   color: var(--color-text-muted, #6b7c72);
+
+  &--inline {
+    margin: 0;
+    font-weight: 400;
+
+    &::before {
+      content: '—';
+      margin: 0 0.35rem;
+      color: var(--color-border, #c5d5cc);
+    }
+  }
 }
 
 .loan-detail-card__body {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+
+  &--after-title {
+    margin-top: 1rem;
+    padding-top: 0.15rem;
+  }
 }
 
 // Champs compacts (wizard)

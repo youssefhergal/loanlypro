@@ -14,6 +14,10 @@
   .loan-detail-card {
     margin-bottom: 0;
   }
+
+  .loan-detail-card__title + .employment-toggle {
+    margin-top: 0.35rem;
+  }
 }
 
 .step-situation__aside {

@@ -4,10 +4,10 @@
       <h2 class="loan-detail-card__title">
         <mat-icon>folder_open</mat-icon>
         Téléverser vos documents
+        <span class="loan-detail-card__desc loan-detail-card__desc--inline">
+          Ajoutez les pièces justificatives requises. Formats acceptés : PDF, JPG, PNG (10 Mo max).
+        </span>
       </h2>
-      <p class="loan-detail-card__desc">
-        Ajoutez les pièces justificatives requises. Formats acceptés : PDF, JPG, PNG (10 Mo max).
-      </p>
 
       @if (errorMessage()) {
         <p class="step-documents__error">{{ errorMessage() }}</p>
