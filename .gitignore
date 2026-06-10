@@ -24,7 +24,15 @@ target/
 .DS_Store
 Thumbs.db
 
+qq 
+
 
 JIRA/
 backend/uploads/
 UXMAGIC-PROMPTS.md
+
+# Seed démo local (ne pas versionner)
+backend/src/main/java/com/projetfilrouge/loanmanagement/config/DemoDataLoader.java
+backend/DEMO_SEED.md
+backend/src/main/resources/demo
+backend/src/main/resources/application-demo.yml

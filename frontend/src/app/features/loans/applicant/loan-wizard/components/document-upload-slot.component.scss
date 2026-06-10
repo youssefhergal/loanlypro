@@ -147,7 +147,7 @@
 
 .doc-file {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.75rem;
   padding: 0.85rem 1rem;
   border: 1px solid var(--color-border, #d8e8de);
@@ -179,6 +179,14 @@
   justify-content: space-between;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.doc-file__aside {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .doc-file__name {
@@ -290,9 +298,47 @@
   gap: 0.15rem;
 }
 
+.doc-file__action {
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+
+  &--download:hover {
+    color: var(--color-primary, #1a7a4a);
+    background: rgba(26, 122, 74, 0.1);
+
+    mat-icon {
+      color: var(--color-primary, #1a7a4a);
+    }
+  }
+
+  &--delete:hover {
+    color: #c62828;
+    background: rgba(198, 40, 40, 0.1);
+
+    mat-icon {
+      color: #c62828;
+    }
+  }
+}
+
 .doc-file__cancel {
   flex-shrink: 0;
   align-self: flex-start;
+}
+
+@media (max-width: 640px) {
+  .doc-file {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .doc-file__aside {
+    width: 100%;
+    justify-content: flex-end;
+    margin-left: 0;
+    padding-left: 2.5rem;
+  }
 }
 
 .doc-slot__error {
