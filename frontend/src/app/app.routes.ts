@@ -94,8 +94,9 @@ export const routes: Routes = [
       },
       {
         path: 'profil',
-        loadComponent: comingSoon,
-        data: { title: 'Mon profil', description: 'Profil conseiller — bientôt disponible.' },
+        loadComponent: () =>
+          import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+        data: { title: 'Mon profil', description: 'Gérez votre profil et la sécurité de votre compte.' },
       },
       {
         path: 'aide',
@@ -173,8 +174,9 @@ export const routes: Routes = [
       },
       {
         path: 'profil',
-        loadComponent: comingSoon,
-        data: { title: 'Mon profil', description: 'Profil administrateur — bientôt disponible.' },
+        loadComponent: () =>
+          import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+        data: { title: 'Mon profil', description: 'Gérez votre profil et la sécurité de votre compte.' },
       },
       {
         path: 'aide',
@@ -306,11 +308,12 @@ export const routes: Routes = [
       },
       {
         path: 'profil',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/profile/profile.component').then((m) => m.ProfileComponent),
         data: {
           title: 'Mon profil',
           description:
-            'Mettez à jour vos coordonnées et vos préférences de compte.',
+            'Mettez à jour votre email et changez votre mot de passe.',
         },
       },
       {

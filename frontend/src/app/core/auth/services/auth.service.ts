@@ -32,6 +32,12 @@ export class AuthService {
     );
   }
 
+  updateSession(user: User, token: string): void {
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+    this.currentUserSignal.set(user);
+  }
+
   register(payload: RegisterRequest): Observable<unknown> {
     return this.http.post(`${this.apiUrl}/register`, payload);
   }
