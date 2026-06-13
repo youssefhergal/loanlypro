@@ -1,0 +1,56 @@
+<div class="container">
+  <section class="card" *ngIf="user() as u">
+    <h2>Informations</h2>
+    <p><strong>Nom:</strong> {{ u.lastName }} {{ u.firstName }}</p>
+    <p><strong>Email:</strong> {{ u.email }}</p>
+  </section>
+
+  <section class="card">
+    <h2>Mettre à jour mon email</h2>
+    <form [formGroup]="emailForm" (ngSubmit)="onUpdateEmail()">
+      <div class="field">
+        <label for="email">Nouvel email</label>
+        <input id="email" type="email" formControlName="email" />
+        <div class="error" *ngIf="emailForm.controls.email.touched && emailForm.controls.email.invalid">
+          <span *ngIf="emailForm.controls.email.errors?.['required']">L'email est obligatoire</span>
+          <span *ngIf="emailForm.controls.email.errors?.['email']">Format email invalide</span>
+          <span *ngIf="emailForm.controls.email.errors?.['maxlength']">255 caractères max</span>
+        </div>
+      </div>
+      <button type="submit" [disabled]="emailForm.invalid || loading()">Mettre à jour</button>
+      <span class="success" *ngIf="emailSuccess()">Email mis à jour</span>
+      <span class="error" *ngIf="emailError()">{{ emailError() }}</span>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Changer mon mot de passe</h2>
+    <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()">
+      <div class="field">
+        <label for="currentPassword">Mot de passe actuel</label>
+        <input id="currentPassword" type="password" formControlName="currentPassword" />
+      </div>
+      <div class="field">
+        <label for="newPassword">Nouveau mot de passe</label>
+        <input id="newPassword" type="password" formControlName="newPassword" />
+        <div class="error" *ngIf="passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.invalid">
+          <span *ngIf="passwordForm.controls.newPassword.errors?.['required']">Obligatoire</span>
+          <span *ngIf="passwordForm.controls.newPassword.errors?.['minlength']">Au moins 8 caractères</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="confirmPassword">Confirmez le nouveau mot de passe</label>
+        <input id="confirmPassword" type="password" formControlName="confirmPassword" />
+        <div class="error" *ngIf="showConfirmPasswordError()">
+          <span *ngIf="passwordForm.controls.confirmPassword.errors?.['required']">Obligatoire</span>
+          <span *ngIf="passwordForm.errors?.['passwordMismatch']">Les mots de passe ne correspondent pas</span>
+        </div>
+      </div>
+      <button type="submit" [disabled]="passwordForm.invalid || loading()">Changer le mot de passe</button>
+      <span class="success" *ngIf="passwordSuccess()">Mot de passe changé</span>
+      <span class="error" *ngIf="passwordError()">{{ passwordError() }}</span>
+    </form>
+  </section>
+
+  <div class="error" *ngIf="globalError()">{{ globalError() }}</div>
+</div>
