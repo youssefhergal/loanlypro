@@ -9,6 +9,7 @@ import com.projetfilrouge.loanmanagement.entity.LoanDocumentType;
 import com.projetfilrouge.loanmanagement.entity.LoanEventActorType;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationEventRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
+import com.projetfilrouge.loanmanagement.repository.LoanRepository;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanHistoryEventResponseDto;
 import com.projetfilrouge.loanmanagement.web.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +37,10 @@ class LoanApplicationHistoryServiceTest {
     private LoanApplicationEventRepository eventRepository;
 
     @Mock
-    private LoanApplicationRepository loanRepository;
+    private LoanApplicationRepository loanApplicationRepository;
+
+    @Mock
+    private LoanRepository loanRepository;
 
     private LoanApplicationHistoryService historyService;
 
@@ -44,6 +48,7 @@ class LoanApplicationHistoryServiceTest {
     void setUp() {
         historyService = new LoanApplicationHistoryService(
                 eventRepository,
+                loanApplicationRepository,
                 loanRepository,
                 new ObjectMapper()
         );
@@ -82,7 +87,7 @@ class LoanApplicationHistoryServiceTest {
 
     @Test
     void getHistory_throwsWhenLoanNotFound() {
-        when(loanRepository.findById(99L)).thenReturn(Optional.empty());
+        when(loanApplicationRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> historyService.getHistory(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
@@ -100,7 +105,7 @@ class LoanApplicationHistoryServiceTest {
                 Instant.parse("2026-01-10T09:00:00Z")
         );
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanApplicationRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
                 .thenReturn(List.of(created));
 
@@ -123,7 +128,7 @@ class LoanApplicationHistoryServiceTest {
                 Instant.parse("2026-01-12T11:00:00Z")
         );
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanApplicationRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
                 .thenReturn(List.of(reviewStarted));
 
@@ -154,7 +159,7 @@ class LoanApplicationHistoryServiceTest {
                 Instant.parse("2026-01-11T08:01:00Z")
         );
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanApplicationRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
                 .thenReturn(List.of(uploadIdentity, uploadPayslips));
 
@@ -203,7 +208,7 @@ class LoanApplicationHistoryServiceTest {
                 Instant.parse("2026-01-20T16:00:00Z")
         );
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanApplicationRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
                 .thenReturn(List.of(approved));
 
@@ -253,7 +258,7 @@ class LoanApplicationHistoryServiceTest {
                 Instant.parse("2026-01-14T10:00:00Z")
         );
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanApplicationRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
                 .thenReturn(List.of(submitted, offer));
 
@@ -283,7 +288,7 @@ class LoanApplicationHistoryServiceTest {
                 Instant.parse("2026-01-12T10:00:00Z")
         );
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanApplicationRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
                 .thenReturn(List.of(assigned, validated));
 
@@ -313,7 +318,7 @@ class LoanApplicationHistoryServiceTest {
                 Instant.parse("2026-01-19T10:00:00Z")
         );
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanApplicationRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
                 .thenReturn(List.of(rejected, cancelled));
 
@@ -344,7 +349,7 @@ class LoanApplicationHistoryServiceTest {
                 Instant.parse("2026-01-15T08:00:00Z")
         );
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanApplicationRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
                 .thenReturn(List.of(bundled, complement));
 
@@ -375,7 +380,7 @@ class LoanApplicationHistoryServiceTest {
                 Instant.parse("2026-01-21T10:00:00Z")
         );
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanApplicationRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(1L))
                 .thenReturn(List.of(approved, funds));
 

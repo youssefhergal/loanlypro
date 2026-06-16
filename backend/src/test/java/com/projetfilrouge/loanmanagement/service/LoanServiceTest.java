@@ -88,6 +88,9 @@ class LoanServiceTest {
     @Mock
     private LoanDocumentStorageService documentStorage;
 
+    @Mock
+    private RepaymentPlanService repaymentPlanService;
+
     @InjectMocks
     private LoanService loanService;
 
@@ -264,6 +267,7 @@ class LoanServiceTest {
                 eq("Marie Conseil"),
                 any(Map.class)
         );
+        verify(repaymentPlanService).createLoanFromApprovedApplication(loan);
     }
 
     @Test
