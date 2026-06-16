@@ -72,8 +72,10 @@ export class AdvisorShellComponent {
     }
 
     const isDashboard = path === '/conseiller/dashboard';
+    const dossierDetailMatch = /^\/conseiller\/dossiers\/(\d+)$/.exec(path);
+    const repaymentDetailMatch = /^\/conseiller\/prets\/(\d+)$/.exec(path);
 
-    let pageTitle = routeTitle;
+    let pageTitle = routeTitle || routeBreadcrumb;
     let pageDescription = routeDescription;
     let breadcrumbCurrentLabel = routeBreadcrumb;
 
@@ -88,7 +90,15 @@ export class AdvisorShellComponent {
     if (!isDashboard) {
       crumbs.push({ label: 'Accueil', routerLink: '/conseiller/dashboard' });
     }
-    crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
+    if (dossierDetailMatch) {
+      crumbs.push({ label: 'Mes dossiers', routerLink: '/conseiller/dossiers' });
+      crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
+    } else if (repaymentDetailMatch) {
+      crumbs.push({ label: 'Prêts', routerLink: '/conseiller/prets' });
+      crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
+    } else {
+      crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
+    }
 
     this.pageTitle.set(pageTitle);
     this.pageDescription.set(pageDescription);

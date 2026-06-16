@@ -70,6 +70,7 @@ export class AdminShellComponent {
     }
 
     const isDashboard = path === '/admin/dashboard';
+    const repaymentDetailMatch = /^\/admin\/prets\/(\d+)$/.exec(path);
 
     let pageTitle = routeTitle;
     let pageDescription = routeDescription;
@@ -86,7 +87,14 @@ export class AdminShellComponent {
     if (!isDashboard) {
       crumbs.push({ label: 'Accueil', routerLink: '/admin/dashboard' });
     }
-    crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
+    if (repaymentDetailMatch) {
+      crumbs.push({ label: 'Prêts', routerLink: '/admin/prets' });
+      crumbs.push({ label: 'Détail du prêt', routerLink: path });
+    } else if (path === '/admin/prets') {
+      crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
+    } else {
+      crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
+    }
 
     this.pageTitle.set(pageTitle);
     this.pageDescription.set(pageDescription);
