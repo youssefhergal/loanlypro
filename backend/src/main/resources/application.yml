@@ -31,6 +31,23 @@ app:
     scheduler:
       enabled: true
       cron: "0 0 * * * *"
+  payment:
+    provider: fake
+    fake:
+      always-success: false
+      fail-rate: 0.0
+      delay-ms: 0
+  repayment:
+    scheduler:
+      enabled: true
+      cron: "0 0 6 * * *"
+      internal-token: ${REPAYMENT_SCHEDULER_TOKEN:}
+      max-attempts: 3
+      retry-days:
+        - 0
+        - 3
+        - 7
+      overdue-threshold: 2
 
 springdoc:
   api-docs:
