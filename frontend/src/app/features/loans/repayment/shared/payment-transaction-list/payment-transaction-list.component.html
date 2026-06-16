@@ -1,0 +1,185 @@
+@if (variant() === 'list') {
+
+  <ul class="payment-tx-list">
+
+    @for (row of pageTransactions(); track row.id) {
+
+      <li class="payment-tx-list__item">
+
+        <div class="payment-tx-list__main">
+
+          <span class="payment-tx-list__date">{{ row.attemptedAt | date: 'dd/MM/yyyy' }}</span>
+
+          <span class="payment-tx-list__amount">
+
+            {{ row.amount | currency: 'EUR' : 'symbol' : '1.2-2' }}
+
+          </span>
+
+        </div>
+
+        <div class="payment-tx-list__meta">
+
+          <span
+
+            class="payment-tx-list__chip"
+
+            [class.payment-tx-list__chip--ok]="row.status === 'SUCCESS'"
+
+            [class.payment-tx-list__chip--ko]="row.status === 'FAILED'"
+
+          >
+
+            {{ statusLabel(row.status) | uppercase }}
+
+          </span>
+
+          @if (row.failureReason) {
+
+            <span class="payment-tx-list__reason">{{ row.failureReason }}</span>
+
+          }
+
+          @if (row.externalReference) {
+
+            <span class="payment-tx-list__ref">{{ row.externalReference }}</span>
+
+          }
+
+        </div>
+
+      </li>
+
+    }
+
+  </ul>
+
+} @else {
+
+  <div class="payment-tx-wrap">
+
+    <table mat-table [dataSource]="pageTransactions()" class="payment-tx-table">
+
+      <ng-container matColumnDef="attemptedAt">
+
+        <th mat-header-cell *matHeaderCellDef>Date</th>
+
+        <td mat-cell *matCellDef="let row">
+
+          {{ row.attemptedAt | date: 'dd/MM/yyyy HH:mm' }}
+
+        </td>
+
+      </ng-container>
+
+
+
+      <ng-container matColumnDef="sequenceNumber">
+
+        <th mat-header-cell *matHeaderCellDef>Échéance</th>
+
+        <td mat-cell *matCellDef="let row">N° {{ row.sequenceNumber }}</td>
+
+      </ng-container>
+
+
+
+      <ng-container matColumnDef="amount">
+
+        <th mat-header-cell *matHeaderCellDef>Montant</th>
+
+        <td mat-cell *matCellDef="let row">
+
+          {{ row.amount | currency: 'EUR' : 'symbol' : '1.2-2' }}
+
+        </td>
+
+      </ng-container>
+
+
+
+      <ng-container matColumnDef="status">
+
+        <th mat-header-cell *matHeaderCellDef>Statut</th>
+
+        <td mat-cell *matCellDef="let row">
+
+          <span
+
+            class="payment-tx-table__chip"
+
+            [class.payment-tx-table__chip--ok]="row.status === 'SUCCESS'"
+
+            [class.payment-tx-table__chip--ko]="row.status === 'FAILED'"
+
+          >
+
+            {{ statusLabel(row.status) }}
+
+          </span>
+
+        </td>
+
+      </ng-container>
+
+
+
+      <ng-container matColumnDef="failureReason">
+
+        <th mat-header-cell *matHeaderCellDef>Motif</th>
+
+        <td mat-cell *matCellDef="let row" class="payment-tx-table__muted">
+
+          {{ row.failureReason || '—' }}
+
+        </td>
+
+      </ng-container>
+
+
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+    </table>
+
+  </div>
+
+}
+
+
+
+@if (transactions().length > PAGE_SIZE) {
+
+  <footer class="payment-tx-footer">
+
+    <p class="payment-tx-footer__summary">
+
+      Affichage de {{ rangeStart() }}-{{ rangeEnd() }} sur {{ transactions().length }} prélèvement{{
+
+        transactions().length > 1 ? 's' : ''
+
+      }}
+
+    </p>
+
+    <mat-paginator
+
+      [length]="transactions().length"
+
+      [pageSize]="PAGE_SIZE"
+
+      [pageIndex]="pageIndex()"
+
+      (page)="onPage($event)"
+
+      hidePageSize
+
+    />
+
+  </footer>
+
+}
+
+
