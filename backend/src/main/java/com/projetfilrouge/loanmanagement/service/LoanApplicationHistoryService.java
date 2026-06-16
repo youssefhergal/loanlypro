@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.projetfilrouge.loanmanagement.entity.*;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationEventRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
+import com.projetfilrouge.loanmanagement.repository.LoanRepository;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanHistoryEventResponseDto;
 import com.projetfilrouge.loanmanagement.web.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -42,8 +43,32 @@ public class LoanApplicationHistoryService {
             LoanDocumentType.OTHER, "Autre document"
     );
 
+    private static final Set<LoanApplicationEventType> REPAYMENT_ONLY_EVENTS = EnumSet.of(
+            LoanApplicationEventType.LOAN_CREATED,
+            LoanApplicationEventType.MANDATE_ACTIVATED,
+            LoanApplicationEventType.MANDATE_REVOKED,
+            LoanApplicationEventType.PAYMENT_SUCCEEDED,
+            LoanApplicationEventType.PAYMENT_FAILED,
+            LoanApplicationEventType.INSTALLMENT_OVERDUE,
+            LoanApplicationEventType.LOAN_CLOSED,
+            LoanApplicationEventType.LOAN_DEFAULTED
+    );
+
+    private static final Set<LoanApplicationEventType> REPAYMENT_PHASE_EVENTS = EnumSet.of(
+            LoanApplicationEventType.FUNDS_RELEASED,
+            LoanApplicationEventType.LOAN_CREATED,
+            LoanApplicationEventType.MANDATE_ACTIVATED,
+            LoanApplicationEventType.MANDATE_REVOKED,
+            LoanApplicationEventType.PAYMENT_SUCCEEDED,
+            LoanApplicationEventType.PAYMENT_FAILED,
+            LoanApplicationEventType.INSTALLMENT_OVERDUE,
+            LoanApplicationEventType.LOAN_CLOSED,
+            LoanApplicationEventType.LOAN_DEFAULTED
+    );
+
     private final LoanApplicationEventRepository eventRepository;
-    private final LoanApplicationRepository loanRepository;
+    private final LoanApplicationRepository loanApplicationRepository;
+    private final LoanRepository loanRepository;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -96,9 +121,38 @@ public class LoanApplicationHistoryService {
 
     @Transactional(readOnly = true)
     public List<LoanHistoryEventResponseDto> getHistory(Long loanId) {
-        LoanApplication loan = loanRepository.findById(loanId)
+        return getApplicationHistory(loanId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<LoanHistoryEventResponseDto> getApplicationHistory(Long loanId) {
+        LoanApplication loan = loanApplicationRepository.findById(loanId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
-        List<LoanApplicationEvent> events = eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(loanId);
+        List<LoanHistoryEventResponseDto> result = buildHistoryEvents(loan);
+        result.removeIf(event ->
+                event.getEventType() != null && REPAYMENT_ONLY_EVENTS.contains(event.getEventType()));
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public List<LoanHistoryEventResponseDto> getRepaymentHistory(Long loanApplicationId) {
+        LoanApplication loan = loanApplicationRepository.findById(loanApplicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+        List<LoanApplicationEvent> events =
+                eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(loanApplicationId);
+        List<LoanHistoryEventResponseDto> result = new ArrayList<>();
+        for (int i = 0; i < events.size(); i++) {
+            LoanApplicationEvent event = events.get(i);
+            if (REPAYMENT_PHASE_EVENTS.contains(event.getEventType())) {
+                result.add(toDisplayDto(event, loan, i, events.size()));
+            }
+        }
+        return result;
+    }
+
+    private List<LoanHistoryEventResponseDto> buildHistoryEvents(LoanApplication loan) {
+        List<LoanApplicationEvent> events =
+                eventRepository.findByLoanApplicationIdOrderByOccurredAtAsc(loan.getId());
         List<LoanHistoryEventResponseDto> result = new ArrayList<>();
         for (int i = 0; i < events.size(); i++) {
             result.add(toDisplayDto(events.get(i), loan, i, events.size()));
@@ -175,6 +229,9 @@ public class LoanApplicationHistoryService {
                     .state(STATE_UPCOMING)
                     .build());
         } else if (loan.getStatus() == LoanApplicationStatus.APPROVED) {
+            if (loanRepository.existsByLoanApplicationId(loan.getId())) {
+                return;
+            }
             boolean hasFunds = result.stream()
                     .anyMatch(e -> e.getEventType() == LoanApplicationEventType.FUNDS_RELEASED);
             if (!hasFunds) {
@@ -289,6 +346,22 @@ public class LoanApplicationHistoryService {
                 return "Demande annulée";
             case FUNDS_RELEASED:
                 return "Fonds débloqués";
+            case LOAN_CREATED:
+                return "Plan de remboursement généré";
+            case MANDATE_ACTIVATED:
+                return "Mandat de prélèvement activé";
+            case MANDATE_REVOKED:
+                return "Mandat de prélèvement révoqué";
+            case PAYMENT_SUCCEEDED:
+                return "Prélèvement réussi";
+            case PAYMENT_FAILED:
+                return "Échec de prélèvement";
+            case INSTALLMENT_OVERDUE:
+                return "Échéance en retard";
+            case LOAN_CLOSED:
+                return "Prêt soldé";
+            case LOAN_DEFAULTED:
+                return "Prêt en défaut";
             default:
                 return "Événement";
         }
@@ -334,6 +407,28 @@ public class LoanApplicationHistoryService {
                 return resolveDecisionDescription(payload, loan, "Cette demande a été annulée.");
             case FUNDS_RELEASED:
                 return "Les fonds sont disponibles sur votre compte.";
+            case LOAN_CREATED:
+                int count = intVal(payload.get("installmentCount"), 0);
+                return "Votre plan de remboursement a été créé (" + count + " échéances). "
+                        + "Configurez votre mandat de prélèvement pour activer les débits automatiques.";
+            case MANDATE_ACTIVATED:
+                return "Votre mandat SEPA est actif. Les prélèvements automatiques peuvent démarrer.";
+            case MANDATE_REVOKED:
+                return "Votre mandat de prélèvement a été révoqué. Réactivez-le pour reprendre les débits.";
+            case PAYMENT_SUCCEEDED:
+                return "Prélèvement de " + payload.get("amount") + " € effectué avec succès.";
+            case PAYMENT_FAILED:
+                String reason = stringVal(payload.get("failureReason"));
+                return reason != null
+                        ? "Échec du prélèvement : " + reason + "."
+                        : "Échec du prélèvement. Une nouvelle tentative sera planifiée.";
+            case INSTALLMENT_OVERDUE:
+                return "L'échéance n°" + payload.get("sequenceNumber")
+                        + " est en retard après plusieurs tentatives de prélèvement.";
+            case LOAN_CLOSED:
+                return "Félicitations, votre prêt est entièrement remboursé.";
+            case LOAN_DEFAULTED:
+                return "Votre prêt est passé en défaut de paiement. Contactez votre conseiller.";
             default:
                 return "";
         }
