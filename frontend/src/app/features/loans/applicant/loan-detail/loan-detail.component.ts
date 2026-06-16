@@ -8,6 +8,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { forkJoin } from 'rxjs';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { LoanApiService } from '../../../../core/loans/services/loan-api.service';
+import { RepaymentApiService } from '../../../../core/loans/repayment/services/repayment-api.service';
+import { LoanSummaryDto } from '../../../../core/loans/repayment/models/loan-summary.model';
 import { LoanResponseDto } from '../../../../core/loans/models/loan-response.model';
 import { LoanDocumentResponseDto } from '../../../../core/loans/models/loan-document.model';
 import { LoanDocumentReviewResponseDto } from '../../../../core/loans/models/loan-document-review.model';
@@ -68,6 +70,7 @@ export class LoanDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly loanApi = inject(LoanApiService);
+  private readonly repaymentApi = inject(RepaymentApiService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly acceptCounterOfferDialog = inject(AcceptCounterOfferDialogService);
@@ -84,6 +87,28 @@ export class LoanDetailComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly complementUploading = signal<LoanDocumentType | null>(null);
   readonly offerActionLoading = signal(false);
+  readonly linkedRepaymentLoan = signal<LoanSummaryDto | null>(null);
+
+  readonly showMandateSetupAlert = computed(() => {
+    const l = this.loan();
+    if (!l || l.status !== 'APPROVED') {
+      return false;
+    }
+    const repayment = this.linkedRepaymentLoan();
+    if (!repayment) {
+      return true;
+    }
+    return (
+      repayment.status === 'PENDING_MANDATE' ||
+      repayment.mandateStatus === 'NONE' ||
+      repayment.mandateStatus === 'REVOKED'
+    );
+  });
+
+  readonly mandateSetupRoute = computed(() => {
+    const repayment = this.linkedRepaymentLoan();
+    return repayment ? ['/mes-prets', repayment.id, 'mandat'] : ['/mes-prets'];
+  });
 
   readonly statusStyle = computed(() => {
     const l = this.loan();
@@ -273,6 +298,9 @@ export class LoanDetailComponent implements OnInit {
         this.documentReviews.set(documentReviews);
         this.loading.set(false);
         this.fetchHistory(id);
+        if (loan.status === 'APPROVED') {
+          this.loadLinkedRepaymentLoan(loan.id);
+        }
       },
       error: (err) => {
         this.error.set(getErrorMessage(err, 'Impossible de charger le dossier.'));
@@ -291,6 +319,18 @@ export class LoanDetailComponent implements OnInit {
       error: () => {
         this.historyEvents.set([]);
         this.historyStatus.set('failed');
+      },
+    });
+  }
+
+  private loadLinkedRepaymentLoan(applicationId: number): void {
+    this.repaymentApi.getMyLoans().subscribe({
+      next: (loans) => {
+        const match = loans.find((loan) => loan.loanApplicationId === applicationId) ?? null;
+        this.linkedRepaymentLoan.set(match);
+      },
+      error: () => {
+        this.linkedRepaymentLoan.set(null);
       },
     });
   }

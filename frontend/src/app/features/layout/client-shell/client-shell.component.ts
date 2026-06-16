@@ -78,6 +78,8 @@ export class ClientShellComponent {
       (leaf.data['title'] as string | undefined) ?? 'Tableau de bord';
     const routeDescription =
       (leaf.data['description'] as string | undefined) ?? '';
+    const routeBreadcrumb =
+      (leaf.data['breadcrumb'] as string | undefined) ?? routeTitle;
 
     let path = this.router.url.split('?')[0].split('#')[0];
     if (path === '' || path === '/') {
@@ -86,10 +88,12 @@ export class ClientShellComponent {
 
     const isDashboard = path === '/dashboard';
     const loanDetailMatch = /^\/mes-demandes\/(\d+)$/.exec(path);
+    const repaymentDetailMatch = /^\/mes-prets\/(\d+)$/.exec(path);
+    const mandateSetupMatch = /^\/mes-prets\/(\d+)\/mandat$/.exec(path);
 
-    let pageTitle = routeTitle;
+    let pageTitle = routeTitle || routeBreadcrumb;
     let pageDescription = routeDescription;
-    let breadcrumbCurrentLabel = routeTitle;
+    let breadcrumbCurrentLabel = routeBreadcrumb;
 
     if (isDashboard) {
       const prenom =
@@ -108,6 +112,18 @@ export class ClientShellComponent {
     if (loanDetailMatch) {
       crumbs.push({ label: 'Mes demandes', routerLink: '/mes-demandes' });
       crumbs.push({ label: 'Détail du dossier', routerLink: path });
+    } else if (mandateSetupMatch) {
+      crumbs.push({ label: 'Mes prêts', routerLink: '/mes-prets' });
+      crumbs.push({
+        label: 'Détail du prêt',
+        routerLink: `/mes-prets/${mandateSetupMatch[1]}`,
+      });
+      crumbs.push({ label: 'Mandat de prélèvement', routerLink: path });
+    } else if (repaymentDetailMatch) {
+      crumbs.push({ label: 'Mes prêts', routerLink: '/mes-prets' });
+      crumbs.push({ label: 'Détail du prêt', routerLink: path });
+    } else if (path === '/mes-prets' || path === '/paiements') {
+      crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
     } else {
       crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
     }

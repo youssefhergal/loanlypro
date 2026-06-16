@@ -125,26 +125,24 @@
           <a
             routerLink="/mes-prets"
             routerLinkActive="active"
-            class="nav-item nav-item--muted"
-            matTooltip="Mes prêts (bientôt)"
+            class="nav-item"
+            matTooltip="Mes prêts"
             [matTooltipDisabled]="!sidebarCollapsed()"
             matTooltipPosition="right"
           >
             <mat-icon>account_balance</mat-icon>
             <span>Mes prêts</span>
-            <span class="badge-soon">Bientôt</span>
           </a>
           <a
             routerLink="/paiements"
             routerLinkActive="active"
-            class="nav-item nav-item--muted"
-            matTooltip="Paiements / Échéancier (bientôt)"
+            class="nav-item"
+            matTooltip="Paiements / Échéancier"
             [matTooltipDisabled]="!sidebarCollapsed()"
             matTooltipPosition="right"
           >
             <mat-icon>calendar_month</mat-icon>
             <span>Paiements / Échéancier</span>
-            <span class="badge-soon">Bientôt</span>
           </a>
           <a
             routerLink="/documents"
@@ -328,25 +326,27 @@
   </header>
 
   <main class="main">
-    <header class="page-header">
-      <div class="page-header-main">
-        <h1 class="page-title">{{ pageTitle() }}</h1>
-        @if (pageDescription()) {
-          <p class="page-description">{{ pageDescription() }}</p>
+    @if (pageTitle()) {
+      <header class="page-header">
+        <div class="page-header-main">
+          <h1 class="page-title">{{ pageTitle() }}</h1>
+          @if (pageDescription()) {
+            <p class="page-description">{{ pageDescription() }}</p>
+          }
+        </div>
+        @if (showNewRequestCta()) {
+          <a
+            mat-flat-button
+            color="primary"
+            class="page-header-cta"
+            routerLink="/nouvelle-demande"
+          >
+            <mat-icon>add</mat-icon>
+            Nouvelle demande
+          </a>
         }
-      </div>
-      @if (showNewRequestCta()) {
-        <a
-          mat-flat-button
-          color="primary"
-          class="page-header-cta"
-          routerLink="/nouvelle-demande"
-        >
-          <mat-icon>add</mat-icon>
-          Nouvelle demande
-        </a>
-      }
-    </header>
+      </header>
+    }
     <router-outlet />
   </main>
 </div>

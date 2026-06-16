@@ -70,6 +70,23 @@
           </section>
         }
 
+        @if (showMandateSetupAlert()) {
+          <section class="loan-detail-alert loan-detail-alert--action">
+            <mat-icon>account_balance</mat-icon>
+            <div>
+              <h2>Configurez votre prélèvement SEPA</h2>
+              <p>
+                Votre demande est approuvée. Pour activer votre prêt et lancer les remboursements,
+                renseignez votre IBAN et signez le mandat de prélèvement.
+              </p>
+              <a mat-flat-button color="primary" [routerLink]="mandateSetupRoute()">
+                <mat-icon>edit</mat-icon>
+                Configurer le mandat
+              </a>
+            </div>
+          </section>
+        }
+
         @if (showComplementAlert()) {
           <section class="loan-detail-alert loan-detail-alert--action">
             <mat-icon>warning_amber</mat-icon>
@@ -340,6 +357,10 @@
                 <mat-icon>history</mat-icon>
                 Historique de la demande
               </h2>
+              <p class="loan-detail-history-scope">
+                Jusqu'au déblocage des fonds. La suite du parcours est dans
+                <a routerLink="/mes-prets">Mes prêts</a>.
+              </p>
               @if (historyUnavailable()) {
                 <div class="loan-detail-history-banner" role="status">
                   <mat-icon>cloud_off</mat-icon>

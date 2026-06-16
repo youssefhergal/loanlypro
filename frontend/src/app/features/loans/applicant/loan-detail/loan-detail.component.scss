@@ -439,6 +439,22 @@
   border: 1px solid rgba(230, 81, 0, 0.18);
 }
 
+.loan-detail-history-scope {
+  margin: -0.35rem 0 0.75rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #6b7c72);
+
+  a {
+    color: var(--color-primary, #1a7a4a);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
 .loan-detail-history-banner {
   display: flex;
   align-items: flex-start;
