@@ -141,8 +141,8 @@ public class DirectDebitExecutionService {
                 application,
                 LoanApplicationEventType.PAYMENT_SUCCEEDED,
                 LoanEventActorType.SYSTEM,
-                "system",
-                "Système",
+                HistoryActorLabels.SYSTEM_EMAIL,
+                HistoryActorLabels.SYSTEM_DISPLAY_NAME,
                 Map.of(
                         "installmentId", installment.getId(),
                         "amount", installment.getAmountDue(),
@@ -171,8 +171,8 @@ public class DirectDebitExecutionService {
                 application,
                 LoanApplicationEventType.PAYMENT_FAILED,
                 LoanEventActorType.SYSTEM,
-                "system",
-                "Système",
+                HistoryActorLabels.SYSTEM_EMAIL,
+                HistoryActorLabels.SYSTEM_DISPLAY_NAME,
                 Map.of(
                         "installmentId", installment.getId(),
                         "amount", installment.getAmountDue(),

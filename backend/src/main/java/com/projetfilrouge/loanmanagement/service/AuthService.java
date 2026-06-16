@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +45,7 @@ public class AuthService {
                 null,
                 user.getRoles().stream()
                         .map(r -> new SimpleGrantedAuthority(r.getName()))
-                        .collect(Collectors.toList())
+                        .toList()
         );
         String token = jwtService.generateToken(authentication);
         UserResponse userResponse = UserResponse.builder()
@@ -54,7 +53,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .roles(user.getRoles().stream().map(r -> r.getName()).collect(Collectors.toList()))
+                .roles(user.getRoles().stream().map(r -> r.getName()).toList())
                 .build();
         return LoginResponse.builder()
                 .token(token)
@@ -74,8 +73,8 @@ public class AuthService {
         User user = User.builder()
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .firstName(request.getFirstname())
-                .lastName(request.getLastname())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
                 .roles(Set.of(clientRole))
                 .build();
 
@@ -88,7 +87,7 @@ public class AuthService {
                 .lastName(savedUser.getLastName())
                 .roles(savedUser.getRoles().stream()
                         .map(Role::getName)
-                        .collect(Collectors.toList()))
+                        .toList())
                 .build();
 
         return RegisterResponse.builder()

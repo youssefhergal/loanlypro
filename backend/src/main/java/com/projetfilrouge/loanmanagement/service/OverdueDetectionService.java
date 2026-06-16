@@ -39,8 +39,8 @@ public class OverdueDetectionService {
                 application,
                 LoanApplicationEventType.INSTALLMENT_OVERDUE,
                 LoanEventActorType.SYSTEM,
-                "system",
-                "Système",
+                HistoryActorLabels.SYSTEM_EMAIL,
+                HistoryActorLabels.SYSTEM_DISPLAY_NAME,
                 Map.of(
                         "installmentId", installment.getId(),
                         "sequenceNumber", installment.getSequenceNumber(),
@@ -66,8 +66,8 @@ public class OverdueDetectionService {
                 application,
                 LoanApplicationEventType.LOAN_DEFAULTED,
                 LoanEventActorType.SYSTEM,
-                "system",
-                "Système",
+                HistoryActorLabels.SYSTEM_EMAIL,
+                HistoryActorLabels.SYSTEM_DISPLAY_NAME,
                 Map.of(
                         "loanId", loan.getId(),
                         "overdueInstallmentsCount", overdueCount
@@ -99,8 +99,8 @@ public class OverdueDetectionService {
                 application,
                 LoanApplicationEventType.LOAN_CLOSED,
                 LoanEventActorType.SYSTEM,
-                "system",
-                "Système",
+                HistoryActorLabels.SYSTEM_EMAIL,
+                HistoryActorLabels.SYSTEM_DISPLAY_NAME,
                 Map.of(
                         "loanId", loan.getId(),
                         "installmentCount", installments.size()

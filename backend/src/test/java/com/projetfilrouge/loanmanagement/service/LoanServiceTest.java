@@ -712,7 +712,7 @@ class LoanServiceTest {
 
         when(userRepository.findByEmail("client@test.com")).thenReturn(Optional.of(client));
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
-        when(historyService.getHistory(1L)).thenReturn(List.of(
+        when(historyService.getApplicationHistory(1L)).thenReturn(List.of(
                 LoanHistoryEventResponseDto.builder().title("Brouillon créé").build()
         ));
 

@@ -146,8 +146,8 @@ public class RepaymentPlanService {
                 application,
                 LoanApplicationEventType.LOAN_CREATED,
                 LoanEventActorType.SYSTEM,
-                "system",
-                "Système",
+                HistoryActorLabels.SYSTEM_EMAIL,
+                HistoryActorLabels.SYSTEM_DISPLAY_NAME,
                 Map.of(
                         "loanId", savedLoan.getId(),
                         "installmentCount", durationMonths,
