@@ -110,8 +110,8 @@ class AuthServiceTest {
     void register_createsClientUserAndReturnsResponse() {
         RegisterRequest request = RegisterRequest.builder()
                 .email("new@test.com")
-                .firstname("Alice")
-                .lastname("Martin")
+                .firstName("Alice")
+                .lastName("Martin")
                 .password("password123")
                 .build();
         Role clientRole = Role.builder().id(1L).name(ROLE_CLIENT).build();
@@ -146,8 +146,8 @@ class AuthServiceTest {
     void register_throwsBusinessRuleExceptionWhenEmailAlreadyExists() {
         RegisterRequest request = RegisterRequest.builder()
                 .email("existing@test.com")
-                .firstname("Bob")
-                .lastname("Dupont")
+                .firstName("Bob")
+                .lastName("Dupont")
                 .password("password123")
                 .build();
 

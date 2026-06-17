@@ -75,4 +75,14 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
               )
             """)
     long countActiveAssignments(@Param("advisorId") Long advisorId);
+
+    @Query("""
+            SELECT la FROM LoanApplication la
+            WHERE la.status = com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus.APPROVED
+              AND NOT EXISTS (
+                SELECT 1 FROM Loan l WHERE l.loanApplication.id = la.id
+              )
+            ORDER BY la.decidedAt ASC, la.id ASC
+            """)
+    List<LoanApplication> findApprovedWithoutRepaymentLoan();
 }

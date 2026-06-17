@@ -36,9 +36,11 @@ flowchart LR
 
 | Inclus | Exclu (autres modules) |
 |--------|-------------------------|
-| CRUD brouillon, documents, workflow statuts | Remboursements, échéancier |
+| CRUD brouillon, documents, workflow statuts | Remboursements, échéancier → [module-pret](../module-pret/README.md) |
 | Historique `loan_application_events` | Messagerie, notifications |
 | 3 shells UI (client, conseiller, admin) | Gestion utilisateurs admin |
+
+> Après `APPROVED`, le cycle de remboursement est documenté dans le module **[Prêt & Paiements](../module-pret/README.md)** (plan d’amortissement, mandat, prélèvement automatique).
 
 ## Statuts (`LoanApplicationStatus`)
 

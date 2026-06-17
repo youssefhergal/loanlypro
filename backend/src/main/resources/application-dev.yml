@@ -3,11 +3,17 @@
 app:
   cors:
     allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200,https://pfr-dev.web.app}
+  payment:
+    iban-vault-key: ${IBAN_VAULT_KEY:loanlyfans-dev-iban-vault-key}
   # En dev : exécution toutes les 5 minutes (prod reste horaire via application.yml)
   advisor-assignment:
     scheduler:
       enabled: true
       cron: "0 */5 * * * *"
+  repayment:
+    scheduler:
+      cron: "0 */5 * * * *"
+      internal-token: ${REPAYMENT_SCHEDULER_TOKEN:dev-scheduler-token}
 
 spring:
   datasource:

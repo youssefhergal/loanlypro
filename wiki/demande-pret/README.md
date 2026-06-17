@@ -5,6 +5,8 @@
 Feature **complète** : dépôt et suivi (client), instruction (conseiller), supervision (admin).  
 La documentation UI conseiller / admin décrit le **comportement cible** (écrans à implémenter selon ce modèle).
 
+**Suite du parcours** (après `APPROVED`) : [module-pret](../module-pret/README.md) — prêt, mandat, prélèvement automatique.
+
 | # | Document |
 |---|----------|
 | 1 | [Vue d’ensemble](./01-vue-ensemble.md) — Périmètre, objectifs, statuts |

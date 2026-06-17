@@ -73,10 +73,25 @@ export const routes: Routes = [
       },
       {
         path: 'prets',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/loans/repayment/advisor/advisor-loan-repayment-list/advisor-loan-repayment-list.component').then(
+            (m) => m.AdvisorLoanRepaymentListComponent
+          ),
         data: {
           title: 'Prêts',
-          description: 'Suivi des prêts accordés — bientôt disponible.',
+          description: 'Suivi des remboursements de vos clients — consultation uniquement.',
+        },
+      },
+      {
+        path: 'prets/:id',
+        loadComponent: () =>
+          import('./features/loans/repayment/advisor/advisor-loan-repayment-detail/advisor-loan-repayment-detail.component').then(
+            (m) => m.AdvisorLoanRepaymentDetailComponent
+          ),
+        data: {
+          title: '',
+          description: '',
+          breadcrumb: 'Détail du prêt',
         },
       },
       {
@@ -150,10 +165,24 @@ export const routes: Routes = [
       },
       {
         path: 'prets',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/loans/repayment/admin/admin-loan-dashboard/admin-loan-dashboard.component').then(
+            (m) => m.AdminLoanDashboardComponent,
+          ),
         data: {
           title: 'Prêts',
-          description: 'Prêts actifs sur la plateforme — bientôt disponible.',
+          description: 'Supervision du portefeuille de prêts et indicateurs de recouvrement.',
+        },
+      },
+      {
+        path: 'prets/:id',
+        loadComponent: () =>
+          import('./features/loans/repayment/admin/admin-loan-detail/admin-loan-detail.component').then(
+            (m) => m.AdminLoanDetailComponent,
+          ),
+        data: {
+          title: '',
+          description: '',
         },
       },
       {
@@ -263,7 +292,10 @@ export const routes: Routes = [
       },
       {
         path: 'mes-prets',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/loans/repayment/client/my-loans/my-loans.component').then(
+            (m) => m.MyLoansComponent
+          ),
         data: {
           title: 'Mes prêts',
           description:
@@ -271,12 +303,38 @@ export const routes: Routes = [
         },
       },
       {
-        path: 'paiements',
-        loadComponent: comingSoon,
+        path: 'mes-prets/:id/mandat',
+        loadComponent: () =>
+          import('./features/loans/repayment/client/mandate-setup/mandate-setup.component').then(
+            (m) => m.MandateSetupComponent
+          ),
         data: {
-          title: 'Paiements / Échéancier',
-          description:
-            'Visualisez vos prochains prélèvements et téléchargez votre planning de remboursement.',
+          title: '',
+          description: '',
+        },
+      },
+      {
+        path: 'mes-prets/:id',
+        loadComponent: () =>
+          import('./features/loans/repayment/client/my-loan-detail/my-loan-detail.component').then(
+            (m) => m.MyLoanDetailComponent
+          ),
+        data: {
+          title: '',
+          description: '',
+          breadcrumb: 'Détail du prêt',
+        },
+      },
+      {
+        path: 'paiements',
+        loadComponent: () =>
+          import('./features/loans/repayment/client/payments-schedule/payments-schedule.component').then(
+            (m) => m.PaymentsScheduleComponent
+          ),
+        data: {
+          title: '',
+          description: '',
+          breadcrumb: 'Paiements / Échéancier',
         },
       },
       {

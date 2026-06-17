@@ -1,0 +1,159 @@
+<div class="loan-detail-page">
+  <header class="loan-detail-page__header">
+    <div class="loan-detail-page__header-main">
+      <div class="loan-detail-page__title-row">
+        <h1 class="loan-detail-page__title">Détail du prêt</h1>
+        @if (loan(); as detail) {
+          <app-loan-status-chip [status]="detail.status" />
+        }
+      </div>
+      @if (loan(); as detail) {
+        <p class="loan-detail-page__meta">Réf. {{ detail.reference }}</p>
+      } @else {
+        <p class="loan-detail-page__meta">Synthèse de votre prêt et suivi des remboursements.</p>
+      }
+    </div>
+    <div class="loan-detail-page__header-actions">
+      <a mat-stroked-button routerLink="/mes-prets">
+        <mat-icon>arrow_back</mat-icon>
+        Retour à mes prêts
+      </a>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="loan-detail-page__loading">Chargement du prêt…</p>
+  } @else if (error()) {
+    <p class="loan-detail-page__error">{{ error() }}</p>
+  } @else {
+    @if (loan(); as detail) {
+      <div class="loan-detail-page__layout">
+        <main class="loan-detail-page__main">
+          <app-mandate-status-banner
+            [loanId]="detail.id"
+            [loanStatus]="detail.status"
+            [mandateStatus]="detail.mandateStatus"
+            [overdueCount]="detail.overdueInstallmentsCount"
+          />
+
+          <div class="loan-detail-page__metrics">
+            <article class="loan-detail-page__metric loan-detail-page__metric--accent">
+              <span>Solde restant</span>
+              <strong>{{ detail.remainingBalance | currency: 'EUR' : 'symbol' : '1.0-0' }}</strong>
+            </article>
+            <article class="loan-detail-page__metric">
+              <span>Mensualité</span>
+              <strong>
+                @if (detail.monthlyPayment != null) {
+                  {{ detail.monthlyPayment | currency: 'EUR' : 'symbol' : '1.2-2' }}
+                } @else {
+                  —
+                }
+              </strong>
+            </article>
+            <article class="loan-detail-page__metric">
+              <span>Échéances payées</span>
+              <strong>{{ detail.paidInstallmentsCount }} / {{ detail.installmentCount ?? '—' }}</strong>
+            </article>
+            <article class="loan-detail-page__metric">
+              <span>Taux annuel</span>
+              <strong>
+                @if (detail.annualRate != null) {
+                  {{ detail.annualRate }} %
+                } @else {
+                  —
+                }
+              </strong>
+            </article>
+          </div>
+
+          <section class="loan-detail-page__card">
+            <h2>Informations</h2>
+            <dl class="loan-detail-page__facts">
+              <div>
+                <dt>Capital emprunté</dt>
+                <dd>{{ detail.principalAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+              </div>
+              <div>
+                <dt>Durée</dt>
+                <dd>{{ detail.durationMonths ?? '—' }} mois</dd>
+              </div>
+              <div>
+                <dt>Prochaine échéance</dt>
+                <dd>
+                  @if (detail.nextInstallmentDate) {
+                    {{ detail.nextInstallmentDate | date: 'dd/MM/yyyy' }}
+                    @if (detail.nextInstallmentAmount != null) {
+                      — {{ detail.nextInstallmentAmount | currency: 'EUR' : 'symbol' : '1.2-2' }}
+                    }
+                  } @else {
+                    —
+                  }
+                </dd>
+              </div>
+              <div>
+                <dt>Mandat SEPA</dt>
+                <dd>
+                  @if (detail.mandateStatus === 'ACTIVE') {
+                    Actif — {{ detail.ibanMasked }}
+                  } @else {
+                    Non configuré
+                  }
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <div class="loan-detail-page__actions">
+            @if (needsMandate(detail.status, detail.mandateStatus)) {
+              <a mat-flat-button color="primary" [routerLink]="['/mes-prets', detail.id, 'mandat']">
+                Configurer le prélèvement
+              </a>
+            }
+            @if (detail.mandateStatus === 'ACTIVE' && detail.status !== 'CLOSED') {
+              <button
+                mat-stroked-button
+                type="button"
+                color="warn"
+                (click)="revokeMandate()"
+                [disabled]="revokingMandate()"
+              >
+                <mat-icon>block</mat-icon>
+                Révoquer le mandat
+              </button>
+            }
+            <a
+              mat-stroked-button
+              [routerLink]="['/paiements']"
+              [queryParams]="{ loanId: detail.id }"
+            >
+              <mat-icon>calendar_month</mat-icon>
+              Voir l'échéancier et les prélèvements
+            </a>
+          </div>
+        </main>
+
+        <aside class="loan-detail-page__aside">
+          <section class="loan-detail-page__history-card">
+            <app-repayment-history-timeline
+              [events]="history()"
+              [loading]="historyLoading()"
+            />
+          </section>
+
+          <section class="loan-detail-page__help-card">
+            <h2 class="loan-detail-page__help-title">
+              <mat-icon>support_agent</mat-icon>
+              Besoin d'aide ?
+            </h2>
+            <p>Une question sur vos remboursements ? Nos conseillers sont là pour vous.</p>
+            <a mat-stroked-button class="loan-detail-page__help-btn" href="mailto:conseil@loanlyfans.fr">
+              <mat-icon>chat</mat-icon>
+              Contacter un conseiller
+            </a>
+          </section>
+        </aside>
+      </div>
+    }
+  }
+</div>

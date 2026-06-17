@@ -1,0 +1,156 @@
+<div class="payments-schedule">
+  <header class="payments-schedule__page-header">
+    <div class="payments-schedule__page-header-main">
+      <h1 class="payments-schedule__page-title">Paiements / Échéancier</h1>
+      <p class="payments-schedule__page-description">
+        Visualisez vos prochains prélèvements et l'historique des transactions.
+      </p>
+    </div>
+
+    @if (!loading() || loans().length) {
+      @if (selectedLoan(); as loan) {
+        <div class="payments-schedule__loan-picker">
+          <span class="payments-schedule__loan-picker-label">Prêt sélectionné</span>
+          <div class="payments-schedule__loan-picker-row">
+            @if (loans().length > 1) {
+              <mat-form-field appearance="outline" class="payments-schedule__loan-select">
+                <mat-select [value]="selectedLoanId()" (valueChange)="onLoanChange($event)">
+                  <mat-select-trigger>
+                    <span class="payments-schedule__select-value">
+                      <span class="payments-schedule__select-ref">{{ loan.reference }}</span>
+                      <app-loan-status-chip [status]="loan.status" />
+                    </span>
+                  </mat-select-trigger>
+                  @for (item of loans(); track item.id) {
+                    <mat-option [value]="item.id">
+                      <span class="payments-schedule__select-option">
+                        <span>{{ item.reference }}</span>
+                        <app-loan-status-chip [status]="item.status" />
+                      </span>
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            } @else {
+              <div class="payments-schedule__loan-static">
+                <span class="payments-schedule__select-ref">{{ loan.reference }}</span>
+                <app-loan-status-chip [status]="loan.status" />
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </header>
+
+  @if (loading() && !loans().length) {
+    <p class="payments-schedule__loading">Chargement…</p>
+  } @else if (!loans().length) {
+    <div class="payments-schedule__empty">
+      <mat-icon>calendar_month</mat-icon>
+      <p>Aucun prêt actif pour afficher un échéancier.</p>
+      <a mat-stroked-button routerLink="/mes-prets">Voir mes prêts</a>
+    </div>
+  } @else {
+    @if (selectedLoan(); as loan) {
+      @if (showActiveMandateBanner()) {
+        <div class="payments-schedule__mandate-ok" role="status">
+          <mat-icon>check_circle</mat-icon>
+          <span>
+            Mandat actif — prélèvement automatique activé sur votre compte
+            {{ loanDetail()?.ibanMasked }}
+          </span>
+        </div>
+      } @else {
+        <app-mandate-status-banner
+          [loanId]="loan.id"
+          [loanStatus]="loan.status"
+          [mandateStatus]="loan.mandateStatus"
+          [overdueCount]="loan.overdueInstallmentsCount"
+        />
+      }
+
+      @if (hasOverdueOrBlocked()) {
+        <div class="payments-schedule__alert" role="alert">
+          <mat-icon>warning</mat-icon>
+          <span>
+            Une ou plusieurs échéances nécessitent votre attention (retard ou mandat manquant).
+          </span>
+        </div>
+      }
+    }
+
+    <div class="payments-schedule__layout">
+      <section class="payments-schedule__main-card">
+        <mat-tab-group class="payments-schedule__tabs" animationDuration="0ms">
+          <mat-tab label="Échéancier">
+            <div class="payments-schedule__tab-panel">
+              <h2 class="payments-schedule__panel-title">Échéancier de remboursement</h2>
+              @if (loading()) {
+                <p class="payments-schedule__loading">Chargement de l'échéancier…</p>
+              } @else if (!installments().length) {
+                <p class="payments-schedule__muted">Aucune échéance disponible.</p>
+              } @else {
+                <app-installment-table [installments]="installments()" variant="schedule" />
+              }
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Historique des prélèvements">
+            <div class="payments-schedule__tab-panel">
+              <h2 class="payments-schedule__panel-title">Historique prélèvements</h2>
+              @if (loading()) {
+                <p class="payments-schedule__loading">Chargement des transactions…</p>
+              } @else if (!transactions().length) {
+                <p class="payments-schedule__muted">
+                  Aucun prélèvement effectué pour le moment. Les débits sont automatiques à chaque
+                  échéance.
+                </p>
+              } @else {
+                <app-payment-transaction-list [transactions]="transactions()" variant="list" />
+              }
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </section>
+
+      <aside class="payments-schedule__aside">
+        <section class="payments-schedule__status-card">
+          <h2 class="payments-schedule__status-title">État du remboursement</h2>
+
+          @if (loading()) {
+            <p class="payments-schedule__muted">Chargement…</p>
+          } @else {
+            @let progress = repaymentProgress();
+            <div class="payments-schedule__progress-head">
+              <span class="payments-schedule__progress-pct">{{ progress.percent }}%</span>
+              <span class="payments-schedule__progress-label">
+                Payé {{ progress.paidCount }} / {{ progress.total || '—' }} échéances
+              </span>
+            </div>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="progress.percent"
+              class="payments-schedule__progress-bar"
+            />
+
+            <dl class="payments-schedule__breakdown">
+              <div>
+                <dt>Capital remboursé</dt>
+                <dd>{{ progress.capitalRepaid | currency: 'EUR' : 'symbol' : '1.2-2' }}</dd>
+              </div>
+              <div>
+                <dt>Intérêts payés</dt>
+                <dd>{{ progress.interestPaid | currency: 'EUR' : 'symbol' : '1.2-2' }}</dd>
+              </div>
+              <div class="payments-schedule__breakdown-total">
+                <dt>Total versé</dt>
+                <dd>{{ progress.totalPaid | currency: 'EUR' : 'symbol' : '1.2-2' }}</dd>
+              </div>
+            </dl>
+          }
+        </section>
+      </aside>
+    </div>
+  }
+</div>

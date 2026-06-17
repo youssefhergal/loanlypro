@@ -1,0 +1,67 @@
+.installment-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border, #d8e8de);
+  border-radius: 10px;
+}
+
+.installment-table-wrap--schedule {
+  border: none;
+  border-radius: 0;
+}
+
+.installment-table {
+  width: 100%;
+  min-width: 640px;
+}
+
+.installment-table-wrap--schedule .installment-table {
+  min-width: 760px;
+
+  th.mat-mdc-header-cell {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-muted, #6b7c72);
+  }
+}
+
+.installment-table__amount {
+  font-weight: 700;
+  color: var(--color-text, #1a2e22);
+}
+
+.installment-table__chip--schedule {
+  font-size: 0.6875rem;
+  letter-spacing: 0.03em;
+  border-radius: 4px;
+  padding: 0.2rem 0.45rem;
+}
+
+.installment-table__muted {
+  color: var(--color-text-muted, #6b7c72);
+  font-size: 0.8125rem;
+}
+
+.installment-table__chip {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.installment-table-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+}
+
+.installment-table-footer__summary {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #6b7c72);
+}

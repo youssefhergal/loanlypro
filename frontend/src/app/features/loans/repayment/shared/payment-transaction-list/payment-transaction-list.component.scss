@@ -1,0 +1,125 @@
+.payment-tx-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border, #d8e8de);
+  border-radius: 10px;
+}
+
+.payment-tx-table {
+  width: 100%;
+  min-width: 620px;
+}
+
+.payment-tx-table__muted {
+  color: var(--color-text-muted, #6b7c72);
+  font-size: 0.8125rem;
+}
+
+.payment-tx-table__chip {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #eceff1;
+  color: #455a64;
+}
+
+.payment-tx-table__chip--ok {
+  background: #e8f5ee;
+  color: #1a7a4a;
+}
+
+.payment-tx-table__chip--ko {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.payment-tx-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+}
+
+.payment-tx-footer__summary {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #6b7c72);
+}
+
+.payment-tx-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.payment-tx-list__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border, #d8e8de);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.payment-tx-list__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.payment-tx-list__date {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text, #1a2e22);
+}
+
+.payment-tx-list__amount {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text, #1a2e22);
+}
+
+.payment-tx-list__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.payment-tx-list__chip {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: #eceff1;
+  color: #455a64;
+}
+
+.payment-tx-list__chip--ok {
+  background: #e8f5ee;
+  color: #1a7a4a;
+}
+
+.payment-tx-list__chip--ko {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.payment-tx-list__ref {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted, #6b7c72);
+}
+
+.payment-tx-list__reason {
+  font-size: 0.6875rem;
+  color: #c62828;
+}

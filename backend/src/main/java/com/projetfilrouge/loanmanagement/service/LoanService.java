@@ -83,6 +83,7 @@ public class LoanService {
     private final LoanApplicationHistoryService historyService;
     private final DocumentReviewService documentReviewService;
     private final LoanDocumentStorageService documentStorage;
+    private final RepaymentPlanService repaymentPlanService;
 
     @Transactional
     public LoanResponseDto createApplication(LoanRequestDto request, String currentUserEmail) {
@@ -444,7 +445,7 @@ public class LoanService {
         LoanApplication loan = loanRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(MSG_DOSSIER_INTROUVABLE));
         ensureCanAccessLoan(loan, currentUser);
-        return historyService.getHistory(id);
+        return historyService.getApplicationHistory(id);
     }
 
     @Transactional
@@ -627,6 +628,7 @@ public class LoanService {
                 displayName(currentUser),
                 Map.of(PAYLOAD_COMMENT, saved.getDecisionComment() != null ? saved.getDecisionComment() : "")
         );
+        repaymentPlanService.createLoanFromApprovedApplication(saved);
         return mapToResponseDto(saved);
     }
 

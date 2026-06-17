@@ -1,0 +1,175 @@
+<div class="installment-table-wrap" [class.installment-table-wrap--schedule]="variant() === 'schedule'">
+
+  <table mat-table [dataSource]="pageInstallments()" class="installment-table">
+
+    <ng-container matColumnDef="sequenceNumber">
+
+      <th mat-header-cell *matHeaderCellDef>N°</th>
+
+      <td mat-cell *matCellDef="let row">{{ row.sequenceNumber }}</td>
+
+    </ng-container>
+
+
+
+    <ng-container matColumnDef="dueDate">
+
+      <th mat-header-cell *matHeaderCellDef>{{ variant() === 'schedule' ? 'Date' : 'Échéance' }}</th>
+
+      <td mat-cell *matCellDef="let row">{{ row.dueDate | date: 'dd/MM/yyyy' }}</td>
+
+    </ng-container>
+
+
+
+    <ng-container matColumnDef="amountDue">
+
+      <th mat-header-cell *matHeaderCellDef>
+
+        {{ variant() === 'schedule' ? 'Mensualité' : 'Montant' }}
+
+      </th>
+
+      <td mat-cell *matCellDef="let row" [class.installment-table__amount]="variant() === 'schedule'">
+
+        {{ row.amountDue | currency: 'EUR' : 'symbol' : '1.2-2' }}
+
+      </td>
+
+    </ng-container>
+
+
+
+    <ng-container matColumnDef="principalPart">
+
+      <th mat-header-cell *matHeaderCellDef>Capital</th>
+
+      <td mat-cell *matCellDef="let row" class="installment-table__muted">
+
+        {{ row.principalPart | currency: 'EUR' : 'symbol' : '1.2-2' }}
+
+      </td>
+
+    </ng-container>
+
+
+
+    <ng-container matColumnDef="interestPart">
+
+      <th mat-header-cell *matHeaderCellDef>Intérêts</th>
+
+      <td mat-cell *matCellDef="let row" class="installment-table__muted">
+
+        {{ row.interestPart | currency: 'EUR' : 'symbol' : '1.2-2' }}
+
+      </td>
+
+    </ng-container>
+
+
+
+    <ng-container matColumnDef="remainingBalance">
+
+      <th mat-header-cell *matHeaderCellDef>Solde restant</th>
+
+      <td mat-cell *matCellDef="let row">
+
+        {{ row.remainingBalance | currency: 'EUR' : 'symbol' : '1.2-2' }}
+
+      </td>
+
+    </ng-container>
+
+
+
+    <ng-container matColumnDef="breakdown">
+
+      <th mat-header-cell *matHeaderCellDef>Capital / Intérêts</th>
+
+      <td mat-cell *matCellDef="let row" class="installment-table__muted">
+
+        {{ row.principalPart | currency: 'EUR' : 'symbol' : '1.2-2' }}
+
+        /
+
+        {{ row.interestPart | currency: 'EUR' : 'symbol' : '1.2-2' }}
+
+      </td>
+
+    </ng-container>
+
+
+
+    <ng-container matColumnDef="status">
+
+      <th mat-header-cell *matHeaderCellDef>Statut</th>
+
+      <td mat-cell *matCellDef="let row">
+
+        @let style = statusStyle(row.status);
+
+        <span
+
+          class="installment-table__chip"
+
+          [class.installment-table__chip--schedule]="variant() === 'schedule'"
+
+          [style.background]="style.badgeBg"
+
+          [style.color]="style.badgeColor"
+
+        >
+
+          {{ variant() === 'schedule' ? (style.label | uppercase) : style.label }}
+
+        </span>
+
+      </td>
+
+    </ng-container>
+
+
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+
+    <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
+
+  </table>
+
+</div>
+
+
+
+@if (installments().length > PAGE_SIZE) {
+
+  <footer class="installment-table-footer">
+
+    <p class="installment-table-footer__summary">
+
+      Affichage de {{ rangeStart() }}-{{ rangeEnd() }} sur {{ installments().length }} échéance{{
+
+        installments().length > 1 ? 's' : ''
+
+      }}
+
+    </p>
+
+    <mat-paginator
+
+      [length]="installments().length"
+
+      [pageSize]="PAGE_SIZE"
+
+      [pageIndex]="pageIndex()"
+
+      (page)="onPage($event)"
+
+      hidePageSize
+
+    />
+
+  </footer>
+
+}
+
+
