@@ -1,0 +1,46 @@
+.documents-loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.credit-doc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.credit-doc-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border, #d8e8de);
+  border-radius: 12px;
+
+  &--unavailable {
+    opacity: 0.7;
+  }
+}
+
+.credit-doc-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.credit-doc-item__title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.credit-doc-item__ref,
+.credit-doc-item__reason {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #6b7c72);
+}

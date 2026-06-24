@@ -1,0 +1,52 @@
+<div class="documents-tab-panel">
+  <div class="documents-skeleton-banner" role="status">
+    <mat-icon aria-hidden="true">construction</mat-icon>
+    <p>
+      Squelette US-6.1 — implémenter <code>ClientDocumentsService</code> côté backend.
+      Voir <strong>JIRA/SPRINT-DOCUMENTS.md</strong>.
+    </p>
+  </div>
+
+  @if (loading()) {
+    <div class="documents-loading">
+      <mat-spinner diameter="36" />
+    </div>
+  } @else if (notImplemented()) {
+    <div class="documents-empty">
+      <mat-icon aria-hidden="true">folder_open</mat-icon>
+      <p>La liste des justificatifs sera disponible après implémentation du service backend.</p>
+    </div>
+  } @else if (groups().length === 0) {
+    <div class="documents-empty">
+      <mat-icon aria-hidden="true">upload_file</mat-icon>
+      <p>Aucun justificatif déposé pour le moment.</p>
+    </div>
+  } @else {
+    @for (group of groups(); track group.loanApplicationId) {
+      <section class="justificatif-group">
+        <header class="justificatif-group__header">
+          <h3>{{ group.loanReference }}</h3>
+          <span class="justificatif-group__status">{{ group.loanStatus }}</span>
+        </header>
+        <ul class="justificatif-list">
+          @for (doc of group.documents; track doc.documentId) {
+            <li class="justificatif-item">
+              <div class="justificatif-item__info">
+                <span class="justificatif-item__type">{{ doc.documentTypeLabel }}</span>
+                <span class="justificatif-item__file">{{ doc.fileName }}</span>
+                <span class="justificatif-item__status" [attr.data-status]="doc.validationStatus">
+                  {{ doc.validationStatus }}
+                </span>
+              </div>
+              @if (doc.downloadable) {
+                <button mat-stroked-button type="button" (click)="download(doc.documentId)">
+                  Télécharger
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</div>

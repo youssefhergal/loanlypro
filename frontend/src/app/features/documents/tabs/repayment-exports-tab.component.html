@@ -1,0 +1,63 @@
+<div class="documents-tab-panel">
+  <div class="documents-skeleton-banner" role="status">
+    <mat-icon aria-hidden="true">construction</mat-icon>
+    <p>
+      Squelette US-6.7 / US-6.8 — implémenter <code>RepaymentDocumentExportService</code>.
+      Voir <strong>JIRA/SPRINT-DOCUMENTS.md</strong>.
+    </p>
+  </div>
+
+  @if (loadingLoans()) {
+    <div class="documents-loading">
+      <mat-spinner diameter="36" />
+    </div>
+  } @else if (loans().length === 0) {
+    <div class="documents-empty">
+      <mat-icon aria-hidden="true">account_balance</mat-icon>
+      <p>Aucun crédit actif — les exports PDF seront disponibles une fois votre prêt débloqué.</p>
+    </div>
+  } @else {
+    <div class="repayment-exports">
+      <mat-form-field appearance="outline" class="repayment-exports__picker">
+        <mat-label>Crédit</mat-label>
+        <mat-select
+          [value]="selectedLoanId()"
+          (selectionChange)="selectedLoanId.set($event.value)"
+        >
+          @for (loan of loans(); track loan.id) {
+            <mat-option [value]="loan.id">{{ loan.reference }} — {{ loan.status }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="repayment-exports__actions">
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="exporting() !== null"
+          (click)="exportSchedule()"
+        >
+          @if (exporting() === 'schedule') {
+            <mat-spinner diameter="18" />
+          } @else {
+            <mat-icon>calendar_month</mat-icon>
+          }
+          Exporter l'échéancier (PDF)
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="exporting() !== null"
+          (click)="exportPayments()"
+        >
+          @if (exporting() === 'payments') {
+            <mat-spinner diameter="18" />
+          } @else {
+            <mat-icon>receipt_long</mat-icon>
+          }
+          Exporter les prélèvements (PDF)
+        </button>
+      </div>
+    </div>
+  }
+</div>

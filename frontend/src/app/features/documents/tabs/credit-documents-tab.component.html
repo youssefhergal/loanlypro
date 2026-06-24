@@ -1,0 +1,47 @@
+<div class="documents-tab-panel">
+  <div class="documents-skeleton-banner" role="status">
+    <mat-icon aria-hidden="true">construction</mat-icon>
+    <p>
+      Squelette US-6.4 — implémenter <code>IssuedDocumentService</code> et génération PDF.
+      Voir <strong>JIRA/SPRINT-DOCUMENTS.md</strong>.
+    </p>
+  </div>
+
+  @if (loading()) {
+    <div class="documents-loading">
+      <mat-spinner diameter="36" />
+    </div>
+  } @else if (notImplemented()) {
+    <div class="documents-empty">
+      <mat-icon aria-hidden="true">description</mat-icon>
+      <p>Les documents crédit (récap, offre, contrat, mandat SEPA) seront listés ici.</p>
+    </div>
+  } @else if (documents().length === 0) {
+    <div class="documents-empty">
+      <mat-icon aria-hidden="true">description</mat-icon>
+      <p>Aucun document crédit disponible pour le moment.</p>
+    </div>
+  } @else {
+    <ul class="credit-doc-list">
+      @for (doc of documents(); track trackByType($index, doc)) {
+        <li class="credit-doc-item" [class.credit-doc-item--unavailable]="!doc.available">
+          <div class="credit-doc-item__info">
+            <span class="credit-doc-item__title">{{ doc.title }}</span>
+            <span class="credit-doc-item__ref">{{ doc.reference }}</span>
+            @if (!doc.available && doc.unavailableReason) {
+              <span class="credit-doc-item__reason">{{ doc.unavailableReason }}</span>
+            }
+          </div>
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="!doc.available"
+            (click)="download(doc)"
+          >
+            Télécharger
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

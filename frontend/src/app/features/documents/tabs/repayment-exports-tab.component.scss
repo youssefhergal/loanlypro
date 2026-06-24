@@ -1,0 +1,28 @@
+.documents-loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.repayment-exports {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.repayment-exports__picker {
+  width: 100%;
+  max-width: 420px;
+}
+
+.repayment-exports__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}

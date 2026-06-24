@@ -62,6 +62,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildError(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_ERROR", e.getMessage());
     }
 
+    @ExceptionHandler(UnsupportedOperationException.class)
+    public ResponseEntity<ApiError> handleNotImplemented(UnsupportedOperationException e) {
+        String message = e.getMessage() != null ? e.getMessage() : "Fonctionnalité non implémentée.";
+        return buildError(HttpStatus.NOT_IMPLEMENTED, "NOT_IMPLEMENTED", message);
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiError> handleRuntime(RuntimeException e) {
         return buildError(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Erreur interne du serveur");

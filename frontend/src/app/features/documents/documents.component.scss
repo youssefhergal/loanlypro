@@ -1,0 +1,68 @@
+.documents-page {
+  padding: 0 28px 2rem;
+  max-width: 960px;
+  box-sizing: border-box;
+}
+
+.documents-tabs {
+  ::ng-deep {
+    .mat-mdc-tab-header {
+      border-bottom: 1px solid var(--color-border, #d8e8de);
+    }
+
+    .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+      color: var(--color-primary, #1a7a4a);
+    }
+
+    .mdc-tab-indicator__content--underline {
+      border-color: var(--color-primary, #1a7a4a) !important;
+    }
+  }
+}
+
+.documents-tab-panel {
+  padding: 1.25rem 0 0.5rem;
+}
+
+.documents-skeleton-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  background: var(--color-primary-light, #e8f5ee);
+  border: 1px solid var(--color-border, #d8e8de);
+  color: var(--color-text, #1a2e22);
+  font-size: 0.875rem;
+  line-height: 1.45;
+
+  mat-icon {
+    flex-shrink: 0;
+    color: var(--color-primary, #1a7a4a);
+  }
+}
+
+.documents-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 200px;
+  text-align: center;
+  color: var(--color-text-muted, #6b7c72);
+
+  mat-icon {
+    font-size: 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--color-primary, #1a7a4a);
+    opacity: 0.75;
+  }
+
+  p {
+    margin: 0;
+    max-width: 28rem;
+  }
+}
