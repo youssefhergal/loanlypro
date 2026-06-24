@@ -1,0 +1,55 @@
+<button
+  type="button"
+  mat-icon-button
+  class="topbar-icon topbar-notifications"
+  [matMenuTriggerFor]="notifMenu"
+  matTooltip="Notifications"
+  aria-label="Notifications"
+  [matBadge]="unreadService.count()"
+  [matBadgeHidden]="unreadService.count() === 0"
+  matBadgeSize="small"
+  matBadgeColor="warn"
+  (menuOpened)="loadPreview()"
+>
+  <mat-icon fontSet="material-icons">notifications</mat-icon>
+</button>
+
+<mat-menu #notifMenu="matMenu" xPosition="before" class="notification-preview-menu">
+  <div class="notification-preview-header" (click)="$event.stopPropagation()">
+    <span class="notification-preview-title">Notifications</span>
+    @if (unreadService.count() > 0) {
+      <span class="notification-preview-badge">{{ unreadService.count() }} non lues</span>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="notification-preview-state" (click)="$event.stopPropagation()">
+      <mat-spinner diameter="28" />
+    </div>
+  } @else if (loadError()) {
+    <p class="notification-preview-state notification-preview-empty" (click)="$event.stopPropagation()">
+      Impossible de charger les notifications.
+    </p>
+  } @else if (preview().length === 0) {
+    <p class="notification-preview-state notification-preview-empty" (click)="$event.stopPropagation()">
+      Aucune notification pour le moment.
+    </p>
+  } @else {
+    <div class="notification-preview-list" (click)="$event.stopPropagation()">
+      @for (notification of preview(); track notification.id) {
+        <app-notification-item
+          [notification]="notification"
+          [compact]="true"
+          (clicked)="openNotification($event)"
+        />
+      }
+    </div>
+  }
+
+  <mat-divider />
+  <a mat-menu-item [routerLink]="centerLink()" class="notification-preview-footer">
+    <mat-icon>inbox</mat-icon>
+    <span>Voir toutes les notifications</span>
+  </a>
+</mat-menu>
+
