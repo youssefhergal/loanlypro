@@ -88,14 +88,18 @@
             <a
               routerLink="/conseiller/notifications"
               routerLinkActive="active"
-              class="nav-item nav-item--muted"
-              matTooltip="Notifications (bientôt)"
+              class="nav-item nav-item--notifications"
+              [matTooltip]="notificationUnread.count() > 0 ? notificationUnread.count() + ' non lues' : 'Notifications'"
               [matTooltipDisabled]="!sidebarCollapsed()"
               matTooltipPosition="right"
             >
               <mat-icon>notifications</mat-icon>
               <span>Notifications</span>
-              <span class="badge-soon">Bientôt</span>
+              @if (notificationUnread.count() > 0) {
+                <span class="nav-badge-count" [attr.aria-label]="notificationUnread.count() + ' non lues'">
+                  {{ notificationUnread.count() }}
+                </span>
+              }
             </a>
           </div>
         </section>
@@ -147,6 +151,10 @@
     <div class="topbar-spacer"></div>
     @if (auth.currentUser(); as user) {
       <div class="topbar-actions">
+        <app-notification-bell-menu
+          centerLink="/conseiller/notifications"
+          dossierLinkBase="/conseiller/dossiers"
+        />
         <button
           type="button"
           mat-button
@@ -184,6 +192,17 @@
             <p class="page-description">{{ pageDescription() }}</p>
           }
         </div>
+        @if (showMarkAllNotificationsCta() && notificationUnread.count() > 0) {
+          <button
+            type="button"
+            mat-stroked-button
+            class="page-header-cta"
+            (click)="markAllNotificationsRead()"
+            [disabled]="markingAllNotifications()"
+          >
+            Tout marquer comme lu
+          </button>
+        }
       </header>
     }
     <router-outlet />

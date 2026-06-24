@@ -178,15 +178,18 @@
           <a
             routerLink="/notifications"
             routerLinkActive="active"
-            class="nav-item nav-item--muted nav-item--notifications"
-            matTooltip="Notifications (bientôt)"
+            class="nav-item nav-item--notifications"
+            [matTooltip]="notificationUnread.count() > 0 ? notificationUnread.count() + ' non lues' : 'Notifications'"
             [matTooltipDisabled]="!sidebarCollapsed()"
             matTooltipPosition="right"
           >
             <mat-icon class="nav-item-icon" fontSet="material-icons" aria-hidden="true">notifications</mat-icon>
             <span>Notifications</span>
-            <span class="nav-badge-count" aria-label="3 non lues">3</span>
-            <span class="badge-soon">Bientôt</span>
+            @if (notificationUnread.count() > 0) {
+              <span class="nav-badge-count" [attr.aria-label]="notificationUnread.count() + ' non lues'">
+                {{ notificationUnread.count() }}
+              </span>
+            }
           </a>
         </div>
       </section>
@@ -269,18 +272,10 @@
         >
           <mat-icon fontSet="material-icons">help_outline</mat-icon>
         </a>
-        <a
-          mat-icon-button
-          routerLink="/notifications"
-          class="topbar-icon topbar-notifications"
-          matTooltip="Notifications"
-          aria-label="Notifications"
-          matBadge="3"
-          matBadgeSize="small"
-          matBadgeColor="warn"
-        >
-          <mat-icon fontSet="material-icons">notifications</mat-icon>
-        </a>
+        <app-notification-bell-menu
+          centerLink="/notifications"
+          dossierLinkBase="/mes-demandes"
+        />
 
         <button
           type="button"
@@ -326,6 +321,22 @@
   </header>
 
   <main class="main">
+    @if (auth.currentUser(); as user) {
+      @if (user.emailVerified === false) {
+        <div class="email-verify-banner" role="status">
+          <mat-icon aria-hidden="true">mark_email_unread</mat-icon>
+          <span>Votre adresse e-mail n’est pas encore vérifiée.</span>
+          <a
+            mat-button
+            color="primary"
+            [routerLink]="['/verify-email']"
+            [queryParams]="{ email: user.email }"
+          >
+            Vérifier maintenant
+          </a>
+        </div>
+      }
+    }
     @if (pageTitle()) {
       <header class="page-header">
         <div class="page-header-main">
@@ -344,6 +355,20 @@
             <mat-icon>add</mat-icon>
             Nouvelle demande
           </a>
+        }
+        @if (showMarkAllNotificationsCta() && notificationUnread.count() > 0) {
+          <button
+            type="button"
+            mat-stroked-button
+            class="page-header-cta"
+            (click)="markAllNotificationsRead()"
+            [disabled]="markingAllNotifications()"
+          >
+            Tout marquer comme lu
+          </button>
+        }
+        @if (showPaymentsLoanPicker()) {
+          <app-payments-schedule-loan-picker class="page-header-cta" />
         }
       </header>
     }

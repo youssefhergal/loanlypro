@@ -14,6 +14,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../core/auth/services/auth.service';
+import { NotificationApiService } from '../../../core/notifications/services/notification-api.service';
+import { NotificationPageCoordinationService } from '../../../core/notifications/services/notification-page-coordination.service';
+import { NotificationUnreadService } from '../../../core/notifications/services/notification-unread.service';
+import { NotificationBellMenuComponent } from '../../../shared/notification-bell-menu/notification-bell-menu.component';
 import type { User } from '../../../core/auth/models/user.model';
 import type { BreadcrumbItem } from '../client-shell/client-shell.component';
 
@@ -31,6 +35,7 @@ const SIDEBAR_COLLAPSED_KEY = 'lf-advisor-sidebar-collapsed';
     MatMenuModule,
     MatTooltipModule,
     MatDividerModule,
+    NotificationBellMenuComponent,
   ],
   templateUrl: './advisor-shell.component.html',
   styleUrl: './advisor-shell.component.scss',
@@ -38,21 +43,48 @@ const SIDEBAR_COLLAPSED_KEY = 'lf-advisor-sidebar-collapsed';
 export class AdvisorShellComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly notificationApi = inject(NotificationApiService);
+  private readonly notificationPageCoordination = inject(NotificationPageCoordinationService);
+  readonly notificationUnread = inject(NotificationUnreadService);
 
   readonly sidebarCollapsed = signal(this.readSidebarPreference());
   readonly breadcrumbs = signal<BreadcrumbItem[]>([]);
   readonly pageTitle = signal('');
   readonly pageDescription = signal('');
+  readonly showMarkAllNotificationsCta = signal(false);
+  readonly markingAllNotifications = signal(false);
 
   constructor(public readonly auth: AuthService) {
+    this.notificationUnread.refresh();
+
     this.router.events
       .pipe(
         filter((e): e is NavigationEnd => e instanceof NavigationEnd),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe(() => this.updatePageContext());
+      .subscribe(() => {
+        this.updatePageContext();
+        this.notificationUnread.refresh();
+      });
 
     this.updatePageContext();
+  }
+
+  markAllNotificationsRead(): void {
+    if (this.markingAllNotifications()) {
+      return;
+    }
+    this.markingAllNotifications.set(true);
+    this.notificationApi.markAllAsRead().subscribe({
+      next: () => {
+        this.notificationUnread.refresh();
+        this.notificationPageCoordination.requestListRefresh();
+        this.markingAllNotifications.set(false);
+      },
+      error: () => {
+        this.markingAllNotifications.set(false);
+      },
+    });
   }
 
   private updatePageContext(): void {
@@ -85,6 +117,8 @@ export class AdvisorShellComponent {
       pageDescription = 'Vue d’ensemble de votre activité d’instruction';
       breadcrumbCurrentLabel = 'Accueil';
     }
+
+    this.showMarkAllNotificationsCta.set(path === '/conseiller/notifications');
 
     const crumbs: BreadcrumbItem[] = [];
     if (!isDashboard) {

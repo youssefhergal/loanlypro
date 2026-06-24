@@ -85,4 +85,12 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
             ORDER BY la.decidedAt ASC, la.id ASC
             """)
     List<LoanApplication> findApprovedWithoutRepaymentLoan();
+
+    @Query("""
+            SELECT la FROM LoanApplication la
+            JOIN FETCH la.applicant
+            LEFT JOIN FETCH la.assignedAdvisor
+            WHERE la.id = :id
+            """)
+    Optional<LoanApplication> findByIdWithApplicantAndAdvisor(@Param("id") Long id);
 }

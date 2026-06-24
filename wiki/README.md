@@ -9,6 +9,7 @@
 | [auth/](./auth/README.md) | Connexion, JWT, guards |
 | [**demande-pret/**](./demande-pret/README.md) | Demande de prêt — client, conseiller, admin |
 | [**module-pret/**](./module-pret/README.md) | Prêt & paiements — prélèvement auto, échéancier, KPI |
+| [**module-notifications/**](./module-notifications/README.md) | E-mails (Resend) + centre de notifications in-app |
 | [projet/](./projet/README.md) | Architecture + diagramme de classes |
 
 ## Modèle de données

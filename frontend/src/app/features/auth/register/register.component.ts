@@ -81,7 +81,10 @@ export class RegisterComponent {
         password: v.password,
       })
       .subscribe({
-        next: () => this.router.navigate(['/verify-email']),
+        next: () =>
+          this.router.navigate(['/verify-email'], {
+            queryParams: { email: v.email?.trim() },
+          }),
         error: (err) => {
           this.loading = false;
           this.error = err?.error?.message ?? 'Une erreur est survenue.';

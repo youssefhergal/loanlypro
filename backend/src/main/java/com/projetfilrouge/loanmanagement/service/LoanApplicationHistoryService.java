@@ -4,12 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.projetfilrouge.loanmanagement.entity.*;
+import com.projetfilrouge.loanmanagement.notification.LoanApplicationEventRecorded;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationEventRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanRepository;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanHistoryEventResponseDto;
 import com.projetfilrouge.loanmanagement.web.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,6 +72,7 @@ public class LoanApplicationHistoryService {
     private final LoanApplicationRepository loanApplicationRepository;
     private final LoanRepository loanRepository;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public LoanApplicationEvent recordEvent(
@@ -102,7 +105,9 @@ public class LoanApplicationHistoryService {
                 .actorDisplayName(actorDisplayName)
                 .payloadJson(serializePayload(payload))
                 .build();
-        return eventRepository.save(event);
+        LoanApplicationEvent saved = eventRepository.save(event);
+        applicationEventPublisher.publishEvent(new LoanApplicationEventRecorded(saved));
+        return saved;
     }
 
     @Transactional(readOnly = true)

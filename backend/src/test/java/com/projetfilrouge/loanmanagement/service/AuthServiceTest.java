@@ -47,6 +47,9 @@ class AuthServiceTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private EmailVerificationService emailVerificationService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -131,7 +134,7 @@ class AuthServiceTest {
 
         RegisterResponse response = authService.register(request);
 
-        assertThat(response.getMessage()).isEqualTo("Utilisateur enregistré avec succès");
+        assertThat(response.getMessage()).isEqualTo("Utilisateur enregistré. Un e-mail de vérification a été envoyé.");
         assertThat(response.getUser().getId()).isEqualTo(42L);
         assertThat(response.getUser().getEmail()).isEqualTo("new@test.com");
         assertThat(response.getUser().getRoles()).containsExactly(ROLE_CLIENT);
@@ -140,6 +143,7 @@ class AuthServiceTest {
         verify(userRepository).save(userCaptor.capture());
         assertThat(userCaptor.getValue().getEmail()).isEqualTo("new@test.com");
         assertThat(userCaptor.getValue().getPasswordHash()).isEqualTo("encoded-password");
+        verify(emailVerificationService).issueVerificationCode(savedUser);
     }
 
     @Test

@@ -1,0 +1,54 @@
+<section class="notifications-page">
+  @if (!loading() && notifications().length > 0) {
+    <mat-button-toggle-group
+      class="notification-filters"
+      [value]="filter()"
+      (change)="setFilter($event.value)"
+      aria-label="Filtrer les notifications"
+      hideSingleSelectionIndicator
+    >
+      <mat-button-toggle value="all">
+        Toutes
+        <span class="notification-filter-count">{{ notifications().length }}</span>
+      </mat-button-toggle>
+      <mat-button-toggle value="unread">
+        Non lues
+        <span class="notification-filter-count">{{ unreadCount() }}</span>
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (notifications().length === 0) {
+    <div class="empty-state">
+      <mat-icon aria-hidden="true">notifications_none</mat-icon>
+      <p>Aucune notification pour le moment.</p>
+    </div>
+  } @else if (filteredNotifications().length === 0) {
+    <div class="empty-state">
+      <mat-icon aria-hidden="true">mark_email_read</mat-icon>
+      <p>Toutes vos notifications ont été lues.</p>
+    </div>
+  } @else {
+    <div class="notification-groups">
+      @for (group of groupedNotifications(); track group.key) {
+        <section class="notification-group">
+          <h2 class="notification-group-title">{{ group.label }}</h2>
+          <ul class="notification-list">
+            @for (notification of group.items; track notification.id) {
+              <li>
+                <app-notification-item
+                  [notification]="notification"
+                  (clicked)="openNotification($event)"
+                />
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+  }
+</section>

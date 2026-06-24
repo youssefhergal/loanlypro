@@ -1,16 +1,14 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { forkJoin } from 'rxjs';
 import { RepaymentApiService } from '../../../../../core/loans/repayment/services/repayment-api.service';
-import { LoanSummaryDto } from '../../../../../core/loans/repayment/models/loan-summary.model';
+import { PaymentsSchedulePageStateService } from '../../../../../core/loans/repayment/services/payments-schedule-page-state.service';
 import { LoanDetailDto } from '../../../../../core/loans/repayment/models/loan-detail.model';
 import { InstallmentDto } from '../../../../../core/loans/repayment/models/installment.model';
 import { PaymentTransactionDto } from '../../../../../core/loans/repayment/models/payment-transaction.model';
@@ -18,7 +16,6 @@ import { getErrorMessage } from '../../../../../core/loans/utils/api-error.util'
 import { InstallmentTableComponent } from '../../shared/installment-table/installment-table.component';
 import { PaymentTransactionListComponent } from '../../shared/payment-transaction-list/payment-transaction-list.component';
 import { MandateStatusBannerComponent } from '../../shared/mandate-status-banner/mandate-status-banner.component';
-import { LoanStatusChipComponent } from '../../shared/loan-status-chip/loan-status-chip.component';
 
 @Component({
   selector: 'app-payments-schedule',
@@ -27,35 +24,26 @@ import { LoanStatusChipComponent } from '../../shared/loan-status-chip/loan-stat
     CurrencyPipe,
     RouterLink,
     MatButtonModule,
-    MatFormFieldModule,
     MatProgressBarModule,
-    MatSelectModule,
     MatTabsModule,
     MatIconModule,
     InstallmentTableComponent,
     PaymentTransactionListComponent,
     MandateStatusBannerComponent,
-    LoanStatusChipComponent,
   ],
   templateUrl: './payments-schedule.component.html',
   styleUrl: './payments-schedule.component.scss',
 })
-export class PaymentsScheduleComponent implements OnInit {
+export class PaymentsScheduleComponent implements OnInit, OnDestroy {
   private readonly repaymentApi = inject(RepaymentApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly snackBar = inject(MatSnackBar);
+  readonly pageState = inject(PaymentsSchedulePageStateService);
 
-  readonly loans = signal<LoanSummaryDto[]>([]);
-  readonly selectedLoanId = signal<number | null>(null);
   readonly loanDetail = signal<LoanDetailDto | null>(null);
   readonly installments = signal<InstallmentDto[]>([]);
   readonly transactions = signal<PaymentTransactionDto[]>([]);
   readonly loading = signal(false);
-
-  readonly selectedLoan = computed(() => {
-    const id = this.selectedLoanId();
-    return this.loans().find((loan) => loan.id === id) ?? null;
-  });
 
   readonly hasOverdueOrBlocked = computed(() =>
     this.installments().some(
@@ -76,17 +64,19 @@ export class PaymentsScheduleComponent implements OnInit {
   });
 
   readonly showActiveMandateBanner = computed(() => {
-    const loan = this.selectedLoan();
+    const loan = this.pageState.selectedLoan();
     const detail = this.loanDetail();
     return loan?.mandateStatus === 'ACTIVE' && !!detail?.ibanMasked;
   });
 
   ngOnInit(): void {
+    this.pageState.bind((loanId) => this.selectLoan(loanId));
+
     const queryLoanId = Number(this.route.snapshot.queryParamMap.get('loanId'));
     this.loading.set(true);
     this.repaymentApi.getMyLoans().subscribe({
       next: (loans) => {
-        this.loans.set(loans);
+        this.pageState.setLoans(loans);
         if (!loans.length) {
           this.loading.set(false);
           return;
@@ -104,8 +94,12 @@ export class PaymentsScheduleComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    this.pageState.unbind();
+  }
+
   selectLoan(loanId: number): void {
-    this.selectedLoanId.set(loanId);
+    this.pageState.setSelectedLoanId(loanId);
     this.loading.set(true);
     forkJoin({
       installments: this.repaymentApi.getInstallments(loanId),
@@ -123,9 +117,5 @@ export class PaymentsScheduleComponent implements OnInit {
         this.snackBar.open(getErrorMessage(err), 'Fermer', { duration: 5000 });
       },
     });
-  }
-
-  onLoanChange(loanId: number): void {
-    this.selectLoan(loanId);
   }
 }

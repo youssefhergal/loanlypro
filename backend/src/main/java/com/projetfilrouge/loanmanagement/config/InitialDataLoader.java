@@ -50,10 +50,24 @@ public class InitialDataLoader implements CommandLineRunner {
         }
     }
 
-    private void createTestUsersIfMissing() {
+    private     void createTestUsersIfMissing() {
         createUserIfMissing("client@test.com", "Jean", "Dupont", DEFAULT_TEST_PASSWORD, ROLE_CLIENT);
         createUserIfMissing("conseiller@test.com", "Marie", "Martin", DEFAULT_TEST_PASSWORD, ROLE_CONSEILLER);
         createUserIfMissing("admin@test.com", "Pierre", "Admin", DEFAULT_TEST_PASSWORD, ROLE_ADMIN);
+        ensureTestAccountsVerified();
+    }
+
+    private void ensureTestAccountsVerified() {
+        for (String email : new String[]{"client@test.com", "conseiller@test.com", "admin@test.com"}) {
+            userRepository.findByEmail(email).ifPresent(user -> {
+                if (!user.isEmailVerified()) {
+                    user.setEmailVerified(true);
+                    user.setEmailVerificationCode(null);
+                    user.setEmailVerificationExpiresAt(null);
+                    userRepository.save(user);
+                }
+            });
+        }
     }
 
     private void createUserIfMissing(String email, String firstName, String lastName, String password, String roleName) {
@@ -66,6 +80,7 @@ public class InitialDataLoader implements CommandLineRunner {
                 .passwordHash(passwordEncoder.encode(password))
                 .firstName(firstName)
                 .lastName(lastName)
+                .emailVerified(true)
                 .roles(Set.of(role))
                 .build();
         userRepository.save(user);

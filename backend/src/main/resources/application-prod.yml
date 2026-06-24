@@ -7,6 +7,11 @@ app:
     scheduler:
       enabled: true
       cron: "0 0 * * * *"
+  mail:
+    # Pas de domaine Resend pour l'instant : logs console + code fixe (passer à resend après achat domaine).
+    provider: logging
+    verification:
+      dev-fixed-code: "000000"
 
 spring:
   datasource:

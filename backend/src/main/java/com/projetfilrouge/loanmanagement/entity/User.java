@@ -3,6 +3,7 @@ package com.projetfilrouge.loanmanagement.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,6 +31,16 @@ public class User {
 
     @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
+
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private boolean emailVerified = false;
+
+    @Column(name = "email_verification_code", length = 12)
+    private String emailVerificationCode;
+
+    @Column(name = "email_verification_expires_at")
+    private Instant emailVerificationExpiresAt;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(

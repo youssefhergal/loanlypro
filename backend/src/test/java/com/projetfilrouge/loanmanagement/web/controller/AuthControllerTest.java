@@ -7,6 +7,7 @@ import com.projetfilrouge.loanmanagement.web.dto.request.RegisterRequest;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoginResponse;
 import com.projetfilrouge.loanmanagement.web.dto.response.RegisterResponse;
 import com.projetfilrouge.loanmanagement.web.dto.response.UserResponse;
+import com.projetfilrouge.loanmanagement.web.dto.response.VerifyEmailResponse;
 import com.projetfilrouge.loanmanagement.web.exception.BusinessRuleException;
 import com.projetfilrouge.loanmanagement.web.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
@@ -111,13 +112,14 @@ class AuthControllerTest {
     @Test
     void register_returns201WithCreatedUser() throws Exception {
         RegisterResponse response = RegisterResponse.builder()
-                .message("Utilisateur enregistré avec succès")
+                .message("Utilisateur enregistré. Un e-mail de vérification a été envoyé.")
                 .user(UserResponse.builder()
                         .id(42L)
                         .email("new@test.com")
                         .firstName("Alice")
                         .lastName("Martin")
                         .roles(List.of("ROLE_CLIENT"))
+                        .emailVerified(false)
                         .build())
                 .build();
 
@@ -134,9 +136,42 @@ class AuthControllerTest {
                                 }
                                 """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.message").value("Utilisateur enregistré avec succès"))
+                .andExpect(jsonPath("$.message").value("Utilisateur enregistré. Un e-mail de vérification a été envoyé."))
                 .andExpect(jsonPath("$.user.id").value(42))
                 .andExpect(jsonPath("$.user.email").value("new@test.com"));
+    }
+
+    @Test
+    void verifyEmail_returns200WhenCodeIsValid() throws Exception {
+        when(authService.verifyEmail("new@test.com", "000000"))
+                .thenReturn(VerifyEmailResponse.builder()
+                        .verified(true)
+                        .message("Adresse e-mail vérifiée avec succès.")
+                        .build());
+
+        mockMvc.perform(post("/api/auth/verify-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "new@test.com",
+                                  "token": "000000"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.verified").value(true))
+                .andExpect(jsonPath("$.message").value("Adresse e-mail vérifiée avec succès."));
+    }
+
+    @Test
+    void resendVerification_returns204() throws Exception {
+        mockMvc.perform(post("/api/auth/resend-verification")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "new@test.com"
+                                }
+                                """))
+                .andExpect(status().isNoContent());
     }
 
     @Test

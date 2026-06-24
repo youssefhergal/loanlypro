@@ -7,7 +7,9 @@
 | Méthode | Chemin | Auth | Description |
 |---------|--------|------|-------------|
 | `POST` | `/api/auth/login` | Non | Retourne JWT + utilisateur |
-| `POST` | `/api/auth/register` | Non | Crée un compte |
+| `POST` | `/api/auth/register` | Non | Crée un compte (envoie e-mail de vérification) |
+| `POST` | `/api/auth/verify-email` | Non | Valide le code reçu (`email` + `token`) |
+| `POST` | `/api/auth/resend-verification` | Non | Renvoie le code (204) |
 
 Contrôleur : `AuthController.java` — préfixe `/api/auth`.
 

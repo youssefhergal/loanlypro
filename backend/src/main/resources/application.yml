@@ -48,6 +48,14 @@ app:
         - 3
         - 7
       overdue-threshold: 2
+  mail:
+    provider: logging
+    from: LoanlyFans <noreply@loanlyfans.fr>
+    resend:
+      api-key: ${RESEND_API_KEY:}
+    verification:
+      expiry-minutes: 30
+      dev-fixed-code: ${MAIL_DEV_VERIFICATION_CODE:}
 
 springdoc:
   api-docs:

@@ -8,13 +8,17 @@ import {
   RouterOutlet,
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../core/auth/services/auth.service';
+import { NotificationApiService } from '../../../core/notifications/services/notification-api.service';
+import { NotificationPageCoordinationService } from '../../../core/notifications/services/notification-page-coordination.service';
+import { NotificationUnreadService } from '../../../core/notifications/services/notification-unread.service';
+import { NotificationBellMenuComponent } from '../../../shared/notification-bell-menu/notification-bell-menu.component';
+import { PaymentsScheduleLoanPickerComponent } from '../../../shared/payments-schedule-loan-picker/payments-schedule-loan-picker.component';
 import type { User } from '../../../core/auth/models/user.model';
 
 const SIDEBAR_COLLAPSED_KEY = 'lf-client-sidebar-collapsed';
@@ -31,12 +35,13 @@ export interface BreadcrumbItem {
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    MatBadgeModule,
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
     MatTooltipModule,
     MatDividerModule,
+    NotificationBellMenuComponent,
+    PaymentsScheduleLoanPickerComponent,
   ],
   templateUrl: './client-shell.component.html',
   styleUrl: './client-shell.component.scss',
@@ -44,30 +49,52 @@ export interface BreadcrumbItem {
 export class ClientShellComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly notificationApi = inject(NotificationApiService);
+  private readonly notificationPageCoordination = inject(NotificationPageCoordinationService);
+  readonly notificationUnread = inject(NotificationUnreadService);
 
-  /** Rail replié (icônes seules) — uniquement appliqué en CSS au-dessus de ~900px */
   readonly sidebarCollapsed = signal(this.readSidebarPreference());
-
-  /** Fil d’Ariane (topbar gauche) */
   readonly breadcrumbs = signal<BreadcrumbItem[]>([]);
-  /** Titre et sous-titre affichés au-dessus du contenu principal */
   readonly pageTitle = signal('');
   readonly pageDescription = signal('');
-  /** Bouton « Nouvelle demande » à droite du titre / description */
   readonly showNewRequestCta = signal(false);
+  readonly showMarkAllNotificationsCta = signal(false);
+  readonly showPaymentsLoanPicker = signal(false);
+  readonly markingAllNotifications = signal(false);
 
   constructor(public readonly auth: AuthService) {
+    this.notificationUnread.refresh();
+
     this.router.events
       .pipe(
         filter((e): e is NavigationEnd => e instanceof NavigationEnd),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe(() => this.updatePageContext());
+      .subscribe(() => {
+        this.updatePageContext();
+        this.notificationUnread.refresh();
+      });
 
     this.updatePageContext();
   }
 
-  /** Met à jour titre, description et fil d’Ariane à partir des `data` de la route active */
+  markAllNotificationsRead(): void {
+    if (this.markingAllNotifications()) {
+      return;
+    }
+    this.markingAllNotifications.set(true);
+    this.notificationApi.markAllAsRead().subscribe({
+      next: () => {
+        this.notificationUnread.refresh();
+        this.notificationPageCoordination.requestListRefresh();
+        this.markingAllNotifications.set(false);
+      },
+      error: () => {
+        this.markingAllNotifications.set(false);
+      },
+    });
+  }
+
   private updatePageContext(): void {
     let leaf = this.router.routerState.snapshot.root;
     while (leaf.firstChild) {
@@ -104,6 +131,8 @@ export class ClientShellComponent {
     }
 
     this.showNewRequestCta.set(isDashboard || path === '/mes-demandes');
+    this.showMarkAllNotificationsCta.set(path === '/notifications');
+    this.showPaymentsLoanPicker.set(path === '/paiements');
 
     const crumbs: BreadcrumbItem[] = [];
     if (!isDashboard) {

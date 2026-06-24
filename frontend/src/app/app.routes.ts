@@ -101,10 +101,13 @@ export const routes: Routes = [
       },
       {
         path: 'notifications',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/notifications/notifications.component').then(
+            (m) => m.NotificationsComponent
+          ),
         data: {
           title: 'Notifications',
-          description: 'Centre de notifications — bientôt disponible.',
+          description: 'Centre de notifications et alertes dossier.',
         },
       },
       {
@@ -332,8 +335,9 @@ export const routes: Routes = [
             (m) => m.PaymentsScheduleComponent
           ),
         data: {
-          title: '',
-          description: '',
+          title: 'Paiements / Échéancier',
+          description:
+            'Visualisez vos prochains prélèvements et l\'historique des transactions.',
           breadcrumb: 'Paiements / Échéancier',
         },
       },
@@ -357,7 +361,10 @@ export const routes: Routes = [
       },
       {
         path: 'notifications',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/notifications/notifications.component').then(
+            (m) => m.NotificationsComponent
+          ),
         data: {
           title: 'Notifications',
           description:

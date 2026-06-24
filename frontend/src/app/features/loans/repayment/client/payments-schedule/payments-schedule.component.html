@@ -1,58 +1,14 @@
 <div class="payments-schedule">
-  <header class="payments-schedule__page-header">
-    <div class="payments-schedule__page-header-main">
-      <h1 class="payments-schedule__page-title">Paiements / Échéancier</h1>
-      <p class="payments-schedule__page-description">
-        Visualisez vos prochains prélèvements et l'historique des transactions.
-      </p>
-    </div>
-
-    @if (!loading() || loans().length) {
-      @if (selectedLoan(); as loan) {
-        <div class="payments-schedule__loan-picker">
-          <span class="payments-schedule__loan-picker-label">Prêt sélectionné</span>
-          <div class="payments-schedule__loan-picker-row">
-            @if (loans().length > 1) {
-              <mat-form-field appearance="outline" class="payments-schedule__loan-select">
-                <mat-select [value]="selectedLoanId()" (valueChange)="onLoanChange($event)">
-                  <mat-select-trigger>
-                    <span class="payments-schedule__select-value">
-                      <span class="payments-schedule__select-ref">{{ loan.reference }}</span>
-                      <app-loan-status-chip [status]="loan.status" />
-                    </span>
-                  </mat-select-trigger>
-                  @for (item of loans(); track item.id) {
-                    <mat-option [value]="item.id">
-                      <span class="payments-schedule__select-option">
-                        <span>{{ item.reference }}</span>
-                        <app-loan-status-chip [status]="item.status" />
-                      </span>
-                    </mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-            } @else {
-              <div class="payments-schedule__loan-static">
-                <span class="payments-schedule__select-ref">{{ loan.reference }}</span>
-                <app-loan-status-chip [status]="loan.status" />
-              </div>
-            }
-          </div>
-        </div>
-      }
-    }
-  </header>
-
-  @if (loading() && !loans().length) {
+  @if (loading() && !pageState.loans().length) {
     <p class="payments-schedule__loading">Chargement…</p>
-  } @else if (!loans().length) {
+  } @else if (!pageState.loans().length) {
     <div class="payments-schedule__empty">
       <mat-icon>calendar_month</mat-icon>
       <p>Aucun prêt actif pour afficher un échéancier.</p>
       <a mat-stroked-button routerLink="/mes-prets">Voir mes prêts</a>
     </div>
   } @else {
-    @if (selectedLoan(); as loan) {
+    @if (pageState.selectedLoan(); as loan) {
       @if (showActiveMandateBanner()) {
         <div class="payments-schedule__mandate-ok" role="status">
           <mat-icon>check_circle</mat-icon>
