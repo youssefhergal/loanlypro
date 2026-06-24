@@ -8,6 +8,7 @@ import type { LoginRequest } from '../models/login-request.model';
 import type { LoginResponse } from '../models/login-response.model';
 import type { RegisterRequest } from '../models/register-request.model';
 import type { RegisterResponse } from '../models/register-response.model';
+import type { VerifyEmailResponse } from '../models/verify-email-response.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -42,8 +43,12 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/register`, payload);
   }
 
-  verifyEmail(token: string): Observable<unknown> {
-    return this.http.post(`${this.apiUrl}/verify-email`, { token });
+  verifyEmail(email: string, token: string): Observable<VerifyEmailResponse> {
+    return this.http.post<VerifyEmailResponse>(`${this.apiUrl}/verify-email`, { email, token });
+  }
+
+  resendVerificationEmail(email: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/resend-verification`, { email });
   }
 
   logout(): void {

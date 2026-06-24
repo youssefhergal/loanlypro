@@ -69,6 +69,21 @@ p {
   text-align: left;
 }
 
+.success {
+  color: #166534;
+  font-size: 0.85rem;
+  background: #ecfdf5;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #bbf7d0;
+  width: 100%;
+  text-align: left;
+}
+
+.resend-btn {
+  margin-top: 0.25rem;
+}
+
 .footer a {
   color: var(--color-primary);
   font-size: 0.9rem;
