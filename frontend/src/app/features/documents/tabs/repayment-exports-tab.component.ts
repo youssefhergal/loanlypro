@@ -86,7 +86,7 @@ export class RepaymentExportsTabComponent implements OnInit {
     this.exporting.set(null);
     const message =
       err instanceof HttpErrorResponse && err.status === 501
-        ? 'Export PDF non encore implémenté (US-6.7 / US-6.8).'
+        ? "L'export PDF n'est pas disponible pour ce prêt."
         : getErrorMessage(err, 'Export indisponible.');
     this.snackBar.open(message, 'Fermer', { duration: 5000 });
   }
