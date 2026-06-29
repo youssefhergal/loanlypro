@@ -1,0 +1,59 @@
+<div class="advisor-dashboard">
+  <mat-card class="panel" *ngIf="!loading(); else loadingTpl">
+    <mat-card-header>
+      <mat-card-title>Tableau de bord conseiller</mat-card-title>
+      <mat-card-subtitle>
+        Bonjour {{ auth.currentUser()?.firstName }} — {{ total() }} prêt(s) suivi(s)
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <ng-container *ngIf="loans().length; else emptyLoans">
+        <mat-list>
+          <a mat-list-item *ngFor="let l of loans().slice(0,5)" [routerLink]="['/conseiller/prets', l.id]">
+            <mat-icon matListItemIcon>assignment</mat-icon>
+            <div matListItemTitle>{{ l.borrowerName || ('Prêt #' + l.id) }}</div>
+            <div matListItemLine>
+              Montant: {{ l.principalAmount | number:'1.0-0' }} € • Restant: {{ l.remainingBalance | number:'1.0-0' }} €
+            </div>
+            <span class="muted" matListItemMeta>{{ l.nextInstallmentDate | date:'short' }}</span>
+          </a>
+        </mat-list>
+      </ng-container>
+      <ng-template #emptyLoans>
+        <p class="muted">Aucun prêt assigné pour le moment.</p>
+      </ng-template>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="panel" *ngIf="!loading(); else loadingTpl">
+    <mat-card-header>
+      <mat-card-title>Dossiers assignés</mat-card-title>
+      <mat-card-subtitle>{{ applicationsTotal() }} dossier(s)</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <ng-container *ngIf="applications().length; else emptyApps">
+        <mat-list>
+          <a mat-list-item *ngFor="let d of applications().slice(0,5)" [routerLink]="['/conseiller/dossiers', d.id]">
+            <mat-icon matListItemIcon>{{ iconForStatus(d.status) }}</mat-icon>
+            <div matListItemTitle>{{ d.title || ('Dossier #' + d.id) }}</div>
+            <div matListItemLine>
+              {{ d.reference }} • Montant demandé: {{ d.requestedAmount | number:'1.0-0' }} € • {{ d.requestedDurationMonths }} mois
+            </div>
+            <span class="muted" matListItemMeta>{{ labelForStatus(d.status) }}</span>
+          </a>
+        </mat-list>
+      </ng-container>
+      <ng-template #emptyApps>
+        <p class="muted">Aucun dossier assigné pour le moment.</p>
+      </ng-template>
+    </mat-card-content>
+  </mat-card>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+    </div>
+  </ng-template>
+
+  <p class="error" *ngIf="error()">{{ error() }}</p>
+</div>

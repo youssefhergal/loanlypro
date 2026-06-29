@@ -50,7 +50,7 @@ export class DashboardComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.api.getMyDashboard().subscribe({
-      next: (res) => {
+      next: (res: DashboardResponse) => {
         this.data.set(res);
         this.loading.set(false);
       },
