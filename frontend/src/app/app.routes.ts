@@ -343,11 +343,13 @@ export const routes: Routes = [
       },
       {
         path: 'documents',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/documents/documents.component').then((m) => m.DocumentsComponent),
         data: {
           title: 'Documents',
           description:
-            'Centralisez vos justificatifs et les documents fournis par LoanlyFans.',
+            'Retrouvez vos justificatifs, vos documents de crédit et vos exports d\'échéancier.',
+          breadcrumb: 'Documents',
         },
       },
       {

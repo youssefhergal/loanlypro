@@ -10,7 +10,7 @@ $border: #d8e8de;
   inset: 0;
   background: rgba(244, 247, 245, 0.72);
   backdrop-filter: blur(1px);
-  z-index: 1200;
+  z-index: 1300;
 }
 
 .doc-preview-panel {
@@ -25,7 +25,7 @@ $border: #d8e8de;
   flex-direction: column;
   background: #fff;
   box-shadow: -8px 0 32px rgba(26, 46, 34, 0.12);
-  z-index: 1201;
+  z-index: 1301;
 }
 
 .doc-preview-panel__header {
