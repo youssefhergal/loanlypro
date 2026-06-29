@@ -1,45 +1,161 @@
-<div class="documents-tab-panel">
+<div class="justificatifs-tab">
+  <p class="justificatifs-tab__intro">
+    Pièces que vous avez déposées lors de vos demandes de prêt.
+  </p>
 
   @if (loading()) {
     <div class="documents-loading">
       <mat-spinner diameter="36" />
     </div>
   } @else if (notImplemented()) {
-    <div class="documents-empty">
+    <div class="justificatifs-empty">
       <mat-icon aria-hidden="true">folder_open</mat-icon>
-      <p>La liste des justificatifs sera disponible après implémentation du service backend.</p>
+      <p>La liste des justificatifs sera disponible prochainement.</p>
     </div>
   } @else if (groups().length === 0) {
-    <div class="documents-empty">
-      <mat-icon aria-hidden="true">upload_file</mat-icon>
-      <p>Aucun justificatif déposé pour le moment.</p>
+    <div class="justificatifs-empty justificatifs-empty--cta">
+      <div class="justificatifs-empty__illustration" aria-hidden="true">
+        <mat-icon>folder_copy</mat-icon>
+      </div>
+      <h3>Aucun justificatif pour le moment</h3>
+      <p>Vos documents apparaîtront ici une fois déposés lors d'une demande de prêt.</p>
+      <a mat-flat-button color="primary" routerLink="/nouvelle-demande">
+        <mat-icon>add</mat-icon>
+        Créer une demande
+      </a>
     </div>
   } @else {
-    @for (group of groups(); track group.loanApplicationId) {
-      <section class="justificatif-group">
-        <header class="justificatif-group__header">
-          <h3>{{ group.loanReference }}</h3>
-          <span class="justificatif-group__status">{{ group.loanStatus }}</span>
-        </header>
-        <ul class="justificatif-list">
-          @for (doc of group.documents; track doc.documentId) {
-            <li class="justificatif-item">
-              <div class="justificatif-item__info">
-                <span class="justificatif-item__type">{{ doc.documentTypeLabel }}</span>
-                <span class="justificatif-item__file">{{ doc.fileName }}</span>
-                <span class="justificatif-item__status" [attr.data-status]="doc.validationStatus">
-                  {{ doc.validationStatus }}
+    <div class="justificatif-folders">
+      @for (group of groups(); track group.loanApplicationId) {
+        <section
+          class="justificatif-folder"
+          [class.justificatif-folder--expanded]="isExpanded(group.loanApplicationId)"
+        >
+          <button
+            type="button"
+            class="justificatif-folder__header"
+            [attr.aria-expanded]="isExpanded(group.loanApplicationId)"
+            (click)="toggleGroup(group.loanApplicationId)"
+          >
+            <span class="justificatif-folder__leading">
+              <span class="justificatif-folder__icon" aria-hidden="true">
+                <mat-icon>folder</mat-icon>
+              </span>
+              <span class="justificatif-folder__titles">
+                <span class="justificatif-folder__title">Dossier {{ group.loanReference }}</span>
+                <span class="justificatif-folder__subtitle">{{ helpers.groupSubtitle(group) }}</span>
+              </span>
+            </span>
+
+            <span class="justificatif-folder__meta">
+              @if (!isExpanded(group.loanApplicationId)) {
+                <span class="justificatif-folder__count">
+                  {{ helpers.documentCountLabel(group.documents.length) }}
                 </span>
-              </div>
-              @if (doc.downloadable) {
-                <button mat-stroked-button type="button" (click)="download(doc.documentId)">
-                  Télécharger
-                </button>
               }
-            </li>
+              <span
+                class="loan-status-badge"
+                [class]="helpers.loanStatusChipClass(group.loanStatus)"
+              >
+                {{ helpers.loanStatusLabel(group.loanStatus) }}
+              </span>
+              <mat-icon class="justificatif-folder__chevron" aria-hidden="true">
+                {{ isExpanded(group.loanApplicationId) ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            </span>
+          </button>
+
+          @if (isExpanded(group.loanApplicationId)) {
+            <div class="justificatif-folder__body">
+              <div class="justificatif-table-wrap">
+                <table class="justificatif-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Type de document</th>
+                      <th scope="col">Nom du fichier</th>
+                      <th scope="col">Date de dépôt</th>
+                      <th scope="col">Statut</th>
+                      <th scope="col" class="justificatif-table__actions-col">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (doc of group.documents; track doc.documentId) {
+                      <tr>
+                        <td>
+                          <span class="justificatif-table__type">
+                            <mat-icon aria-hidden="true">{{ helpers.documentTypeIcon(doc.documentType) }}</mat-icon>
+                            {{ doc.documentTypeLabel }}
+                          </span>
+                        </td>
+                        <td class="justificatif-table__file">{{ doc.fileName }}</td>
+                        <td class="justificatif-table__date">
+                          {{ helpers.formatUploadedAt(doc.uploadedAt) }}
+                        </td>
+                        <td>
+                          <div class="justificatif-table__status-cell">
+                            <span
+                              class="doc-status-badge"
+                              [class]="helpers.validationStatusClass(doc.validationStatus)"
+                            >
+                              {{ helpers.validationStatusLabel(doc.validationStatus) }}
+                            </span>
+                            @if (doc.validationStatus === 'REJECTED' && doc.rejectionReason) {
+                              <span class="justificatif-table__rejection">
+                                <mat-icon aria-hidden="true">warning_amber</mat-icon>
+                                Motif : {{ doc.rejectionReason }}
+                              </span>
+                            }
+                          </div>
+                        </td>
+                        <td class="justificatif-table__actions">
+                          @if (doc.downloadable) {
+                            <button
+                              mat-icon-button
+                              type="button"
+                              [attr.aria-label]="'Télécharger ' + doc.fileName"
+                              matTooltip="Télécharger"
+                              (click)="download(doc); $event.stopPropagation()"
+                            >
+                              <mat-icon>download</mat-icon>
+                            </button>
+                            <button
+                              mat-icon-button
+                              type="button"
+                              [attr.aria-label]="'Actions pour ' + doc.fileName"
+                              [matMenuTriggerFor]="docActionsMenu"
+                              (click)="openDocMenu(doc, group); $event.stopPropagation()"
+                            >
+                              <mat-icon>more_vert</mat-icon>
+                            </button>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <a class="justificatif-folder__footer-link" [routerLink]="dossierLink(group)">
+                Voir le dossier {{ group.loanReference }}
+                <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+              </a>
+            </div>
           }
-        </ul>
-      </section>
-    }
+        </section>
+      }
+    </div>
   }
 </div>
+
+<mat-menu #docActionsMenu="matMenu">
+  @if (menuContext(); as ctx) {
+    <button mat-menu-item type="button" (click)="download(ctx.doc)">
+      <mat-icon>download</mat-icon>
+      Télécharger
+    </button>
+    <a mat-menu-item [routerLink]="dossierLink(ctx.group)">
+      <mat-icon>open_in_new</mat-icon>
+      Voir le dossier
+    </a>
+  }
+</mat-menu>

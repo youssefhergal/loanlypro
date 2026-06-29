@@ -1,13 +1,12 @@
-.loan-picker {
+.selected-loan-picker {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.35rem;
   flex-shrink: 0;
-  align-self: center;
 }
 
-.loan-picker__label {
+.selected-loan-picker__label {
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -15,7 +14,7 @@
   color: var(--color-text-muted, #6b7c72);
 }
 
-.loan-picker__row {
+.selected-loan-picker__row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -34,7 +33,7 @@
   }
 }
 
-.loan-picker__select {
+.selected-loan-picker__select {
   width: 220px;
   margin: 0;
 
@@ -44,24 +43,23 @@
     }
 
     .mat-mdc-text-field-wrapper {
-      height: 36px;
-      padding: 0 8px;
+      height: 40px;
+      padding: 0 10px;
     }
 
     .mat-mdc-form-field-flex {
-      height: 36px;
+      height: 40px;
       align-items: center;
     }
 
     .mat-mdc-form-field-infix {
-      padding-top: 0 !important;
-      padding-bottom: 0 !important;
-      min-height: 36px;
-      width: auto;
+      padding-top: 8px !important;
+      padding-bottom: 8px !important;
+      min-height: unset;
     }
 
-    .mat-mdc-select-value {
-      max-width: 100%;
+    .mat-mdc-floating-label {
+      display: none;
     }
 
     .mat-mdc-select-arrow-wrapper {
@@ -70,9 +68,9 @@
   }
 }
 
-.loan-picker__value,
-.loan-picker__option,
-.loan-picker__static {
+.selected-loan-picker__value,
+.selected-loan-picker__option,
+.selected-loan-picker__static {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
@@ -81,12 +79,17 @@
   min-width: 0;
 }
 
-.loan-picker__option {
-  width: 100%;
-  justify-content: space-between;
+.selected-loan-picker__static {
+  height: 40px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--color-border, #d8e8de);
+  border-radius: 8px;
+  background: #fff;
+  width: 220px;
+  box-sizing: border-box;
 }
 
-.loan-picker__ref {
+.selected-loan-picker__ref {
   font-size: 0.8125rem;
   font-weight: 700;
   color: var(--color-text, #1a2e22);
@@ -95,28 +98,18 @@
   white-space: nowrap;
 }
 
-.loan-picker__static {
-  height: 36px;
-  padding: 0 0.65rem;
-  border: 1px solid var(--color-border, #d8e8de);
-  border-radius: 8px;
-  background: #fff;
-  width: 220px;
-  box-sizing: border-box;
-}
-
-@media (max-width: 960px) {
-  .loan-picker {
+@media (max-width: 768px) {
+  .selected-loan-picker {
     align-items: stretch;
     width: 100%;
   }
 
-  .loan-picker__select,
-  .loan-picker__static {
+  .selected-loan-picker__select,
+  .selected-loan-picker__static {
     width: 100%;
   }
 
-  .loan-picker__row {
+  .selected-loan-picker__row {
     justify-content: stretch;
   }
 }

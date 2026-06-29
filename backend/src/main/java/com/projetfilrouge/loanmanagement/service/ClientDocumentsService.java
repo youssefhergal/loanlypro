@@ -53,6 +53,8 @@ public class ClientDocumentsService {
                             .loanApplicationId(applicationId)
                             .loanReference(application.getReference())
                             .loanStatus(application.getStatus().name())
+                            .submittedAt(application.getSubmittedAt())
+                            .updatedAt(application.getUpdatedAt())
                             .documents(new ArrayList<>())
                             .build());
 
