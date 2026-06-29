@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -17,10 +17,76 @@ import { NotificationItemComponent } from '../../shared/notification-item/notifi
 
 export type NotificationFilter = 'all' | 'unread';
 
+interface NotificationsQuickLink {
+  route: string;
+  label: string;
+  icon: string;
+}
+
+interface NotificationAlertType {
+  icon: string;
+  label: string;
+  description: string;
+}
+
+const CLIENT_ASIDE_TIPS = [
+  'Les notifications regroupent les mises à jour de vos demandes, documents et paiements.',
+  'Cliquez sur une alerte pour consulter le dossier concerné — elle sera marquée comme lue.',
+  'Utilisez le filtre « Non lues » pour retrouver rapidement ce qui nécessite votre attention.',
+];
+
+const ADVISOR_ASIDE_TIPS = [
+  'Vous êtes alerté lors des actions client, des documents à traiter et des événements de paiement.',
+  'Ouvrez une notification pour accéder directement au dossier associé.',
+  'Le bouton « Tout marquer comme lu » est disponible en haut de page lorsque des alertes sont en attente.',
+];
+
+const CLIENT_ALERT_TYPES: NotificationAlertType[] = [
+  {
+    icon: 'folder_open',
+    label: 'Dossier',
+    description: 'Soumission, instruction, offre et décision.',
+  },
+  {
+    icon: 'description',
+    label: 'Documents',
+    description: 'Justificatifs déposés, validés ou refusés.',
+  },
+  {
+    icon: 'payments',
+    label: 'Paiements',
+    description: 'Prélèvements réussis, échecs et retards.',
+  },
+  {
+    icon: 'verified_user',
+    label: 'Mandat SEPA',
+    description: 'Activation ou révocation du prélèvement.',
+  },
+];
+
+const ADVISOR_ALERT_TYPES: NotificationAlertType[] = [
+  {
+    icon: 'inbox',
+    label: 'Dossiers clients',
+    description: 'Nouvelles demandes et mises à jour à instruire.',
+  },
+  {
+    icon: 'upload_file',
+    label: 'Justificatifs',
+    description: 'Pièces déposées ou complétées par le client.',
+  },
+  {
+    icon: 'money_off',
+    label: 'Incidents paiement',
+    description: 'Échecs de prélèvement et échéances en retard.',
+  },
+];
+
 @Component({
   selector: 'app-notifications',
   standalone: true,
   imports: [
+    RouterLink,
     MatButtonToggleModule,
     MatIconModule,
     MatProgressSpinnerModule,
@@ -58,6 +124,30 @@ export class NotificationsComponent implements OnInit {
   readonly groupedNotifications = computed(() =>
     groupNotificationsByPeriod(this.filteredNotifications()),
   );
+
+  readonly asideTipParagraphs = computed(() =>
+    this.isAdvisor() ? ADVISOR_ASIDE_TIPS : CLIENT_ASIDE_TIPS,
+  );
+
+  readonly alertTypes = computed(() =>
+    this.isAdvisor() ? ADVISOR_ALERT_TYPES : CLIENT_ALERT_TYPES,
+  );
+
+  readonly quickLinks = computed((): NotificationsQuickLink[] => {
+    if (this.isAdvisor()) {
+      return [
+        { route: '/conseiller/dossiers', label: 'Mes dossiers', icon: 'folder_open' },
+        { route: '/conseiller/prets', label: 'Prêts clients', icon: 'account_balance' },
+        { route: '/conseiller/dashboard', label: 'Tableau de bord', icon: 'dashboard' },
+      ];
+    }
+    return [
+      { route: '/mes-demandes', label: 'Mes demandes', icon: 'folder_open' },
+      { route: '/documents', label: 'Mes documents', icon: 'description' },
+      { route: '/paiements', label: 'Paiements', icon: 'calendar_month' },
+      { route: '/profil', label: 'Mon profil', icon: 'person' },
+    ];
+  });
 
   ngOnInit(): void {
     this.loadNotifications();
