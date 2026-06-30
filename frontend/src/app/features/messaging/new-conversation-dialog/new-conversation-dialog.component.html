@@ -1,0 +1,91 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon>edit_square</mat-icon>
+  Nouveau message
+</h2>
+
+<mat-dialog-content class="dialog-content" [formGroup]="form">
+
+  @if (loading()) {
+    <div class="dialog-loading">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+
+    <!-- Contact search -->
+    <div class="contact-search">
+      <mat-icon class="contact-search__icon">search</mat-icon>
+      <input
+        class="contact-search__input"
+        formControlName="search"
+        type="text"
+        placeholder="Rechercher un contact…"
+        aria-label="Rechercher un contact"
+        autocomplete="off"
+      />
+    </div>
+
+    <!-- Contact list -->
+    <ul class="contact-list" aria-label="Liste des contacts">
+      @for (c of filtered(); track c.id) {
+        <li
+          class="contact-item"
+          [class.contact-item--selected]="selectedContact()?.id === c.id"
+          (click)="selectContact(c)"
+          (keydown.enter)="selectContact(c)"
+          tabindex="0"
+          role="option"
+          [attr.aria-selected]="selectedContact()?.id === c.id"
+        >
+          <div class="contact-avatar" [attr.data-role]="roleColor(c.role)">
+            {{ initials(c) }}
+          </div>
+          <div class="contact-info">
+            <span class="contact-name">{{ c.firstName }} {{ c.lastName }}</span>
+            <span class="contact-role-chip" [attr.data-role]="roleColor(c.role)">
+              {{ roleLabel(c.role) }}
+            </span>
+          </div>
+          @if (selectedContact()?.id === c.id) {
+            <mat-icon class="contact-check">check_circle</mat-icon>
+          }
+        </li>
+      } @empty {
+        <li class="contact-empty">Aucun contact trouvé</li>
+      }
+    </ul>
+
+    <!-- Message input -->
+    @if (selectedContact()) {
+      <div class="message-input-wrap">
+        <mat-form-field appearance="outline">
+          <mat-label>Message</mat-label>
+          <textarea
+            matInput
+            formControlName="message"
+            rows="3"
+            placeholder="Décrivez votre problème ou question…"
+          ></textarea>
+          <mat-error>Le message est requis (max 4000 caractères)</mat-error>
+        </mat-form-field>
+      </div>
+    }
+  }
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-button mat-dialog-close [disabled]="sending()">Annuler</button>
+  <button
+    mat-flat-button
+    color="primary"
+    [disabled]="form.invalid || !selectedContact() || sending()"
+    (click)="submit()"
+  >
+    @if (sending()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      <mat-icon>send</mat-icon>
+      Envoyer
+    }
+  </button>
+</mat-dialog-actions>

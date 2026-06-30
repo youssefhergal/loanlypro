@@ -45,7 +45,7 @@ export const routes: Routes = [
           ),
         data: {
           title: 'Tableau de bord',
-          description: 'Vue d’ensemble de votre activité d’instruction.',
+          description: "Vue d'ensemble de votre activité d'instruction.",
         },
       },
       {
@@ -96,8 +96,9 @@ export const routes: Routes = [
       },
       {
         path: 'messages',
-        loadComponent: comingSoon,
-        data: { title: 'Messages', description: 'Messagerie conseiller — bientôt disponible.' },
+        loadComponent: () =>
+          import('./features/messaging/messaging.component').then((m) => m.MessagingComponent),
+        data: { title: 'Messages', description: 'Messagerie en temps réel.' },
       },
       {
         path: 'notifications',
@@ -152,7 +153,7 @@ export const routes: Routes = [
           ),
         data: {
           title: 'Toutes les demandes',
-          description: "Liste de l’ensemble des demandes de prêt.",
+          description: "Liste de l'ensemble des demandes de prêt.",
         },
       },
       {
@@ -187,6 +188,12 @@ export const routes: Routes = [
           title: '',
           description: '',
         },
+      },
+      {
+        path: 'messages',
+        loadComponent: () =>
+          import('./features/messaging/messaging.component').then((m) => m.MessagingComponent),
+        data: { title: 'Messages', description: 'Messagerie en temps réel.' },
       },
       {
         path: 'utilisateurs',
@@ -235,7 +242,7 @@ export const routes: Routes = [
         data: {
           title: 'Tableau de bord',
           description:
-            'Vue d’ensemble de votre espace : suivez vos demandes et accédez rapidement aux actions utiles.',
+            "Vue d'ensemble de votre espace : suivez vos demandes et accédez rapidement aux actions utiles.",
         },
       },
       {
@@ -257,7 +264,7 @@ export const routes: Routes = [
           ),
         data: {
           title: 'Détail de la demande',
-          description: 'Suivez l’avancement de votre dossier et consultez les informations associées.',
+          description: "Suivez l'avancement de votre dossier et consultez les informations associées.",
         },
       },
       {
@@ -337,7 +344,7 @@ export const routes: Routes = [
         data: {
           title: 'Paiements / Échéancier',
           description:
-            'Visualisez vos prochains prélèvements et l\'historique des transactions.',
+            "Visualisez vos prochains prélèvements et l\'historique des transactions.",
           breadcrumb: 'Paiements / Échéancier',
         },
       },
@@ -348,17 +355,17 @@ export const routes: Routes = [
         data: {
           title: 'Documents',
           description:
-            'Retrouvez vos justificatifs, vos documents de crédit et vos exports d\'échéancier.',
+            "Retrouvez vos justificatifs, vos documents de crédit et vos exports d\'échéancier.",
           breadcrumb: 'Documents',
         },
       },
       {
         path: 'messages',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/messaging/messaging.component').then((m) => m.MessagingComponent),
         data: {
           title: 'Messages',
-          description:
-            'Échangez avec nos équipes et consultez l’historique de vos conversations.',
+          description: "Échangez avec nos équipes et consultez l\'historique de vos conversations.",
         },
       },
       {
@@ -389,7 +396,7 @@ export const routes: Routes = [
         data: {
           title: 'Paramètres',
           description:
-            'Gérez la sécurité du compte, les préférences d’affichage et les notifications.',
+            "Gérez la sécurité du compte, les préférences d'affichage et les notifications.",
         },
       },
       {
