@@ -1,5 +1,6 @@
 package com.projetfilrouge.loanmanagement.web.exception;
 
+import com.projetfilrouge.loanmanagement.notification.EmailDeliveryException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -60,6 +61,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(LoanStorageException.class)
     public ResponseEntity<ApiError> handleLoanStorage(LoanStorageException e) {
         return buildError(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_ERROR", e.getMessage());
+    }
+
+    @ExceptionHandler(EmailDeliveryException.class)
+    public ResponseEntity<ApiError> handleEmailDelivery(EmailDeliveryException e) {
+        return buildError(HttpStatus.BAD_GATEWAY, "EMAIL_DELIVERY_FAILED", e.getMessage());
     }
 
     @ExceptionHandler(UnsupportedOperationException.class)
