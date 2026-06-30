@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -40,6 +40,8 @@ export class RepaymentExportsTabComponent implements OnInit {
   private readonly documentsApi = inject(DocumentsApiService);
   private readonly repaymentApi = inject(RepaymentApiService);
   private readonly snackBar = inject(MatSnackBar);
+
+  readonly initialLoanId = input<number | null>(null);
 
   readonly loadingLoans = signal(true);
   readonly loadingDetails = signal(false);
@@ -88,7 +90,12 @@ export class RepaymentExportsTabComponent implements OnInit {
       next: (loans) => {
         this.loans.set(loans);
         if (loans.length > 0) {
-          this.selectLoan(loans[0].id);
+          const preferredId = this.initialLoanId();
+          const loanId =
+            preferredId != null && loans.some((loan) => loan.id === preferredId)
+              ? preferredId
+              : loans[0].id;
+          this.selectLoan(loanId);
         }
         this.loadingLoans.set(false);
       },

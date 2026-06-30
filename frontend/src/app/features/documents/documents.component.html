@@ -14,7 +14,7 @@
           <app-credit-documents-tab />
         </mat-tab>
         <mat-tab label="Échéancier & prélèvements">
-          <app-repayment-exports-tab />
+          <app-repayment-exports-tab [initialLoanId]="initialRepaymentLoanId()" />
         </mat-tab>
       </mat-tab-group>
     </div>
