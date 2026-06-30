@@ -1,5 +1,6 @@
 package com.projetfilrouge.loanmanagement.web.exception;
 
+import com.projetfilrouge.loanmanagement.notification.EmailDeliveryException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
