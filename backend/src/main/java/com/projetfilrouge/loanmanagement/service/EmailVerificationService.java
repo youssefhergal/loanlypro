@@ -30,6 +30,9 @@ public class EmailVerificationService {
     @Value("${app.mail.verification.dev-fixed-code:}")
     private String devFixedCode;
 
+    @Value("${app.mail.verification.log-code-to-console:false}")
+    private boolean logCodeToConsole;
+
     @Transactional
     public void issueVerificationCode(User user) {
         if (user.isEmailVerified()) {
@@ -39,6 +42,7 @@ public class EmailVerificationService {
         user.setEmailVerificationCode(code);
         user.setEmailVerificationExpiresAt(Instant.now().plus(expiryMinutes, ChronoUnit.MINUTES));
         userRepository.save(user);
+        logVerificationCodeToConsole(user.getEmail(), code);
         sendVerificationEmail(user, code);
     }
 
@@ -92,6 +96,17 @@ public class EmailVerificationService {
         }
         int value = RANDOM.nextInt(1_000_000);
         return String.format("%06d", value);
+    }
+
+    private void logVerificationCodeToConsole(String email, String code) {
+        if (!logCodeToConsole) {
+            return;
+        }
+        System.out.println("==================================================");
+        System.out.println("[LoanlyFans] Code verification e-mail");
+        System.out.println("  Email : " + email);
+        System.out.println("  Code  : " + code);
+        System.out.println("==================================================");
     }
 
     private void sendVerificationEmail(User user, String code) {

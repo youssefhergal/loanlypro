@@ -18,6 +18,7 @@ app:
     provider: logging
     verification:
       dev-fixed-code: "000000"
+      log-code-to-console: true
 
 spring:
   datasource:

@@ -3,7 +3,12 @@ package com.projetfilrouge.loanmanagement.config;
 import com.projetfilrouge.loanmanagement.entity.*;
 import com.projetfilrouge.loanmanagement.repository.RoleRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
+import com.projetfilrouge.loanmanagement.notification.NotificationAudience;
+import com.projetfilrouge.loanmanagement.notification.NotificationContent;
+import com.projetfilrouge.loanmanagement.notification.NotificationContentFactory;
 import com.projetfilrouge.loanmanagement.repository.LoanDocumentRepository;
+import com.projetfilrouge.loanmanagement.repository.LoanDocumentReviewRepository;
+import com.projetfilrouge.loanmanagement.repository.NotificationRepository;
 import com.projetfilrouge.loanmanagement.repository.UserRepository;
 import com.projetfilrouge.loanmanagement.repository.LoanRepository;
 import com.projetfilrouge.loanmanagement.repository.RepaymentPlanRepository;
@@ -21,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -39,11 +46,18 @@ public class InitialDataLoader implements CommandLineRunner {
     private static final String ROLE_CONSEILLER = "ROLE_CONSEILLER";
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String DEFAULT_TEST_PASSWORD = "password";
+    private static final String PROFILE_B_EMAIL = "sophie.client@test.com";
+    private static final String PROFILE_B_REFERENCE = "LF-DEMO-B001";
+    private static final String PROFILE_D_EMAIL = "pierre.client@test.com";
+    private static final String PROFILE_D_REFERENCE = "LF-DEMO-0000";
+    private static final String PROFILE_D_ARCHIVED_REFERENCE = "LF-DEMO-D002";
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final LoanApplicationRepository loanApplicationRepository;
     private final LoanDocumentRepository loanDocumentRepository;
+    private final LoanDocumentReviewRepository loanDocumentReviewRepository;
+    private final NotificationRepository notificationRepository;
     private final LoanRepository loanRepository;
     private final RepaymentPlanRepository repaymentPlanRepository;
     private final InstallmentRepository installmentRepository;
@@ -57,6 +71,8 @@ public class InitialDataLoader implements CommandLineRunner {
         createRolesIfMissing();
         createTestUsersIfMissing();
         createSampleClientDataIfMissing();
+        createProfileBClientDataIfMissing();
+        createProfileDClientDataIfMissing();
         log.info("Données initiales : rôles et utilisateurs de test vérifiés.");
     }
 
@@ -69,15 +85,25 @@ public class InitialDataLoader implements CommandLineRunner {
         }
     }
 
-    private     void createTestUsersIfMissing() {
+    private void createTestUsersIfMissing() {
         createUserIfMissing("client@test.com", "Jean", "Dupont", DEFAULT_TEST_PASSWORD, ROLE_CLIENT);
+        createUserIfMissing("marie.client@test.com", "Marie", "Leroy", DEFAULT_TEST_PASSWORD, ROLE_CLIENT);
+        createUserIfMissing(PROFILE_B_EMAIL, "Sophie", "Bernard", DEFAULT_TEST_PASSWORD, ROLE_CLIENT);
+        createUserIfMissing(PROFILE_D_EMAIL, "Pierre", "Moreau", DEFAULT_TEST_PASSWORD, ROLE_CLIENT);
         createUserIfMissing("conseiller@test.com", "Marie", "Martin", DEFAULT_TEST_PASSWORD, ROLE_CONSEILLER);
         createUserIfMissing("admin@test.com", "Pierre", "Admin", DEFAULT_TEST_PASSWORD, ROLE_ADMIN);
         ensureTestAccountsVerified();
     }
 
     private void ensureTestAccountsVerified() {
-        for (String email : new String[]{"client@test.com", "conseiller@test.com", "admin@test.com"}) {
+        for (String email : new String[]{
+                "client@test.com",
+                "marie.client@test.com",
+                PROFILE_B_EMAIL,
+                PROFILE_D_EMAIL,
+                "conseiller@test.com",
+                "admin@test.com"
+        }) {
             userRepository.findByEmail(email).ifPresent(user -> {
                 if (!user.isEmailVerified()) {
                     user.setEmailVerified(true);
@@ -100,7 +126,7 @@ public class InitialDataLoader implements CommandLineRunner {
                 .firstName(firstName)
                 .lastName(lastName)
                 .emailVerified(true)
-                .roles(Set.of(role))
+                .roles(new HashSet<>(Set.of(role)))
                 .build();
         userRepository.save(user);
         log.info("Utilisateur de test créé: {} / {}", email, password);
@@ -241,6 +267,195 @@ public class InitialDataLoader implements CommandLineRunner {
                 log.info("Backfill démo: prêt et transactions vérifiés/créés pour {}.", client.getEmail());
             }
         });
+    }
+
+    /**
+     * Profil B dashboard : dossier en cours d'étude, documents refusés, aucun prêt actif.
+     */
+    private void createProfileBClientDataIfMissing() {
+        User client = userRepository.findByEmail(PROFILE_B_EMAIL).orElse(null);
+        if (client == null) {
+            return;
+        }
+
+        if (loanApplicationRepository.findByReference(PROFILE_B_REFERENCE).isPresent()) {
+            return;
+        }
+
+        User advisor = userRepository.findByEmail("conseiller@test.com").orElse(null);
+        Instant now = Instant.now();
+
+        LoanApplication application = LoanApplication.builder()
+                .reference(PROFILE_B_REFERENCE)
+                .applicant(client)
+                .assignedAdvisor(advisor)
+                .status(LoanApplicationStatus.UNDER_REVIEW)
+                .requestedAmount(new BigDecimal("12000.00"))
+                .requestedDurationMonths(36)
+                .title("Rénovation cuisine")
+                .loanPurpose(LoanPurpose.HOME_IMPROVEMENT)
+                .purpose("Travaux cuisine et électroménager")
+                .monthlyIncome(new BigDecimal("3200.00"))
+                .employmentStatus(EmploymentStatus.CDI)
+                .submittedAt(now.minus(3, ChronoUnit.DAYS))
+                .build();
+        application = loanApplicationRepository.save(application);
+
+        LoanDocument identityDoc = LoanDocument.builder()
+                .loanApplication(application)
+                .documentType(LoanDocumentType.IDENTITY)
+                .originalFileName("cni_sophie.pdf")
+                .displayName("Pièce d'identité")
+                .storedFileName("cni_sophie.pdf")
+                .contentType("application/pdf")
+                .fileSizeBytes(118_000L)
+                .storagePath("storage/loans/" + application.getId() + "/cni_sophie.pdf")
+                .build();
+        loanDocumentRepository.save(identityDoc);
+
+        LoanDocument payslipDoc = LoanDocument.builder()
+                .loanApplication(application)
+                .documentType(LoanDocumentType.PAYSLIPS)
+                .originalFileName("bulletin_paie_sophie.pdf")
+                .displayName("Bulletin de paie")
+                .storedFileName("bulletin_paie_sophie.pdf")
+                .contentType("application/pdf")
+                .fileSizeBytes(92_000L)
+                .storagePath("storage/loans/" + application.getId() + "/bulletin_paie_sophie.pdf")
+                .build();
+        loanDocumentRepository.save(payslipDoc);
+
+        loanDocumentReviewRepository.save(LoanDocumentReview.builder()
+                .loanApplication(application)
+                .documentType(LoanDocumentType.IDENTITY)
+                .reviewStatus(LoanDocumentReviewStatus.REJECTED)
+                .reviewComment("Document illisible — merci de téléverser une copie nette.")
+                .build());
+
+        loanDocumentReviewRepository.save(LoanDocumentReview.builder()
+                .loanApplication(application)
+                .documentType(LoanDocumentType.PAYSLIPS)
+                .reviewStatus(LoanDocumentReviewStatus.REJECTED)
+                .reviewComment("Bulletin trop ancien — merci d'envoyer le dernier mois.")
+                .build());
+
+        if (notificationRepository.countByRecipientId(client.getId()) == 0) {
+            NotificationContent submitted = NotificationContentFactory.forEvent(
+                    LoanApplicationEventType.APPLICATION_SUBMITTED,
+                    application,
+                    NotificationAudience.CLIENT
+            );
+            NotificationContent reviewStarted = NotificationContentFactory.forEvent(
+                    LoanApplicationEventType.REVIEW_STARTED,
+                    application,
+                    NotificationAudience.CLIENT
+            );
+            notificationRepository.save(Notification.builder()
+                    .recipient(client)
+                    .eventType(LoanApplicationEventType.APPLICATION_SUBMITTED)
+                    .title(submitted.title())
+                    .message(submitted.message())
+                    .referenceType("LOAN_APPLICATION")
+                    .referenceId(application.getId())
+                    .createdAt(now.minus(3, ChronoUnit.DAYS))
+                    .build());
+            notificationRepository.save(Notification.builder()
+                    .recipient(client)
+                    .eventType(LoanApplicationEventType.REVIEW_STARTED)
+                    .title(reviewStarted.title())
+                    .message(reviewStarted.message())
+                    .referenceType("LOAN_APPLICATION")
+                    .referenceId(application.getId())
+                    .createdAt(now.minus(2, ChronoUnit.DAYS))
+                    .build());
+        }
+
+        log.info(
+                "Données profil B créées pour {} : dossier {} (UNDER_REVIEW), 2 docs refusés, sans prêt.",
+                PROFILE_B_EMAIL,
+                PROFILE_B_REFERENCE
+        );
+    }
+
+    /**
+     * Profil D dashboard : prêt CLOSED entièrement remboursé, demandes archivées.
+     */
+    private void createProfileDClientDataIfMissing() {
+        User client = userRepository.findByEmail(PROFILE_D_EMAIL).orElse(null);
+        if (client == null) {
+            return;
+        }
+
+        if (loanApplicationRepository.findByReference(PROFILE_D_REFERENCE).isPresent()) {
+            return;
+        }
+
+        User advisor = userRepository.findByEmail("conseiller@test.com").orElse(null);
+        Instant now = Instant.now();
+
+        LoanApplication closedApplication = LoanApplication.builder()
+                .reference(PROFILE_D_REFERENCE)
+                .applicant(client)
+                .assignedAdvisor(advisor)
+                .status(LoanApplicationStatus.APPROVED)
+                .requestedAmount(new BigDecimal("10000.00"))
+                .requestedDurationMonths(20)
+                .title("Prêt personnel — soldé")
+                .loanPurpose(LoanPurpose.PERSONAL)
+                .purpose("Projet personnel remboursé intégralement")
+                .monthlyIncome(new BigDecimal("3400.00"))
+                .employmentStatus(EmploymentStatus.CDI)
+                .approvedAmount(new BigDecimal("10000.00"))
+                .approvedDurationMonths(20)
+                .interestRate(new BigDecimal("3.50"))
+                .submittedAt(now.minus(700, ChronoUnit.DAYS))
+                .decidedAt(now.minus(680, ChronoUnit.DAYS))
+                .offerClientAccepted(true)
+                .build();
+        closedApplication = loanApplicationRepository.save(closedApplication);
+
+        LoanApplication rejectedApplication = LoanApplication.builder()
+                .reference(PROFILE_D_ARCHIVED_REFERENCE)
+                .applicant(client)
+                .assignedAdvisor(advisor)
+                .status(LoanApplicationStatus.REJECTED)
+                .requestedAmount(new BigDecimal("5000.00"))
+                .requestedDurationMonths(24)
+                .title("Ancienne demande refusée")
+                .loanPurpose(LoanPurpose.VEHICLE)
+                .purpose("Véhicule — dossier archivé")
+                .monthlyIncome(new BigDecimal("3400.00"))
+                .employmentStatus(EmploymentStatus.CDI)
+                .submittedAt(now.minus(900, ChronoUnit.DAYS))
+                .decidedAt(now.minus(880, ChronoUnit.DAYS))
+                .build();
+        loanApplicationRepository.save(rejectedApplication);
+
+        Loan loan = repaymentPlanService.createLoanFromApprovedApplication(closedApplication);
+        RepaymentPlan plan = repaymentPlanRepository.findByLoanId(loan.getId()).orElse(null);
+        if (plan != null) {
+            List<Installment> installments = installmentRepository
+                    .findByRepaymentPlanIdOrderBySequenceNumberAsc(plan.getId());
+            BigDecimal zero = BigDecimal.ZERO.setScale(2);
+            for (Installment installment : installments) {
+                installment.setStatus(InstallmentStatus.PAID);
+                installment.setAttemptCount(1);
+                installment.setNextRetryDate(null);
+                installmentRepository.save(installment);
+            }
+            loan.setRemainingBalance(zero);
+            loan.setStatus(LoanStatus.CLOSED);
+            loan.setActivatedAt(now.minus(670, ChronoUnit.DAYS));
+            loan.setClosedAt(now.minus(30, ChronoUnit.DAYS));
+            loanRepository.save(loan);
+        }
+
+        log.info(
+                "Données profil D créées pour {} : prêt {} CLOSED ({} échéances), 2 demandes archivées.",
+                PROFILE_D_EMAIL,
+                PROFILE_D_REFERENCE,
+                plan != null ? plan.getInstallmentCount() : 0
+        );
     }
 
     private void seedTransactionsIfMissing(Long loanId) {
