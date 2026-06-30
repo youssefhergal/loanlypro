@@ -93,4 +93,19 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
             WHERE la.id = :id
             """)
     Optional<LoanApplication> findByIdWithApplicantAndAdvisor(@Param("id") Long id);
+
+    boolean existsByApplicantEmailAndAssignedAdvisorId(String applicantEmail, Long advisorId);
+
+    @Query("""
+            SELECT DISTINCT la.applicant FROM LoanApplication la
+            WHERE la.assignedAdvisor.id = :advisorId
+            """)
+    List<com.projetfilrouge.loanmanagement.entity.User> findClientsByAdvisorId(@Param("advisorId") Long advisorId);
+
+    @Query("""
+            SELECT DISTINCT la.assignedAdvisor FROM LoanApplication la
+            WHERE la.applicant.email = :email
+              AND la.assignedAdvisor IS NOT NULL
+            """)
+    List<com.projetfilrouge.loanmanagement.entity.User> findAdvisorsByClientEmail(@Param("email") String email);
 }
