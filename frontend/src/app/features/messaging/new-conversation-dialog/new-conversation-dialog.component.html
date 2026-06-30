@@ -81,11 +81,14 @@
     [disabled]="form.invalid || !selectedContact() || sending()"
     (click)="submit()"
   >
-    @if (sending()) {
-      <mat-spinner diameter="18" />
-    } @else {
-      <mat-icon>send</mat-icon>
-      Envoyer
-    }
+    <span class="dialog-actions__submit">
+      @if (sending()) {
+        <mat-spinner diameter="18" />
+        <span>Envoi…</span>
+      } @else {
+        <mat-icon aria-hidden="true">send</mat-icon>
+        <span>Envoyer</span>
+      }
+    </span>
   </button>
 </mat-dialog-actions>
