@@ -35,7 +35,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Documents crédit émis par LoanlyFans (onglet « Mon crédit »). US-6.2
+ * Documents crédit émis par LoanlyPro (onglet « Mon crédit »). US-6.2
  *
  * <p>La disponibilité de chaque type est calculée à partir du statut du dossier /
  * du mandat. Les PDF sont générés à la demande (pas de stockage). Une éventuelle
@@ -274,12 +274,12 @@ public class IssuedDocumentService {
     private String bodyParagraph(IssuedDocumentType type) {
         return switch (type) {
             case APPLICATION_RECAP -> "Ce récapitulatif reprend les informations principales de votre demande de prêt "
-                    + "telles qu'enregistrées sur la plateforme LoanlyFans.";
+                    + "telles qu'enregistrées sur la plateforme LoanlyPro.";
             case OFFER -> "Cette offre présente les conditions proposées pour votre prêt. Elle est fournie à titre "
                     + "informatif dans le cadre du projet de démonstration.";
             case LOAN_CONTRACT -> "Ce document récapitule l'engagement contractuel lié à votre prêt. Document non "
                     + "contractuel généré automatiquement.";
-            case SEPA_MANDATE -> "Ce mandat autorise LoanlyFans à présenter des prélèvements SEPA sur le compte "
+            case SEPA_MANDATE -> "Ce mandat autorise LoanlyPro à présenter des prélèvements SEPA sur le compte "
                     + "indiqué, conformément au plan de remboursement de votre prêt.";
         };
     }

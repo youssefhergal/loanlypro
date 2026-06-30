@@ -50,7 +50,7 @@ app:
       overdue-threshold: 2
   mail:
     provider: logging
-    from: LoanlyFans <noreply@loanlyfans.fr>
+    from: LoanlyPro <noreply@loanlypro.fr>
     resend:
       api-key: ${RESEND_API_KEY:}
     verification:

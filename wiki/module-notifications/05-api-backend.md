@@ -58,7 +58,7 @@ Voir [README.md](./README.md#configuration-rapide).
 | Propriété | Défaut | Description |
 |-----------|--------|-------------|
 | `app.mail.provider` | `logging` | `logging` = logs console ; `resend` = API Resend |
-| `app.mail.from` | `LoanlyFans <noreply@...>` | Expéditeur |
+| `app.mail.from` | `LoanlyPro <noreply@...>` | Expéditeur |
 | `app.mail.resend.api-key` | — | Clé API Resend (obligatoire si provider=resend) |
 | `app.mail.verification.expiry-minutes` | `30` | Validité du code |
 | `app.mail.verification.dev-fixed-code` | — | Code fixe en dev (`000000`) |

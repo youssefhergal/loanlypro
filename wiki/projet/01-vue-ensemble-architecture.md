@@ -4,7 +4,7 @@
 
 ## Objectif
 
-**LoanlyFans** — application de gestion de prêts : le **client** dépose une demande ; le **conseiller** instruit et décide via l’API.
+**LoanlyPro** — application de gestion de prêts : le **client** dépose une demande ; le **conseiller** instruit et décide via l’API.
 
 ## Stack
 
@@ -22,7 +22,7 @@
 flowchart TB
   client[Client]
   conseiller[Conseiller]
-  subgraph app [Application LoanlyFans]
+  subgraph app [Application LoanlyPro]
     front[Angular SPA - port 4200]
     api[Spring Boot API - port 8080]
     db[(MySQL)]

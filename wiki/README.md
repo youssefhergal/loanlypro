@@ -1,4 +1,4 @@
-# Wiki — LoanlyFans
+# Wiki — LoanlyPro
 
 [← README racine](../README.md) · Diagrammes : [DIAGRAMMES.md](./DIAGRAMMES.md)
 

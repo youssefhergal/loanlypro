@@ -96,10 +96,10 @@ export const INSTALLMENT_STATUS_STYLES: Record<InstallmentStatus, StatusChipStyl
 };
 
 export const MANDATE_CONSENT_TEXT =
-  'J’autorise LoanlyFans à prélever automatiquement le montant de chaque échéance sur le compte indiqué ci-dessus conformément au mandat de prélèvement SEPA.';
+  'J’autorise LoanlyPro à prélever automatiquement le montant de chaque échéance sur le compte indiqué ci-dessus conformément au mandat de prélèvement SEPA.';
 
 export const MANDATE_CONSENT_FINE_PRINT =
-  'En signant ce mandat, vous autorisez LoanlyFans à envoyer des instructions à votre banque pour débiter votre compte, et votre banque à débiter votre compte conformément aux instructions de LoanlyFans.';
+  'En signant ce mandat, vous autorisez LoanlyPro à envoyer des instructions à votre banque pour débiter votre compte, et votre banque à débiter votre compte conformément aux instructions de LoanlyPro.';
 
 export function advisorRepaymentLoanStatusStyle(
   status: RepaymentLoanStatus | string,

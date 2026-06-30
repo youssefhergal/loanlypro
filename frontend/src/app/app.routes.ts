@@ -141,7 +141,7 @@ export const routes: Routes = [
           ),
         data: {
           title: 'Tableau de bord',
-          description: 'Supervision de la plateforme LoanlyFans.',
+          description: 'Supervision de la plateforme LoanlyPro.',
         },
       },
       {

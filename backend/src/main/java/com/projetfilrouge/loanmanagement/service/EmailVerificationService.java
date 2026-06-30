@@ -95,11 +95,11 @@ public class EmailVerificationService {
     }
 
     private void sendVerificationEmail(User user, String code) {
-        String subject = "Confirmez votre inscription LoanlyFans";
+        String subject = "Confirmez votre inscription LoanlyPro";
         String textBody = """
                 Bonjour %s,
 
-                Votre code de vérification LoanlyFans est : %s
+                Votre code de vérification LoanlyPro est : %s
 
                 Ce code expire dans %d minutes.
 
@@ -108,7 +108,7 @@ public class EmailVerificationService {
 
         String htmlBody = """
                 <p>Bonjour <strong>%s</strong>,</p>
-                <p>Votre code de vérification LoanlyFans est :</p>
+                <p>Votre code de vérification LoanlyPro est :</p>
                 <p style="font-size:24px;font-weight:bold;letter-spacing:4px;">%s</p>
                 <p>Ce code expire dans %d minutes.</p>
                 """.formatted(user.getFirstName(), code, expiryMinutes);
