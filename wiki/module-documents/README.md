@@ -3,7 +3,7 @@
 [← Wiki](../README.md)
 
 Espace client `/documents` regroupant en 3 onglets tous les documents liés aux prêts :
-justificatifs déposés, documents crédit émis par LoanlyFans, et exports PDF
+justificatifs déposés, documents crédit émis par LoanlyPro, et exports PDF
 échéancier / prélèvements.
 
 ## Sommaire

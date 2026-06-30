@@ -12,7 +12,11 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class DashboardResponse {
-    private List<PaymentTransactionDto> transactions;
     private List<LoanApplicationSummaryDto> demandes;
+    private List<LoanSummaryDto> loans;
+    private List<JustificatifGroupResponseDto> justificatifs;
+    private List<NotificationResponseDto> notifications;
+    private long unreadNotificationsCount;
     private List<LoanDocumentResponseDto> documents;
+    private List<PaymentTransactionDto> transactions;
 }

@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { LoanSummaryDto } from '../../loans/repayment/models/loan-summary.model';
+import { JustificatifGroupDto } from '../../documents/models/justificatif.model';
+import { NotificationDto } from '../../notifications/models/notification.model';
 import { AdminLoanListSummary } from '../../loans/models/admin-loan-list-summary.model';
+import { LoanSummaryDto } from '../../loans/repayment/models/loan-summary.model';
 
-// Minimal models used by the client dashboard component
 export interface LoanApplicationSummaryDto {
   id: number;
   reference: string;
@@ -39,6 +40,10 @@ export interface PaymentTransactionDto {
 
 export interface DashboardResponse {
   demandes: LoanApplicationSummaryDto[];
+  loans: LoanSummaryDto[];
+  justificatifs: JustificatifGroupDto[];
+  notifications: NotificationDto[];
+  unreadNotificationsCount: number;
   documents: LoanDocumentResponseDto[];
   transactions: PaymentTransactionDto[];
 }
@@ -46,7 +51,6 @@ export interface DashboardResponse {
 export interface AdvisorDashboardResponse {
   totalCount: number;
   loans: LoanSummaryDto[];
-  // Champs optionnels renvoyés par le backend pour les dossiers assignés au conseiller
   applicationsCount?: number;
   applications?: LoanApplicationSummaryDto[];
 }

@@ -54,7 +54,7 @@ public class ClientDocumentsController {
     }
 
     @GetMapping("/me/credit")
-    @Operation(summary = "Documents crédit émis par LoanlyFans")
+    @Operation(summary = "Documents crédit émis par LoanlyPro")
     public ResponseEntity<List<CreditDocumentResponseDto>> getMyCreditDocuments(Authentication authentication) {
         List<CreditDocumentResponseDto> result = issuedDocumentService.listCreditDocumentsForClient(
                 authentication.getName()

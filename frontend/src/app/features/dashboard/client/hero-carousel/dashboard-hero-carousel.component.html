@@ -1,0 +1,92 @@
+@if (activeSlide(); as slide) {
+  <section class="hero-carousel" aria-roledescription="carousel" aria-label="Informations principales">
+    @if (showControls()) {
+      <button
+        type="button"
+        class="hero-carousel__nav hero-carousel__nav--prev"
+        aria-label="Slide précédente"
+        (click)="prevSlide()"
+      >
+        <mat-icon aria-hidden="true">chevron_left</mat-icon>
+      </button>
+    }
+
+    <article class="hero-slide" [class]="'hero-slide--' + slide.visual">
+      <div class="hero-slide__content">
+        <p class="hero-slide__eyebrow">{{ slide.eyebrow }}</p>
+        <p class="hero-slide__amount">{{ slide.amountLine }}</p>
+        <a
+          mat-stroked-button
+          class="hero-slide__cta"
+          [routerLink]="slide.routerLink"
+          [queryParams]="slide.queryParams ?? null"
+        >
+          {{ slide.ctaLabel }}
+        </a>
+      </div>
+
+      <div class="hero-slide__visual" aria-hidden="true">
+        @switch (slide.visual) {
+          @case ('payment') {
+            <div class="hero-slide__illustration hero-slide__illustration--payment">
+              <span class="hero-slide__leaf hero-slide__leaf--1">
+                <mat-icon>eco</mat-icon>
+              </span>
+              <span class="hero-slide__calendar">
+                <mat-icon>calendar_month</mat-icon>
+                <span class="hero-slide__coin">€</span>
+              </span>
+              <span class="hero-slide__leaf hero-slide__leaf--2">
+                <mat-icon>spa</mat-icon>
+              </span>
+            </div>
+          }
+          @case ('documents') {
+            <div class="hero-slide__illustration hero-slide__illustration--documents">
+              <mat-icon>description</mat-icon>
+            </div>
+          }
+          @case ('progress') {
+            <div class="hero-slide__illustration hero-slide__illustration--progress">
+              <mat-icon>trending_up</mat-icon>
+            </div>
+          }
+          @case ('dossier') {
+            <div class="hero-slide__illustration hero-slide__illustration--dossier">
+              <mat-icon>hourglass_top</mat-icon>
+            </div>
+          }
+          @default {
+            <div class="hero-slide__illustration hero-slide__illustration--welcome">
+              <mat-icon>account_balance</mat-icon>
+            </div>
+          }
+        }
+      </div>
+    </article>
+
+    @if (showControls()) {
+      <button
+        type="button"
+        class="hero-carousel__nav hero-carousel__nav--next"
+        aria-label="Slide suivante"
+        (click)="nextSlide()"
+      >
+        <mat-icon aria-hidden="true">chevron_right</mat-icon>
+      </button>
+
+      <div class="hero-carousel__dots" role="tablist" aria-label="Slides du carousel">
+        @for (item of slides(); track item.id; let i = $index) {
+          <button
+            type="button"
+            class="hero-carousel__dot"
+            [class.hero-carousel__dot--active]="i === activeIndex()"
+            [attr.aria-selected]="i === activeIndex()"
+            [attr.aria-label]="'Slide ' + (i + 1)"
+            (click)="goToSlide(i)"
+          ></button>
+        }
+      </div>
+    }
+  </section>
+}

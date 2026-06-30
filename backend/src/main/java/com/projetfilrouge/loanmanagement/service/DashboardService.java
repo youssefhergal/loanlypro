@@ -21,6 +21,10 @@ public class DashboardService {
     private final LoanApplicationRepository loanApplicationRepository;
     private final LoanService loanService;
     private final RepaymentQueryService repaymentQueryService;
+    private final ClientDocumentsService clientDocumentsService;
+    private final NotificationService notificationService;
+
+    private static final int DASHBOARD_NOTIFICATIONS_LIMIT = 10;
 
     @Transactional(readOnly = true)
     public DashboardResponse getMyDashboard() {
@@ -55,15 +59,28 @@ public class DashboardService {
             documents.addAll(loanService.getDocuments(app.getId(), email));
         }
 
-        // 3) Transactions du client (toutes transactions de tous ses prêts)
-        List<PaymentTransactionDto> transactions = new ArrayList<>();
+        // 3) Prêts, transactions, justificatifs et notifications
         List<LoanSummaryDto> myLoans = repaymentQueryService.getMyLoans(email);
+        List<PaymentTransactionDto> transactions = new ArrayList<>();
         for (LoanSummaryDto loan : myLoans) {
             transactions.addAll(repaymentQueryService.getTransactionsForBorrower(loan.getId(), email));
         }
 
+        List<JustificatifGroupResponseDto> justificatifs =
+                clientDocumentsService.getJustificatifsGroupedByApplication(email);
+
+        Page<NotificationResponseDto> notificationPage = notificationService.getMyNotifications(
+                email,
+                PageRequest.of(0, DASHBOARD_NOTIFICATIONS_LIMIT)
+        );
+        long unreadNotificationsCount = notificationService.countUnread(email);
+
         return DashboardResponse.builder()
                 .demandes(demandes)
+                .loans(myLoans)
+                .justificatifs(justificatifs)
+                .notifications(notificationPage.getContent())
+                .unreadNotificationsCount(unreadNotificationsCount)
                 .documents(documents)
                 .transactions(transactions)
                 .build();
