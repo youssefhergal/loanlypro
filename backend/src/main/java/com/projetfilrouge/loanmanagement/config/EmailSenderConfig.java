@@ -21,7 +21,7 @@ public class EmailSenderConfig {
     @ConditionalOnProperty(name = "app.mail.provider", havingValue = "resend")
     EmailSender resendEmailSender(
             @Value("${app.mail.resend.api-key:}") String apiKey,
-            @Value("${app.mail.from:LoanlyFans <noreply@loanlyfans.fr>}") String fromAddress
+            @Value("${app.mail.from:LoanlyPro <noreply@loanlypro.fr>}") String fromAddress
     ) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException("app.mail.resend.api-key requis lorsque app.mail.provider=resend");

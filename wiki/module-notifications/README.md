@@ -34,7 +34,7 @@ En dev, le code de vérification est fixe : **`000000`** (`application-dev.yml`)
 
 ```yaml
 app.mail.provider: logging          # logging | resend
-app.mail.from: LoanlyFans <noreply@loanlyfans.fr>
+app.mail.from: LoanlyPro <noreply@LoanlyPro.fr>
 app.mail.resend.api-key: ${RESEND_API_KEY:}
 app.mail.verification.expiry-minutes: 30
 app.mail.verification.dev-fixed-code: "000000"   # dev uniquement

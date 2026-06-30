@@ -29,7 +29,7 @@ const ASIDE_TIPS: DocumentsAsideTip[] = [
     title: 'Bon à savoir',
     icon: 'description',
     paragraphs: [
-      'Les documents crédit (récap, offre, contrat, mandat SEPA) sont générés par LoanlyFans.',
+      'Les documents crédit (récap, offre, contrat, mandat SEPA) sont générés par LoanlyPro.',
       'Leur disponibilité dépend de l’avancement de votre dossier ou de l’activation du mandat.',
       'Les PDF sont téléchargeables dès qu’ils apparaissent comme disponibles.',
     ],

@@ -15,7 +15,7 @@ import java.util.List;
 @Component
 public class DefaultLoanDocumentPdfGenerator implements LoanDocumentPdfGenerator {
 
-    private static final String BRAND = "LoanlyFans";
+    private static final String BRAND = "LoanlyPro";
 
     @Override
     public byte[] generateCreditDocument(CreditDocumentContent content) {

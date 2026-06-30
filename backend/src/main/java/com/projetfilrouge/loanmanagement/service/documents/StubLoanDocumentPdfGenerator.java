@@ -16,7 +16,7 @@ public class StubLoanDocumentPdfGenerator implements LoanDocumentPdfGenerator {
     @Override
     public byte[] generateCreditDocument(CreditDocumentContent content) {
         return new SimplePdfDocument()
-                .brandHeader("LoanlyFans", content.documentTitle())
+                .brandHeader("LoanlyPro", content.documentTitle())
                 .paragraph("Document indisponible.")
                 .build();
     }
@@ -24,7 +24,7 @@ public class StubLoanDocumentPdfGenerator implements LoanDocumentPdfGenerator {
     @Override
     public byte[] generateSchedule(SchedulePdfContent content) {
         return new SimplePdfDocument()
-                .brandHeader("LoanlyFans", "Échéancier")
+                .brandHeader("LoanlyPro", "Échéancier")
                 .paragraph("Document indisponible.")
                 .build();
     }
@@ -32,7 +32,7 @@ public class StubLoanDocumentPdfGenerator implements LoanDocumentPdfGenerator {
     @Override
     public byte[] generatePayments(PaymentsPdfContent content) {
         return new SimplePdfDocument()
-                .brandHeader("LoanlyFans", "Relevé des prélèvements")
+                .brandHeader("LoanlyPro", "Relevé des prélèvements")
                 .paragraph("Document indisponible.")
                 .build();
     }
