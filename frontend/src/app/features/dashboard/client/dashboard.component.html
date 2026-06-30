@@ -1,0 +1,94 @@
+<div class="page">
+
+  <section class="grid">
+    <mat-card class="panel" *ngIf="!loading(); else loadingTpl">
+      <mat-card-header>
+        <mat-card-title>Mes demandes récentes</mat-card-title>
+        <mat-card-subtitle>{{ demandes().length }} demande(s)</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <ng-container *ngIf="demandes().length; else emptyDemandes">
+          <mat-list>
+            <a
+              mat-list-item
+              *ngFor="let d of demandes().slice(0, 5)"
+              [routerLink]="d.status === 'DRAFT' ? ['/nouvelle-demande', d.id] : ['/mes-demandes', d.id]"
+            >
+              <mat-icon matListItemIcon>{{ iconForStatus(d.status) }}</mat-icon>
+              <div matListItemTitle>{{ d.title }}</div>
+              <div matListItemLine>
+                {{ d.reference }} • {{ d.requestedAmount | currency: 'EUR':'symbol':'1.0-0' }} •
+                {{ d.requestedDurationMonths }} mois
+              </div>
+              <span class="chip" [ngClass]="statusClass(d.status)" matListItemMeta>{{ labelForStatus(d.status) }}</span>
+            </a>
+          </mat-list>
+        </ng-container>
+        <ng-template #emptyDemandes>
+          <p class="muted">Aucune demande pour le moment.</p>
+        </ng-template>
+      </mat-card-content>
+      <mat-card-actions align="end">
+        <a mat-stroked-button color="primary" routerLink="/mes-demandes">Voir toutes mes demandes</a>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="panel" *ngIf="!loading(); else loadingTpl">
+      <mat-card-header>
+        <mat-card-title>Documents récents</mat-card-title>
+        <mat-card-subtitle>{{ documents().length }} document(s)</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <ng-container *ngIf="documents().length; else emptyDocs">
+          <mat-list>
+            <div mat-list-item *ngFor="let doc of documents().slice(0, 5)">
+              <mat-icon matListItemIcon>description</mat-icon>
+              <div matListItemTitle>{{ doc.displayName || doc.originalFileName }}</div>
+              <div matListItemLine>Type: {{ doc.documentType }} • Taille: {{ doc.fileSizeBytes | number }} o</div>
+              <span class="muted" matListItemMeta>{{ doc.uploadedAt | date: 'short' }}</span>
+            </div>
+          </mat-list>
+        </ng-container>
+        <ng-template #emptyDocs>
+          <p class="muted">Aucun document pour le moment.</p>
+        </ng-template>
+      </mat-card-content>
+      <mat-card-actions align="end">
+        <a mat-stroked-button color="primary" routerLink="/mes-demandes">Gérer mes documents</a>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="panel" *ngIf="!loading(); else loadingTpl">
+      <mat-card-header>
+        <mat-card-title>Transactions récentes</mat-card-title>
+        <mat-card-subtitle>{{ transactions().length }} transaction(s)</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <ng-container *ngIf="transactions().length; else emptyTxs">
+          <mat-list>
+            <div mat-list-item *ngFor="let t of transactions().slice(0, 5)">
+              <mat-icon matListItemIcon>
+                {{ t.status === 'SUCCESS' ? 'check_circle' : (t.status === 'FAILED' ? 'error' : 'schedule') }}
+              </mat-icon>
+              <div matListItemTitle>{{ t.amount | currency: 'EUR':'symbol':'1.0-0' }}</div>
+              <div matListItemLine>Prélèvement #{{ t.sequenceNumber }} • Tentative {{ t.attemptNumber }}</div>
+              <span class="muted" matListItemMeta>{{ t.settledAt || t.attemptedAt | date: 'short' }}</span>
+            </div>
+          </mat-list>
+        </ng-container>
+        <ng-template #emptyTxs>
+          <p class="muted">Aucune transaction trouvée.</p>
+        </ng-template>
+      </mat-card-content>
+      <mat-card-actions align="end">
+        <a mat-stroked-button color="primary" routerLink="/mes-prets">Voir mes prêts</a>
+      </mat-card-actions>
+    </mat-card>
+  </section>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+    </div>
+  </ng-template>
+</div>

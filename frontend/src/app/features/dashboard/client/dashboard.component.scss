@@ -1,0 +1,14 @@
+.page { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
+.welcome { display:flex; align-items:center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.welcome h1 { margin: 0; font-size: 1.5rem; }
+.welcome .muted { color: #667085; margin: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 1rem; }
+.panel { min-height: 300px; }
+.muted { color: #667085; }
+.chip { padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+.chip.DRAFT { background:#FFF7E6; color:#B54708; }
+.chip.SUBMITTED, .chip.UNDER_REVIEW, .chip.OFFER_PENDING { background:#EEF4FF; color:#3538CD; }
+.chip.APPROVED { background:#ECFDF3; color:#067647; }
+.chip.REJECTED { background:#FEF3F2; color:#B42318; }
+.chip.CANCELLED { background:#F2F4F7; color:#344054; }
+.loading { display:flex; align-items:center; justify-content:center; padding: 2rem 0; }

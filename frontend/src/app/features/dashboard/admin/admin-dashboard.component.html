@@ -1,0 +1,31 @@
+<div class="admin-dashboard">
+  <mat-card class="panel" *ngIf="!loading(); else loadingTpl">
+    <mat-card-header>
+      <mat-card-title>Tableau de bord administrateur</mat-card-title>
+      <mat-card-subtitle>
+        Bonjour {{ auth.currentUser()?.firstName }} — {{ summary()?.totalCount || 0 }} demande(s) au total
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="kpis">
+        <span class="chip">Non affectées: {{ summary()?.unassignedCount || 0 }}</span>
+      </div>
+
+      <h3>Par statut</h3>
+      <mat-list>
+        <div mat-list-item *ngFor="let s of statusEntries()">
+          <div matListItemTitle>{{ labelForStatus(s.key) }}</div>
+          <span matListItemMeta>{{ s.value }}</span>
+        </div>
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+    </div>
+  </ng-template>
+
+  <p class="error" *ngIf="error()">{{ error() }}</p>
+</div>

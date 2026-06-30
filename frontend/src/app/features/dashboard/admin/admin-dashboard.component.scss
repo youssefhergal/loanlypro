@@ -1,0 +1,8 @@
+.admin-dashboard {
+  max-width: 720px;
+}
+.panel { margin-bottom: 16px; }
+.loading { display: flex; justify-content: center; padding: 24px; }
+.kpis { display: flex; gap: 12px; margin-bottom: 12px; }
+.chip { background: #e3f2fd; padding: 4px 8px; border-radius: 16px; font-size: 12px; }
+.error { color: #b00020; margin-top: 8px; }
