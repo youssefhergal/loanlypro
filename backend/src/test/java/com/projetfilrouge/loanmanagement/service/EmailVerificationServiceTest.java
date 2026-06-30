@@ -55,7 +55,7 @@ class EmailVerificationServiceTest {
         ArgumentCaptor<EmailMessage> messageCaptor = ArgumentCaptor.forClass(EmailMessage.class);
         verify(emailSender).send(messageCaptor.capture());
         assertThat(messageCaptor.getValue().to()).containsExactly("client@test.com");
-        assertThat(messageCaptor.getValue().subject()).contains("LoanlyFans");
+        assertThat(messageCaptor.getValue().subject()).contains("LoanlyPro");
     }
 
     @Test
