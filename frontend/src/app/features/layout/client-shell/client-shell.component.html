@@ -367,6 +367,9 @@
         @if (showPaymentsLoanPicker()) {
           <app-payments-schedule-loan-picker class="page-header-cta" />
         }
+        @if (showHelpFaqSearch()) {
+          <app-help-faq-search-field class="page-header-search" />
+        }
       </header>
     }
     <router-outlet />

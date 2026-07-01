@@ -9,6 +9,9 @@ const comingSoon = () =>
     (m) => m.ComingSoonComponent
   );
 
+const helpFaq = () =>
+  import('./features/help/help-faq.component').then((m) => m.HelpFaqComponent);
+
 export const routes: Routes = [
   {
     path: 'login',
@@ -119,8 +122,8 @@ export const routes: Routes = [
       },
       {
         path: 'aide',
-        loadComponent: comingSoon,
-        data: { title: 'Aide', description: 'FAQ et support — bientôt disponible.' },
+        loadComponent: helpFaq,
+        data: { title: 'Aide', description: 'FAQ et support.' },
       },
     ],
   },
@@ -222,8 +225,8 @@ export const routes: Routes = [
       },
       {
         path: 'aide',
-        loadComponent: comingSoon,
-        data: { title: 'Aide', description: 'FAQ et support — bientôt disponible.' },
+        loadComponent: helpFaq,
+        data: { title: 'Aide', description: 'FAQ et support.' },
       },
     ],
   },
@@ -404,7 +407,7 @@ export const routes: Routes = [
       },
       {
         path: 'aide',
-        loadComponent: comingSoon,
+        loadComponent: helpFaq,
         data: {
           title: 'Aide / FAQ',
           description:

@@ -200,6 +200,9 @@
             <p class="page-description">{{ pageDescription() }}</p>
           }
         </div>
+        @if (showHelpFaqSearch()) {
+          <app-help-faq-search-field class="page-header-search" />
+        }
       </header>
     }
     <router-outlet />
