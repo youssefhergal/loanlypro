@@ -1,31 +1,490 @@
 <div class="admin-dashboard">
-  <mat-card class="panel" *ngIf="!loading(); else loadingTpl">
-    <mat-card-header>
-      <mat-card-title>Tableau de bord administrateur</mat-card-title>
-      <mat-card-subtitle>
-        Bonjour {{ auth.currentUser()?.firstName }} — {{ summary()?.totalCount || 0 }} demande(s) au total
-      </mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="kpis">
-        <span class="chip">Non affectées: {{ summary()?.unassignedCount || 0 }}</span>
+  @if (loading()) {
+    <div class="admin-dashboard__loading" aria-busy="true" aria-label="Chargement">
+      <mat-progress-spinner mode="indeterminate" diameter="40" />
+    </div>
+  } @else {
+    @if (error()) {
+      <p class="admin-dashboard__error" role="alert">{{ error() }}</p>
+    }
+
+    @if (isEmptyPlatform()) {
+      <section class="admin-empty" aria-labelledby="admin-empty-title">
+        <span class="admin-empty__icon" aria-hidden="true">
+          <mat-icon>admin_panel_settings</mat-icon>
+        </span>
+        <h2 id="admin-empty-title">Aucune activité pour le moment</h2>
+        <p>Les demandes clients et les prêts apparaîtront ici dès les premières soumissions.</p>
+        <div class="admin-empty__actions">
+          <a mat-stroked-button routerLink="/admin/demandes">Voir les demandes</a>
+          <button mat-stroked-button type="button" (click)="openCreateUserDialog()">
+            Créer un conseiller
+          </button>
+        </div>
+      </section>
+    } @else {
+      <div class="admin-dashboard__info" role="note">
+        <mat-icon aria-hidden="true">visibility</mat-icon>
+        <div>
+          <strong>Mode supervision</strong>
+          <span>
+            — Vous consultez l'activité globale. L'instruction des dossiers reste du ressort des
+            conseillers.
+          </span>
+        </div>
       </div>
 
-      <h3>Par statut</h3>
-      <mat-list>
-        <div mat-list-item *ngFor="let s of statusEntries()">
-          <div matListItemTitle>{{ labelForStatus(s.key) }}</div>
-          <span matListItemMeta>{{ s.value }}</span>
+      @if (hasUnassignedAlert()) {
+        <div class="admin-dashboard__alert admin-dashboard__alert--warning" role="alert">
+          <mat-icon aria-hidden="true">group_add</mat-icon>
+          <div class="admin-dashboard__alert-copy">
+            <p class="admin-dashboard__alert-title">
+              {{ unassignedCount() }} demande{{ unassignedCount() > 1 ? 's' : '' }} non affectée{{
+                unassignedCount() > 1 ? 's' : ''
+              }}
+              à un conseiller
+            </p>
+            <p class="admin-dashboard__alert-detail">
+              @for (app of unassignedApplications(); track app.id; let last = $last) {
+                <span>
+                  <strong>{{ app.reference }}</strong>
+                </span>
+                @if (!last) {
+                  <span class="admin-dashboard__alert-sep"> • </span>
+                }
+              }
+              <span> — en attente d'affectation</span>
+            </p>
+          </div>
+          <div class="admin-dashboard__alert-actions">
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="runAdvisorAssignment()"
+              [disabled]="assigning()"
+            >
+              @if (assigning()) {
+                <mat-icon class="admin-dashboard__spin">sync</mat-icon>
+              } @else {
+                <mat-icon>group_add</mat-icon>
+              }
+              Affecter conseillers
+            </button>
+            <a routerLink="/admin/demandes" class="admin-dashboard__alert-link">
+              Voir toutes les demandes
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          </div>
         </div>
-      </mat-list>
-    </mat-card-content>
-  </mat-card>
+      }
 
-  <ng-template #loadingTpl>
-    <div class="loading">
-      <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
-    </div>
-  </ng-template>
+      @if (hasOverdueAlert()) {
+        <div class="admin-dashboard__alert admin-dashboard__alert--danger" role="alert">
+          <mat-icon aria-hidden="true">warning</mat-icon>
+          <div class="admin-dashboard__alert-copy">
+            <p class="admin-dashboard__alert-title">
+              {{ overdueCount() }} échéance{{ overdueCount() > 1 ? 's' : '' }} en retard sur le
+              portefeuille
+            </p>
+          </div>
+          <a routerLink="/admin/prets" class="admin-dashboard__alert-link">
+            Consulter les prêts
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+        </div>
+      }
 
-  <p class="error" *ngIf="error()">{{ error() }}</p>
+      <div class="kpi-row">
+        <a routerLink="/admin/demandes" class="kpi-card kpi-card--link">
+          <div class="kpi-card__head">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <mat-icon>description</mat-icon>
+            </span>
+            <span class="kpi-card__label">Demandes totales</span>
+          </div>
+          <strong class="kpi-card__value">{{ totalApplications() }}</strong>
+          <span class="kpi-card__link">
+            Toutes les demandes
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </span>
+        </a>
+
+        <a routerLink="/admin/demandes" class="kpi-card kpi-card--link">
+          <div class="kpi-card__head">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <mat-icon>group_add</mat-icon>
+            </span>
+            <span class="kpi-card__label">Non affectées</span>
+          </div>
+          <strong class="kpi-card__value">{{ unassignedCount() }}</strong>
+          @if (unassignedCount() > 0) {
+            <span class="kpi-card__badge">À affecter</span>
+          } @else {
+            <span class="kpi-card__muted">À jour</span>
+          }
+        </a>
+
+        <a routerLink="/admin/demandes" class="kpi-card kpi-card--link">
+          <div class="kpi-card__head">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <mat-icon>hourglass_top</mat-icon>
+            </span>
+            <span class="kpi-card__label">En étude</span>
+          </div>
+          <strong class="kpi-card__value">{{ underReviewCount() }}</strong>
+          <span class="kpi-card__link">
+            Filtrer en étude
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </span>
+        </a>
+
+        <a routerLink="/admin/prets" class="kpi-card kpi-card--link">
+          <div class="kpi-card__head">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <mat-icon>account_balance</mat-icon>
+            </span>
+            <span class="kpi-card__label">Prêts actifs</span>
+          </div>
+          <strong class="kpi-card__value">{{ kpi()?.activeLoansCount ?? 0 }}</strong>
+          <span class="kpi-card__link">
+            Voir les prêts
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </span>
+        </a>
+
+        <a routerLink="/admin/prets" class="kpi-card kpi-card--link">
+          <div class="kpi-card__head">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <mat-icon>savings</mat-icon>
+            </span>
+            <span class="kpi-card__label">Encours total</span>
+          </div>
+          <strong class="kpi-card__value">
+            {{ kpi()?.totalOutstanding ?? 0 | currency: 'EUR' : 'symbol' : '1.0-0' }}
+          </strong>
+          <span class="kpi-card__muted">Portefeuille global</span>
+        </a>
+
+        <a routerLink="/admin/prets" class="kpi-card kpi-card--link">
+          <div class="kpi-card__head">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <mat-icon>warning</mat-icon>
+            </span>
+            <span class="kpi-card__label">Échéances en retard</span>
+          </div>
+          <strong class="kpi-card__value">{{ overdueCount() }}</strong>
+          @if (overdueCount() > 0) {
+            <span class="kpi-card__badge kpi-card__badge--danger">À surveiller</span>
+          } @else {
+            <span class="kpi-card__muted kpi-card__muted--ok">0</span>
+          }
+        </a>
+      </div>
+
+      <div class="analytics-row">
+        <section class="panel-card">
+          <header class="panel-card__header">
+            <h2>Pipeline des demandes</h2>
+            <a routerLink="/admin/demandes" class="panel-card__link">
+              Vue détaillée
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          </header>
+          @if (pipelineSegments().length > 0) {
+            <div class="pipeline-donut pipeline-donut--centered">
+              <div
+                class="pipeline-donut__chart"
+                [style.background]="pipelineConicGradient()"
+                role="img"
+                [attr.aria-label]="'Répartition des demandes par statut'"
+              >
+                <div class="pipeline-donut__hole">
+                  <strong>{{ pipelineTotal() }}</strong>
+                  <span>demandes</span>
+                </div>
+              </div>
+              <ul class="pipeline-legend pipeline-legend--donut">
+                @for (segment of pipelineSegments(); track segment.key) {
+                  <li>
+                    <span class="pipeline-legend__dot" [style.background]="segment.color"></span>
+                    <span class="pipeline-legend__label">{{ segment.label }}</span>
+                    <span class="pipeline-legend__count">({{ segment.count }})</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          } @else {
+            <p class="panel-card__empty">Aucune demande en cours.</p>
+          }
+        </section>
+
+        <section class="panel-card">
+          <header class="panel-card__header">
+            <h2>Charge par conseiller</h2>
+            <a routerLink="/admin/demandes" class="panel-card__link">
+              Gérer les affectations
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          </header>
+          @if (workloadRows().length > 0) {
+            <p class="workload-list__intro">Plus chargés → avant-dernier → moins chargé</p>
+            <ul class="workload-list">
+              @for (row of workloadRows(); track row.id) {
+                <li class="workload-list__item">
+                  <div class="workload-list__meta">
+                    <span class="workload-list__name">{{ row.name }}</span>
+                    <span class="workload-list__count">
+                      {{ row.count }} dossier{{ row.count > 1 ? 's' : '' }}
+                      <span
+                        class="workload-list__tier"
+                        [class.workload-list__tier--low]="row.chargeTier === 'low'"
+                        [class.workload-list__tier--medium]="row.chargeTier === 'medium'"
+                        [class.workload-list__tier--high]="row.chargeTier === 'high'"
+                      >
+                        @switch (row.chargeTier) {
+                          @case ('low') {
+                            Faible
+                          }
+                          @case ('medium') {
+                            Modérée
+                          }
+                          @case ('high') {
+                            Élevée
+                          }
+                        }
+                      </span>
+                    </span>
+                  </div>
+                  <div
+                    class="workload-list__track"
+                    [class.workload-list__track--low]="row.chargeTier === 'low'"
+                    [class.workload-list__track--medium]="row.chargeTier === 'medium'"
+                    [class.workload-list__track--high]="row.chargeTier === 'high'"
+                    aria-hidden="true"
+                  >
+                    <span
+                      class="workload-list__fill"
+                      [style.width.%]="row.percent"
+                      [style.background]="row.barGradient"
+                    ></span>
+                  </div>
+                </li>
+              }
+            </ul>
+            @if (unassignedCount() > 0) {
+              <p class="workload-list__footnote">
+                {{ unassignedCount() }} dossier{{ unassignedCount() > 1 ? 's' : '' }} non affecté{{
+                  unassignedCount() > 1 ? 's' : ''
+                }}
+                (hors top 4)
+              </p>
+            }
+          } @else {
+            <p class="panel-card__empty">Aucun conseiller enregistré.</p>
+          }
+        </section>
+      </div>
+
+      <div class="tables-row">
+        <section class="panel-card">
+          <header class="panel-card__header">
+            <h2>
+              Non affectées
+              @if (unassignedCount() > 0) {
+                <span class="panel-card__badge">{{ unassignedCount() }}</span>
+              }
+            </h2>
+            <a routerLink="/admin/demandes" class="panel-card__link">
+              Tout voir
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          </header>
+
+          @if (unassignedApplications().length === 0) {
+            <p class="panel-card__empty panel-card__empty--ok">
+              <mat-icon aria-hidden="true">check_circle</mat-icon>
+              Toutes les demandes sont affectées.
+            </p>
+          } @else {
+            <div class="data-table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Référence</th>
+                    <th>Client</th>
+                    <th>Montant</th>
+                    <th>Statut</th>
+                    <th>Soumis</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (app of unassignedApplications(); track app.id) {
+                    <tr [routerLink]="['/admin/demandes', app.id]">
+                      <td>{{ app.reference }}</td>
+                      <td>{{ app.applicantName || '—' }}</td>
+                      <td>{{ app.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
+                      <td>
+                        @let style = helpers.loanCardStatusStyle(app.status);
+                        <span
+                          class="loan-status-badge"
+                          [style.background]="style.badgeBg"
+                          [style.color]="style.badgeColor"
+                        >
+                          <span class="loan-status-badge__dot" [style.background]="style.accent"></span>
+                          {{ style.label }}
+                        </span>
+                      </td>
+                      <td>{{ helpers.formatRelativeSubmittedAt(app.submittedAt) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <button
+              mat-stroked-button
+              type="button"
+              class="panel-card__action"
+              (click)="runAdvisorAssignment()"
+              [disabled]="assigning()"
+            >
+              <mat-icon>group_add</mat-icon>
+              Affecter conseillers
+            </button>
+          }
+        </section>
+
+        <section class="panel-card">
+          <header class="panel-card__header">
+            <h2>Recouvrement</h2>
+            <a routerLink="/admin/prets" class="panel-card__link">
+              Tous les prêts
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          </header>
+
+          @if (kpi(); as stats) {
+            <div class="mini-kpi-row">
+              <div class="mini-kpi">
+                <mat-icon class="mini-kpi__icon" aria-hidden="true">payments</mat-icon>
+                <div class="mini-kpi__content">
+                  <span class="mini-kpi__label">Encaissé ce mois</span>
+                  <strong>{{ stats.collectedThisMonth | currency: 'EUR' : 'symbol' : '1.0-0' }}</strong>
+                </div>
+              </div>
+              <div
+                class="mini-kpi"
+                [class.mini-kpi--warn]="stats.failureRatePercent >= 5"
+              >
+                <mat-icon class="mini-kpi__icon" aria-hidden="true">trending_down</mat-icon>
+                <div class="mini-kpi__content">
+                  <span class="mini-kpi__label">Taux d'échec</span>
+                  <strong>{{ stats.failureRatePercent | number: '1.1-1' }} %</strong>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (overdueWatchLoans().length === 0) {
+            <p class="panel-card__empty">Aucun prêt actif à afficher.</p>
+          } @else {
+            <div class="data-table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Référence</th>
+                    <th>Encours</th>
+                    <th>Alerte</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (loan of overdueWatchLoans(); track loan.id) {
+                    <tr
+                      [routerLink]="['/admin/prets', loan.id]"
+                      [class.data-table__row--alert]="loan.overdueInstallmentsCount > 0"
+                    >
+                      <td>{{ loan.borrowerName || '—' }}</td>
+                      <td>{{ loan.reference }}</td>
+                      <td>{{ loan.remainingBalance | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
+                      <td>
+                        @if (loan.overdueInstallmentsCount > 0) {
+                          <span class="alert-chip">{{ loan.overdueInstallmentsCount }} retard</span>
+                        } @else {
+                          <span class="panel-card__muted-inline">—</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+      </div>
+
+      <div class="quick-actions">
+        <button mat-stroked-button type="button" (click)="runAdvisorAssignment()" [disabled]="assigning()">
+          <mat-icon>group_add</mat-icon>
+          Affecter conseillers
+        </button>
+        <a mat-stroked-button routerLink="/admin/demandes">
+          <mat-icon>description</mat-icon>
+          Toutes les demandes
+        </a>
+        <button mat-stroked-button type="button" (click)="openCreateUserDialog()">
+          <mat-icon>person_add</mat-icon>
+          Créer un utilisateur
+        </button>
+        <a mat-stroked-button routerLink="/admin/messages">
+          <mat-icon>chat</mat-icon>
+          Messages
+        </a>
+      </div>
+
+      @if (usersSnapshot(); as users) {
+        <section class="users-snapshot">
+          <header class="users-snapshot__header">
+            <h2>Comptes plateforme</h2>
+            <a routerLink="/admin/utilisateurs" class="panel-card__link">
+              Gérer les utilisateurs
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          </header>
+          <div class="users-snapshot__grid">
+            <article class="users-snapshot__card">
+              <mat-icon>group</mat-icon>
+              <div>
+                <span>Total</span>
+                <strong>{{ users.total }}</strong>
+              </div>
+            </article>
+            <article class="users-snapshot__card">
+              <mat-icon>person</mat-icon>
+              <div>
+                <span>Clients</span>
+                <strong>{{ users.clients }}</strong>
+              </div>
+            </article>
+            <article class="users-snapshot__card">
+              <mat-icon>support_agent</mat-icon>
+              <div>
+                <span>Staff</span>
+                <strong>{{ users.staff }}</strong>
+              </div>
+            </article>
+            <article
+              class="users-snapshot__card"
+              [class.users-snapshot__card--warn]="users.unverified > 0"
+            >
+              <mat-icon>mark_email_unread</mat-icon>
+              <div>
+                <span>Non vérifiés</span>
+                <strong>{{ users.unverified }}</strong>
+              </div>
+            </article>
+          </div>
+        </section>
+      }
+    }
+  }
 </div>
