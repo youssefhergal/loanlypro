@@ -36,7 +36,11 @@ export type HeroCarouselVisual =
   | 'welcome'
   | 'personal-loan'
   | 'works-loan'
-  | 'dossier';
+  | 'dossier'
+  | 'advisor-dossiers'
+  | 'advisor-portfolio'
+  | 'advisor-sla'
+  | 'advisor-welcome';
 
 export interface HeroCarouselSlide {
   id: string;
@@ -460,6 +464,8 @@ export function applicationProgressSteps(status: string): ApplicationProgressSte
   let currentIndex = -1;
   switch (status) {
     case 'SUBMITTED':
+      currentIndex = 0;
+      break;
     case 'UNDER_REVIEW':
       currentIndex = 1;
       break;

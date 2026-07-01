@@ -72,13 +72,43 @@
     background-image: url('/images/dashboard/carousel/hero-progress.png');
   }
 
+  &--advisor-dossiers {
+    background-image: url('/images/dashboard/carousel/hero-advisor-dossiers.png');
+  }
+
+  &--advisor-portfolio {
+    background-image: url('/images/dashboard/carousel/hero-advisor-portfolio.png');
+  }
+
+  &--advisor-sla {
+    border-color: color-mix(in srgb, #ed6c02 22%, #f5dcc4);
+    background-image: url('/images/dashboard/carousel/hero-advisor-sla.png');
+
+    &::before {
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.76) 0%,
+        rgba(255, 255, 255, 0.38) 42%,
+        transparent 68%
+      );
+    }
+  }
+
+  &--advisor-welcome {
+    background-image: url('/images/dashboard/carousel/hero-advisor-welcome.png');
+  }
+
   &--payment,
   &--documents,
   &--progress,
   &--welcome,
   &--personal-loan,
   &--works-loan,
-  &--dossier {
+  &--dossier,
+  &--advisor-dossiers,
+  &--advisor-portfolio,
+  &--advisor-sla,
+  &--advisor-welcome {
     .hero-slide__visual {
       display: none;
     }
