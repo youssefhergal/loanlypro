@@ -1,0 +1,223 @@
+<div class="learning-layout">
+
+  <!-- ═══════════════════════════ GOAL INPUT VIEW ══════════════════════════ -->
+  @if (view() === 'goal-input') {
+    <div class="goal-view">
+
+      <header class="goal-header">
+        <div class="goal-header__icon">
+          <mat-icon>school</mat-icon>
+        </div>
+        <h1 class="goal-header__title">Formation sur mesure</h1>
+        <p class="goal-header__subtitle">
+          Décrivez votre objectif, nous générons un parcours d'apprentissage personnalisé.
+        </p>
+      </header>
+
+      <div class="goal-form">
+        <textarea
+          #goalInput
+          class="goal-input"
+          [formControl]="goalCtrl"
+          placeholder="Ex : Je veux apprendre à gérer mon budget et économiser chaque mois…"
+          rows="3"
+          aria-label="Votre objectif d'apprentissage"
+        ></textarea>
+
+        <div class="goal-suggestions">
+          @for (s of suggestions; track s) {
+            <button
+              type="button"
+              class="suggestion-chip"
+              (click)="generateRoadmap(s)"
+              [disabled]="loadingRoadmap()"
+            >
+              {{ s }}
+            </button>
+          }
+        </div>
+
+        <button
+          mat-flat-button
+          class="goal-submit-btn"
+          [disabled]="goalCtrl.invalid || loadingRoadmap()"
+          (click)="generateRoadmap()"
+        >
+          @if (loadingRoadmap()) {
+            <ng-container><mat-icon class="spin-icon">autorenew</mat-icon> Génération du parcours…</ng-container>
+          } @else {
+            <ng-container><mat-icon>auto_awesome</mat-icon> Générer mon parcours</ng-container>
+          }
+        </button>
+      </div>
+
+      <!-- Past sessions -->
+      @if (pastSessions().length > 0) {
+        <section class="past-sessions">
+          <h2 class="past-sessions__title">
+            <mat-icon>history</mat-icon>
+            Mes parcours précédents
+          </h2>
+          <div class="past-sessions__list">
+            @for (s of pastSessions(); track s.id) {
+              <button class="past-session-card" type="button" (click)="resumeSession(s)">
+                <div class="past-session-card__header">
+                  <span class="past-session-card__objective">{{ s.objective }}</span>
+                  <span class="past-session-card__status" [class.status--done]="s.status === 'COMPLETED'">
+                    {{ s.status === 'COMPLETED' ? 'Terminé' : 'En cours' }}
+                  </span>
+                </div>
+                <div class="past-session-card__meta">
+                  <span>{{ s.completedCount }}/{{ s.totalSteps }} étapes</span>
+                  <span>{{ formatDate(s.createdAt) }}</span>
+                </div>
+                <div class="past-session-card__bar">
+                  <div
+                    class="past-session-card__bar-fill"
+                    [style.width.%]="s.totalSteps ? (s.completedCount / s.totalSteps * 100) : 0"
+                  ></div>
+                </div>
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+    </div>
+  }
+
+  <!-- ═══════════════════════════ ROADMAP VIEW ═════════════════════════════ -->
+  @if (view() === 'roadmap') {
+    <div class="roadmap-view">
+
+      <header class="roadmap-header">
+        <button mat-icon-button class="back-btn" (click)="backToGoal()" matTooltip="Retour">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="roadmap-header__info">
+          <h1 class="roadmap-header__objective">{{ session()?.objective }}</h1>
+          <span class="roadmap-header__progress">
+            {{ session()?.completedCount }}/{{ session()?.totalSteps }} étapes · {{ progressPercent }}%
+          </span>
+        </div>
+        @if (session()?.status === 'COMPLETED') {
+          <span class="completed-badge">
+            <mat-icon>check_circle</mat-icon>
+            Parcours terminé !
+          </span>
+        }
+      </header>
+
+      <div class="progress-bar-wrap">
+        <mat-progress-bar
+          mode="determinate"
+          [value]="progressPercent"
+          class="learning-progress-bar"
+        />
+      </div>
+
+      <ol class="steps-list">
+        @for (step of session()?.steps ?? []; track step.index) {
+          <li
+            class="step-card"
+            [class.step-card--completed]="isStepCompleted(step.index)"
+            [class.step-card--next]="!isStepCompleted(step.index) && step.index === (session()?.completedCount ?? 0)"
+          >
+            <div class="step-card__number">
+              @if (isStepCompleted(step.index)) {
+                <mat-icon class="step-check">check</mat-icon>
+              } @else {
+                {{ step.index + 1 }}
+              }
+            </div>
+            <div class="step-card__content">
+              <h3 class="step-card__title">{{ step.title }}</h3>
+              <p class="step-card__desc">{{ step.description }}</p>
+              <span class="step-card__time">
+                <mat-icon>schedule</mat-icon>
+                {{ step.estimatedMinutes }} min
+              </span>
+            </div>
+            <button
+              mat-flat-button
+              class="step-card__btn"
+              [class.step-card__btn--completed]="isStepCompleted(step.index)"
+              (click)="openStep(step.index)"
+            >
+              @if (isStepCompleted(step.index)) {
+                <ng-container><mat-icon>replay</mat-icon> Revoir</ng-container>
+              } @else if (step.index === (session()?.completedCount ?? 0)) {
+                <ng-container><mat-icon>play_arrow</mat-icon> Commencer</ng-container>
+              } @else {
+                <ng-container><mat-icon>lock</mat-icon> Verrouillé</ng-container>
+              }
+            </button>
+          </li>
+        }
+      </ol>
+
+    </div>
+  }
+
+  <!-- ═══════════════════════════ STEP DETAIL VIEW ═════════════════════════ -->
+  @if (view() === 'step-detail') {
+    <div class="step-view">
+
+      <header class="step-header">
+        <button mat-icon-button class="back-btn" (click)="backToRoadmap()" matTooltip="Retour au parcours">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="step-header__info">
+          <span class="step-header__num">Étape {{ (activeStepIndex() ?? 0) + 1 }}</span>
+          <h1 class="step-header__title">{{ activeStep?.title }}</h1>
+        </div>
+      </header>
+
+      <div class="step-content-wrap">
+
+        @if (loadingContent()) {
+          <div class="content-loading">
+            <div class="loading-pulse"></div>
+            <div class="loading-pulse loading-pulse--2"></div>
+            <div class="loading-pulse loading-pulse--3"></div>
+            <p class="loading-text">Génération du contenu…</p>
+          </div>
+        } @else if (stepContent()) {
+          <article
+            class="step-content"
+            [innerHTML]="formatContent(stepContent()!)"
+            aria-label="Contenu de l'étape"
+          ></article>
+
+          <footer class="step-footer">
+            @if (!isStepCompleted(activeStepIndex()!)) {
+              <button
+                mat-flat-button
+                class="complete-btn"
+                [disabled]="completingStep()"
+                (click)="completeStep()"
+              >
+                @if (completingStep()) {
+                  <ng-container><mat-icon class="spin-icon">autorenew</mat-icon> Sauvegarde…</ng-container>
+                } @else {
+                  <ng-container>
+                    <mat-icon>check_circle</mat-icon>
+                    Marquer comme terminé{{ (activeStepIndex()! + 1) < (session()?.totalSteps ?? 0) ? ' · Passer à l\'étape suivante' : '' }}
+                  </ng-container>
+                }
+              </button>
+            } @else {
+              <div class="already-done">
+                <mat-icon>check_circle</mat-icon>
+                Étape déjà complétée
+              </div>
+            }
+          </footer>
+        }
+
+      </div>
+
+    </div>
+  }
+
+</div>

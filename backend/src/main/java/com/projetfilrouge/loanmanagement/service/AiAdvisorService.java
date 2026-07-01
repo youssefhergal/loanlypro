@@ -96,7 +96,7 @@ public class AiAdvisorService {
                 throw new RuntimeException("Réponse vide de l'API Anthropic");
             }
 
-            return response.content().getFirst().text();
+            return response.content().get(0).text();
 
         } catch (BusinessRuleException e) {
             throw e;

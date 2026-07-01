@@ -96,6 +96,17 @@
               <span>Conseiller IA</span>
             </a>
             <a
+              routerLink="/conseiller/formation"
+              routerLinkActive="active"
+              class="nav-item nav-item--ai"
+              matTooltip="Formation sur mesure"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>school</mat-icon>
+              <span>Formation sur mesure</span>
+            </a>
+            <a
               routerLink="/conseiller/notifications"
               routerLinkActive="active"
               class="nav-item nav-item--notifications"

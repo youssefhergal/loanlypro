@@ -19,6 +19,8 @@ app:
     verification:
       dev-fixed-code: "000000"
       log-code-to-console: true
+  ai:
+    anthropic-api-key: ${ANTHROPIC_API_KEY:}
 
 spring:
   datasource:
