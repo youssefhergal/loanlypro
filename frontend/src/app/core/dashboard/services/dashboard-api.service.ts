@@ -17,6 +17,7 @@ export interface LoanApplicationSummaryDto {
   createdAt?: string | null;
   submittedAt?: string | null;
   decidedAt?: string | null;
+  applicantName?: string | null;
 }
 
 export interface LoanDocumentResponseDto {
