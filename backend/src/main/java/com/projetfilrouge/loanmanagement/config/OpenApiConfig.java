@@ -16,7 +16,7 @@ public class OpenApiConfig {
         final String securitySchemeName = "bearerAuth";
         return new OpenAPI()
                 .info(new Info()
-                        .title("LoanlyFans API")
+                        .title("LoanlyPro API")
                         .description("API de gestion des prêts - Documentation des contrats")
                         .version("1.0.0"))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))

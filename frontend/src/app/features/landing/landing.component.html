@@ -1,0 +1,249 @@
+<div class="landing">
+
+  <!-- ══════════ NAV ══════════ -->
+  <nav class="lnav">
+    <a class="lnav__logo" routerLink="/">
+      <div class="lnav__logo-icon">
+        <mat-icon>account_balance</mat-icon>
+      </div>
+      <span>LoanlyPro</span>
+    </a>
+    <div class="lnav__actions">
+      <a routerLink="/login" mat-button class="lnav__login-btn">Se connecter</a>
+      <a routerLink="/register" mat-flat-button class="lnav__cta-btn">Créer un compte</a>
+    </div>
+  </nav>
+
+  <!-- ══════════ HERO ══════════ -->
+  <section class="hero">
+    <div class="hero__blobs">
+      <div class="blob blob--1"></div>
+      <div class="blob blob--2"></div>
+      <div class="blob blob--3"></div>
+    </div>
+    <div class="hero__particles">
+      @for (p of [1,2,3,4,5,6,7,8]; track p) {
+        <div class="particle" [style]="'--i:' + p"></div>
+      }
+    </div>
+    <div class="hero__content">
+      <div class="hero__badge aos" data-delay="0">
+        <span class="badge-dot"></span>
+        Propulsé par l'Intelligence Artificielle
+      </div>
+      <h1 class="hero__title aos" data-delay="100">
+        Vos finances,<br>
+        <span class="gradient-text">réinventées</span>
+      </h1>
+      <p class="hero__sub aos" data-delay="200">
+        La plateforme de gestion de prêt qui vous accompagne intelligemment,
+        de la demande au dernier remboursement.
+      </p>
+      <div class="hero__actions aos" data-delay="300">
+        <a routerLink="/register" mat-flat-button class="btn-primary-hero">
+          <mat-icon>rocket_launch</mat-icon>
+          Commencer gratuitement
+        </a>
+        <a routerLink="/login" class="btn-ghost-hero">
+          Déjà client ? <mat-icon>arrow_forward</mat-icon>
+        </a>
+      </div>
+      <div class="hero__trust aos" data-delay="400">
+        <div class="trust-item">
+          <mat-icon>verified</mat-icon>
+          <span>Sans engagement</span>
+        </div>
+        <div class="trust-item">
+          <mat-icon>lock</mat-icon>
+          <span>100 % sécurisé</span>
+        </div>
+        <div class="trust-item">
+          <mat-icon>schedule</mat-icon>
+          <span>Réponse en 48h</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero__visual aos" data-delay="200">
+      <div class="dashboard-mock">
+        <div class="mock-header">
+          <div class="mock-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="mock-title">Mon espace</span>
+        </div>
+        <div class="mock-body">
+          <div class="mock-stat">
+            <mat-icon>account_balance_wallet</mat-icon>
+            <div>
+              <span class="mock-label">Mensualité</span>
+              <span class="mock-value">342 €</span>
+            </div>
+          </div>
+          <div class="mock-bar-wrap">
+            <span class="mock-bar-label">Remboursé</span>
+            <div class="mock-bar"><div class="mock-bar-fill" style="width:65%"></div></div>
+            <span class="mock-bar-pct">65 %</span>
+          </div>
+          <div class="mock-ai">
+            <mat-icon>psychology</mat-icon>
+            <div class="mock-ai-bubble">Alex IA est disponible pour vous conseiller…</div>
+          </div>
+          <div class="mock-badges">
+            <span class="mock-badge mock-badge--green">
+              <mat-icon>eco</mat-icon> Taux vert actif
+            </span>
+            <span class="mock-badge mock-badge--blue">
+              <mat-icon>school</mat-icon> 3 étapes complétées
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ STATS ══════════ -->
+  <section class="stats-section">
+    <div class="stats-inner">
+      @for (stat of stats; track stat.label) {
+        <div class="stat-card aos">
+          <span
+            class="stat-value"
+            [attr.data-target]="stat.value"
+            [attr.data-suffix]="stat.suffix"
+          >0{{ stat.suffix }}</span>
+          <span class="stat-label">{{ stat.label }}</span>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ══════════ ADVANTAGES ══════════ -->
+  <section class="advantages-section">
+    <div class="section-header aos">
+      <p class="section-eyebrow">Nos avantages</p>
+      <h2>Pourquoi choisir <span class="text-green">LoanlyPro</span> ?</h2>
+      <p class="section-sub">Tout ce dont vous avez besoin pour gérer votre crédit sereinement et progresser financièrement.</p>
+    </div>
+    <div class="adv-grid">
+      @for (adv of advantages; track adv.title; let i = $index) {
+        <div class="adv-card aos" [attr.data-delay]="(i % 3) * 100">
+          <div class="adv-card__tag">{{ adv.tag }}</div>
+          <div class="adv-card__icon-wrap">
+            <mat-icon>{{ adv.icon }}</mat-icon>
+          </div>
+          <h3 class="adv-card__title">{{ adv.title }}</h3>
+          <p class="adv-card__desc">{{ adv.description }}</p>
+          <div class="adv-card__arrow">
+            <mat-icon>arrow_forward</mat-icon>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ══════════ GREEN HIGHLIGHT ══════════ -->
+  <section class="green-section">
+    <div class="green-section__inner">
+      <div class="green-section__text aos">
+        <div class="green-badge">
+          <mat-icon>eco</mat-icon>
+          Finance verte
+        </div>
+        <h2>Engagez-vous pour la planète,<br>on réduit votre taux</h2>
+        <p>
+          Voiture électrique, pompe à chaleur, isolation thermique, panneaux photovoltaïques…
+          Chaque projet écologique mérite un financement avantageux.
+          Nos taux verts peuvent aller jusqu'à <strong>30 % moins chers</strong> que les taux classiques.
+        </p>
+        <ul class="green-list">
+          <li><mat-icon>check_circle</mat-icon> Véhicules électriques &amp; hybrides</li>
+          <li><mat-icon>check_circle</mat-icon> Rénovation énergétique du logement</li>
+          <li><mat-icon>check_circle</mat-icon> Panneaux solaires &amp; éoliennes</li>
+          <li><mat-icon>check_circle</mat-icon> Équipements à faible consommation</li>
+        </ul>
+        <a routerLink="/register" mat-flat-button class="btn-green-cta">
+          Simuler mon taux vert <mat-icon>arrow_forward</mat-icon>
+        </a>
+      </div>
+      <div class="green-section__visual aos" data-delay="150">
+        <div class="green-card-big">
+          <div class="leaf-bg"></div>
+          <mat-icon class="big-eco-icon">eco</mat-icon>
+          <div class="rate-display">
+            <span class="rate-label">Votre taux vert</span>
+            <span class="rate-value">dès 3,2 %</span>
+            <span class="rate-instead">au lieu de 5,8 %</span>
+          </div>
+          <div class="rate-savings">
+            <mat-icon>savings</mat-icon>
+            <span>Économisez jusqu'à <strong>2 600 €</strong> sur votre crédit</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ HOW IT WORKS ══════════ -->
+  <section class="how-section">
+    <div class="section-header aos">
+      <p class="section-eyebrow">Simple &amp; rapide</p>
+      <h2>En 3 étapes vers votre prêt</h2>
+    </div>
+    <div class="steps-row">
+      @for (step of steps; track step.num; let last = $last) {
+        <div class="step-card aos" [attr.data-delay]="$index * 120">
+          <div class="step-card__num">{{ step.num }}</div>
+          <div class="step-card__icon">
+            <mat-icon>{{ step.icon }}</mat-icon>
+          </div>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.desc }}</p>
+        </div>
+        @if (!last) {
+          <div class="step-connector aos">
+            <div class="connector-line"></div>
+            <mat-icon class="connector-arrow">east</mat-icon>
+          </div>
+        }
+      }
+    </div>
+  </section>
+
+  <!-- ══════════ FINAL CTA ══════════ -->
+  <section class="cta-section">
+    <div class="cta-blobs">
+      <div class="cta-blob cta-blob--1"></div>
+      <div class="cta-blob cta-blob--2"></div>
+    </div>
+    <div class="cta-content aos">
+      <mat-icon class="cta-icon">star</mat-icon>
+      <h2>Prêt à reprendre le contrôle<br>de vos finances ?</h2>
+      <p>Rejoignez plus de 2 500 clients qui font confiance à LoanlyPro</p>
+      <div class="cta-actions">
+        <a routerLink="/register" mat-flat-button class="cta-btn-primary">
+          Créer mon compte — c'est gratuit
+        </a>
+        <a routerLink="/login" class="cta-btn-ghost">
+          Se connecter <mat-icon>login</mat-icon>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ FOOTER ══════════ -->
+  <footer class="landing-footer">
+    <div class="footer-inner">
+      <div class="footer-logo">
+        <mat-icon>account_balance</mat-icon>
+        <span>LoanlyPro</span>
+      </div>
+      <p class="footer-copy">© 2026 LoanlyPro · Tous droits réservés</p>
+      <div class="footer-links">
+        <a href="#">Mentions légales</a>
+        <a href="#">Confidentialité</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+</div>

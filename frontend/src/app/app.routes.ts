@@ -14,6 +14,12 @@ const helpFaq = () =>
 
 export const routes: Routes = [
   {
+    path: '',
+    pathMatch: 'full',
+    loadComponent: () =>
+      import('./features/landing/landing.component').then((m) => m.LandingComponent),
+  },
+  {
     path: 'login',
     loadComponent: () =>
       import('./features/auth/login/login.component').then((m) => m.LoginComponent),
@@ -102,6 +108,18 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/messaging/messaging.component').then((m) => m.MessagingComponent),
         data: { title: 'Messages', description: 'Messagerie en temps réel.' },
+      },
+      {
+        path: 'conseiller-ia',
+        loadComponent: () =>
+          import('./features/ai-advisor/ai-advisor.component').then((m) => m.AiAdvisorComponent),
+        data: { title: 'Conseiller IA', description: 'Votre conseiller financier personnalisé propulsé par IA.' },
+      },
+      {
+        path: 'formation',
+        loadComponent: () =>
+          import('./features/ai-learning/ai-learning.component').then((m) => m.AiLearningComponent),
+        data: { title: 'Formation sur mesure', description: 'Apprenez à votre rythme avec un parcours généré par IA.' },
       },
       {
         path: 'notifications',
@@ -197,6 +215,18 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/messaging/messaging.component').then((m) => m.MessagingComponent),
         data: { title: 'Messages', description: 'Messagerie en temps réel.' },
+      },
+      {
+        path: 'conseiller-ia',
+        loadComponent: () =>
+          import('./features/ai-advisor/ai-advisor.component').then((m) => m.AiAdvisorComponent),
+        data: { title: 'Conseiller IA', description: 'Votre conseiller financier personnalisé propulsé par IA.' },
+      },
+      {
+        path: 'formation',
+        loadComponent: () =>
+          import('./features/ai-learning/ai-learning.component').then((m) => m.AiLearningComponent),
+        data: { title: 'Formation sur mesure', description: 'Apprenez à votre rythme avec un parcours généré par IA.' },
       },
       {
         path: 'utilisateurs',
@@ -375,6 +405,18 @@ export const routes: Routes = [
         },
       },
       {
+        path: 'conseiller-ia',
+        loadComponent: () =>
+          import('./features/ai-advisor/ai-advisor.component').then((m) => m.AiAdvisorComponent),
+        data: { title: 'Conseiller IA', description: 'Votre conseiller financier personnalisé propulsé par IA.' },
+      },
+      {
+        path: 'formation',
+        loadComponent: () =>
+          import('./features/ai-learning/ai-learning.component').then((m) => m.AiLearningComponent),
+        data: { title: 'Formation sur mesure', description: 'Apprenez à votre rythme avec un parcours généré par IA.' },
+      },
+      {
         path: 'notifications',
         loadComponent: () =>
           import('./features/notifications/notifications.component').then(
@@ -416,5 +458,5 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '**', redirectTo: 'dashboard' },
+  { path: '**', redirectTo: '' },
 ];

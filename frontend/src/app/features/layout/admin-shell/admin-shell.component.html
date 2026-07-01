@@ -84,6 +84,28 @@
               <mat-icon>chat</mat-icon>
               <span>Messages</span>
             </a>
+            <a
+              routerLink="/admin/conseiller-ia"
+              routerLinkActive="active"
+              class="nav-item nav-item--ai"
+              matTooltip="Conseiller IA"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>auto_awesome</mat-icon>
+              <span>Conseiller IA</span>
+            </a>
+            <a
+              routerLink="/admin/formation"
+              routerLinkActive="active"
+              class="nav-item nav-item--ai"
+              matTooltip="Formation sur mesure"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>school</mat-icon>
+              <span>Formation sur mesure</span>
+            </a>
           </div>
         </section>
 

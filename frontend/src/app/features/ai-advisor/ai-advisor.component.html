@@ -1,0 +1,111 @@
+<div class="ai-advisor-layout">
+
+  <!-- ── Header ──────────────────────────────────────────────────── -->
+  <header class="ai-header">
+    <div class="ai-header__avatar">
+      <mat-icon>auto_awesome</mat-icon>
+    </div>
+    <div class="ai-header__info">
+      <h2 class="ai-header__name">Alex</h2>
+      <span class="ai-header__status">
+        @if (isTyping()) {
+          <span class="status-dot status-dot--typing"></span>
+          En train de rédiger…
+        } @else {
+          <span class="status-dot status-dot--online"></span>
+          Conseiller IA · En ligne
+        }
+      </span>
+    </div>
+    <button
+      mat-icon-button
+      class="ai-header__reset"
+      (click)="reset()"
+      matTooltip="Nouvelle conversation"
+      aria-label="Réinitialiser la conversation"
+    >
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </header>
+
+  <!-- ── Messages ────────────────────────────────────────────────── -->
+  <div class="ai-messages" aria-live="polite" aria-label="Conversation avec Alex">
+
+    @for (msg of messages(); track $index) {
+      <div class="msg-row" [class.msg-row--user]="msg.role === 'user'">
+
+        @if (msg.role === 'assistant') {
+          <div class="msg-avatar msg-avatar--ai">
+            <mat-icon>auto_awesome</mat-icon>
+          </div>
+        }
+
+        <div class="msg-bubble" [class.msg-bubble--user]="msg.role === 'user'" [class.msg-bubble--ai]="msg.role === 'assistant'">
+          <p class="msg-text" [innerHTML]="formatContent(msg.content)"></p>
+        </div>
+
+        @if (msg.role === 'user') {
+          <div class="msg-avatar msg-avatar--user">
+            <mat-icon>person</mat-icon>
+          </div>
+        }
+
+      </div>
+    }
+
+    <!-- Typing indicator -->
+    @if (isTyping()) {
+      <div class="msg-row">
+        <div class="msg-avatar msg-avatar--ai">
+          <mat-icon>auto_awesome</mat-icon>
+        </div>
+        <div class="msg-bubble msg-bubble--ai msg-bubble--typing">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>
+      </div>
+    }
+
+    <div #messagesEnd></div>
+  </div>
+
+  <!-- ── Suggestions ─────────────────────────────────────────────── -->
+  @if (showSuggestions()) {
+    <div class="ai-suggestions" aria-label="Suggestions">
+      @for (s of suggestions; track s) {
+        <button
+          class="suggestion-chip"
+          type="button"
+          (click)="send(s)"
+        >
+          {{ s }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- ── Input ───────────────────────────────────────────────────── -->
+  <footer class="ai-input-bar">
+    <textarea
+      #inputRef
+      class="ai-input"
+      [formControl]="messageCtrl"
+      placeholder="Posez votre question… (Entrée pour envoyer)"
+      (keydown)="onKeydown($event)"
+      rows="1"
+      aria-label="Zone de saisie"
+    ></textarea>
+    <button
+      mat-icon-button
+      class="ai-send-btn"
+      [disabled]="!messageCtrl.value?.trim() || isTyping()"
+      (click)="send()"
+      matTooltip="Envoyer"
+      aria-label="Envoyer le message"
+    >
+      <mat-icon>send</mat-icon>
+    </button>
+  </footer>
+
+</div>
