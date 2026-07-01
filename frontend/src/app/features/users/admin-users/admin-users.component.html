@@ -1,0 +1,132 @@
+<div class="admin-users">
+  <div class="panels">
+    <mat-card class="panel filters">
+      <div class="panel-title">
+        <mat-icon>filter_list</mat-icon>
+        <span>Filtres</span>
+      </div>
+
+      <div class="filters-row">
+        <mat-form-field appearance="outline" class="field q">
+          <mat-label>Recherche (email, prénom, nom)</mat-label>
+          <input matInput [value]="q()" (keyup.enter)="applyFilters()" (input)="q.set($any($event.target).value)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="field role">
+          <mat-label>Rôle</mat-label>
+          <mat-select [value]="role()" (selectionChange)="role.set($any($event.value)); applyFilters()">
+            <mat-option value="">Tous</mat-option>
+            <mat-option value="CLIENT">Client</mat-option>
+            <mat-option value="CONSEILLER">Conseiller</mat-option>
+            <mat-option value="ADMIN">Administrateur</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button type="button" mat-stroked-button color="primary" (click)="applyFilters()">
+          <mat-icon>search</mat-icon>
+          Rechercher
+        </button>
+        <button type="button" mat-button (click)="resetFilters()">Réinitialiser</button>
+      </div>
+
+      <div class="status-row">
+        <span class="error" *ngIf="error() as e">{{ e }}</span>
+        <span class="hint" *ngIf="!error() && !loading()">{{ total() }} utilisateur(s)</span>
+      </div>
+    </mat-card>
+
+    <mat-card class="panel create">
+      <div class="panel-title">
+        <mat-icon>person_add</mat-icon>
+        <span>Créer un compte (conseiller/admin)</span>
+      </div>
+
+      <div class="create-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" [value]="cEmail()" (input)="cEmail.set($any($event.target).value)" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Prénom</mat-label>
+          <input matInput [value]="cFirstName()" (input)="cFirstName.set($any($event.target).value)" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Nom</mat-label>
+          <input matInput [value]="cLastName()" (input)="cLastName.set($any($event.target).value)" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Mot de passe</mat-label>
+          <input matInput type="password" [value]="cPassword()" (input)="cPassword.set($any($event.target).value)" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Rôle</mat-label>
+          <mat-select [value]="cRole()" (selectionChange)="cRole.set($any($event.value))">
+            <mat-option value="CONSEILLER">Conseiller</mat-option>
+            <mat-option value="ADMIN">Administrateur</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <div class="create-actions">
+          <button type="button" mat-raised-button color="primary" (click)="createUser()" [disabled]="creating()">
+            <mat-icon>save</mat-icon>
+            Créer
+          </button>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <span class="error" *ngIf="createError() as ce">{{ ce }}</span>
+        <span class="success" *ngIf="createSuccess() as cs">{{ cs }}</span>
+      </div>
+    </mat-card>
+  </div>
+
+  <mat-card class="panel list">
+    <div class="panel-title">
+      <mat-icon>group</mat-icon>
+      <span>Utilisateurs</span>
+      <span class="spacer"></span>
+      <span class="muted" *ngIf="loading()">Chargement...</span>
+    </div>
+
+    <div class="table">
+      <div class="thead">
+        <div class="tr">
+          <div class="th email">Email</div>
+          <div class="th name">Nom</div>
+          <div class="th roles">Rôles</div>
+          <div class="th verif">Vérifié</div>
+        </div>
+      </div>
+      <div class="tbody">
+        <div class="tr" *ngFor="let u of users()">
+          <div class="td email">{{ u.email }}</div>
+          <div class="td name">{{ u.lastName }} {{ u.firstName }}</div>
+          <div class="td roles">
+            <span class="role" *ngFor="let r of u.roles">{{ r.replace('ROLE_', '') }}</span>
+          </div>
+          <div class="td verif">
+            <span class="chip" [class.ok]="u.emailVerified" [class.ko]="!u.emailVerified">
+              {{ u.emailVerified ? 'Oui' : 'Non' }}
+            </span>
+          </div>
+        </div>
+        <div class="empty" *ngIf="!loading() && users().length === 0 && !error()">
+          Aucun résultat.
+        </div>
+      </div>
+    </div>
+
+    <mat-divider />
+    <div class="pagination">
+      <button mat-stroked-button (click)="prevPage()" [disabled]="page() === 0">
+        <mat-icon>chevron_left</mat-icon>
+        Précédent
+      </button>
+      <span>Page {{ page() + 1 }} / {{ totalPages() }}</span>
+      <button mat-stroked-button (click)="nextPage()" [disabled]="page() + 1 >= totalPages()">
+        Suivant
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  </mat-card>
+</div>

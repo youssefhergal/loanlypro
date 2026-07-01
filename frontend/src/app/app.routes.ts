@@ -197,10 +197,13 @@ export const routes: Routes = [
       },
       {
         path: 'utilisateurs',
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/users/admin-users/admin-users.component').then(
+            (m) => m.AdminUsersComponent,
+          ),
         data: {
           title: 'Utilisateurs',
-          description: 'Gestion des comptes — bientôt disponible.',
+          description: 'Gestion des comptes (liste, filtres, création conseiller/admin).',
         },
       },
       {
