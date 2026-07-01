@@ -172,6 +172,12 @@
   }
 }
 
+.page-header-search {
+  flex-shrink: 0;
+  align-self: center;
+  width: min(100%, 320px);
+}
+
 .page-title {
   margin: 0;
   font-size: 1.5rem;

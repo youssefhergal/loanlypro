@@ -24,6 +24,7 @@ import {
   calculateLoanSimulation,
   calculateMonthlyPayment,
 } from '../../../../core/loans/utils/loan-calculator';
+import { computeIndicativeRatePercent } from '../../../../core/loans/utils/loan-interest-rate.util';
 import { LoanDocumentType } from '../../../../core/loans/models/loan.enums';
 import {
   LoanDetailDocumentRow,
@@ -206,15 +207,21 @@ export class LoanDetailComponent implements OnInit {
     return calculateMonthlyPayment(
       Number(l.requestedAmount),
       l.requestedDurationMonths,
-      rate
+      rate,
+      l.loanPurpose
     );
   });
 
   readonly totalCost = computed(() => {
     const l = this.loan();
     if (!l) return 0;
-    return calculateLoanSimulation(Number(l.requestedAmount), l.requestedDurationMonths)
-      .totalCost;
+    const rate = l.interestRate != null ? Number(l.interestRate) / 100 : undefined;
+    return calculateLoanSimulation(
+      Number(l.requestedAmount),
+      l.requestedDurationMonths,
+      l.loanPurpose,
+      rate
+    ).totalCost;
   });
 
   readonly debtRatioPercent = computed(() => {
@@ -272,7 +279,12 @@ export class LoanDetailComponent implements OnInit {
   readonly proposedRate = computed(() => {
     const l = this.loan();
     if (l?.interestRate != null) return Number(l.interestRate);
-    return 3.85;
+    if (!l) return 0;
+    return computeIndicativeRatePercent(
+      Number(l.requestedAmount),
+      l.requestedDurationMonths,
+      l.loanPurpose
+    );
   });
 
   ngOnInit(): void {

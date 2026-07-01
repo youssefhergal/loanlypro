@@ -16,6 +16,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../core/auth/services/auth.service';
 import type { User } from '../../../core/auth/models/user.model';
 import type { BreadcrumbItem } from '../client-shell/client-shell.component';
+import { HelpFaqSearchFieldComponent } from '../../../shared/help-faq-search-field/help-faq-search-field.component';
+import { HelpFaqSearchService } from '../../../core/help/services/help-faq-search.service';
+import { isHelpFaqPath } from '../../../core/help/utils/help-faq.util';
 
 const SIDEBAR_COLLAPSED_KEY = 'lf-admin-sidebar-collapsed';
 
@@ -31,6 +34,7 @@ const SIDEBAR_COLLAPSED_KEY = 'lf-admin-sidebar-collapsed';
     MatMenuModule,
     MatTooltipModule,
     MatDividerModule,
+    HelpFaqSearchFieldComponent,
   ],
   templateUrl: './admin-shell.component.html',
   styleUrl: './admin-shell.component.scss',
@@ -38,11 +42,13 @@ const SIDEBAR_COLLAPSED_KEY = 'lf-admin-sidebar-collapsed';
 export class AdminShellComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly helpFaqSearch = inject(HelpFaqSearchService);
 
   readonly sidebarCollapsed = signal(this.readSidebarPreference());
   readonly breadcrumbs = signal<BreadcrumbItem[]>([]);
   readonly pageTitle = signal('');
   readonly pageDescription = signal('');
+  readonly showHelpFaqSearch = signal(false);
 
   constructor(public readonly auth: AuthService) {
     this.router.events
@@ -94,6 +100,11 @@ export class AdminShellComponent {
       crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
     } else {
       crumbs.push({ label: breadcrumbCurrentLabel, routerLink: path });
+    }
+
+    this.showHelpFaqSearch.set(isHelpFaqPath(path));
+    if (!isHelpFaqPath(path)) {
+      this.helpFaqSearch.clear();
     }
 
     this.pageTitle.set(pageTitle);

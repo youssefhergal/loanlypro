@@ -17,6 +17,7 @@ export type EmploymentStatus =
   | 'STUDENT';
 
 export type LoanPurpose =
+  | 'GREEN'
   | 'SOFTWARE'
   | 'VEHICLE'
   | 'HOME_IMPROVEMENT'

@@ -137,7 +137,11 @@
   </div>
 
   <aside class="step-situation__aside">
-    <app-wizard-estimation-panel [amount]="amount" [durationMonths]="durationMonths" />
+    <app-wizard-estimation-panel
+      [amount]="amount"
+      [durationMonths]="durationMonths"
+      [loanPurpose]="loanPurpose"
+    />
     <app-wizard-debt-ratio-panel
       [debtRatio]="debtRatio"
       [totalIncome]="totalIncome"

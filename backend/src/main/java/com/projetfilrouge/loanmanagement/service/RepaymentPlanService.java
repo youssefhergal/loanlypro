@@ -31,8 +31,6 @@ import java.util.Map;
 @Slf4j
 public class RepaymentPlanService {
 
-    private static final BigDecimal DEFAULT_ANNUAL_RATE = new BigDecimal("3.85");
-
     private static final MathContext CALC_CONTEXT = new MathContext(16, RoundingMode.HALF_UP);
     private static final int MONEY_SCALE = 2;
 
@@ -40,6 +38,7 @@ public class RepaymentPlanService {
     private final LoanApplicationRepository loanApplicationRepository;
     private final RepaymentPlanRepository repaymentPlanRepository;
     private final LoanApplicationHistoryService historyService;
+    private final LoanInterestRateService interestRateService;
 
     @Transactional
     public int backfillLoansForApprovedApplications() {
@@ -81,7 +80,13 @@ public class RepaymentPlanService {
             changed = true;
         }
         if (application.getInterestRate() == null) {
-            application.setInterestRate(DEFAULT_ANNUAL_RATE);
+            application.setInterestRate(
+                    interestRateService.calculateIndicativeRate(
+                            application.getRequestedAmount(),
+                            application.getRequestedDurationMonths(),
+                            application.getLoanPurpose()
+                    )
+            );
             changed = true;
         }
 

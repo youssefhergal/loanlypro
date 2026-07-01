@@ -1,11 +1,15 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { Component, Input, OnChanges } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { LoanPurpose } from '../../../../../core/loans/models/loan.enums';
 import {
   calculateLoanSimulation,
   LoanSimulation,
 } from '../../../../../core/loans/utils/loan-calculator';
-import { LOAN_INTEREST_RATE } from '../../../../../core/loans/constants/loan.constants';
+import {
+  computeIndicativeRatePercent,
+  isGreenLoanPurpose,
+} from '../../../../../core/loans/utils/loan-interest-rate.util';
 
 @Component({
   selector: 'app-wizard-estimation-panel',
@@ -35,7 +39,12 @@ import { LOAN_INTEREST_RATE } from '../../../../../core/loans/constants/loan.con
         </div>
         <div>
           <dt>Taux indicatif</dt>
-          <dd>{{ interestPercent | number: '1.2-2' }} %</dd>
+          <dd>
+            {{ interestPercent | number: '1.2-2' }} %
+            @if (isGreen) {
+              <span class="estimation-panel__green-badge">Crédit vert</span>
+            }
+          </dd>
         </div>
         <div>
           <dt>Coût total</dt>
@@ -44,7 +53,7 @@ import { LOAN_INTEREST_RATE } from '../../../../../core/loans/constants/loan.con
       </dl>
 
       <p class="estimation-panel__disclaimer">
-        * Simulation indicative, non contractuelle
+        * Taux calculé selon montant, durée et type de projet — simulation non contractuelle
       </p>
     </section>
   `,
@@ -108,6 +117,20 @@ import { LOAN_INTEREST_RATE } from '../../../../../core/loans/constants/loan.con
       font-size: 0.9375rem;
       font-weight: 600;
       color: var(--color-text, #1a2e22);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .estimation-panel__green-badge {
+      font-size: 0.6875rem;
+      font-weight: 650;
+      color: var(--color-primary, #1a7a4a);
+      background: color-mix(in srgb, var(--color-primary, #1a7a4a) 12%, #fff);
+      border-radius: 999px;
+      padding: 0.1rem 0.45rem;
     }
 
     .estimation-panel__disclaimer {
@@ -121,11 +144,19 @@ import { LOAN_INTEREST_RATE } from '../../../../../core/loans/constants/loan.con
 export class WizardEstimationPanelComponent implements OnChanges {
   @Input() amount = 0;
   @Input() durationMonths = 0;
+  @Input() loanPurpose: LoanPurpose = 'PERSONAL';
 
-  readonly interestPercent = LOAN_INTEREST_RATE * 100;
+  interestPercent = 0;
+  isGreen = false;
   simulation: LoanSimulation = { monthlyPayment: 0, totalCost: 0, totalInterest: 0 };
 
   ngOnChanges(): void {
-    this.simulation = calculateLoanSimulation(this.amount, this.durationMonths);
+    this.interestPercent = computeIndicativeRatePercent(
+      this.amount,
+      this.durationMonths,
+      this.loanPurpose
+    );
+    this.isGreen = isGreenLoanPurpose(this.loanPurpose);
+    this.simulation = calculateLoanSimulation(this.amount, this.durationMonths, this.loanPurpose);
   }
 }

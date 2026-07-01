@@ -19,6 +19,7 @@ import {
   calculateDebtRatio,
   calculateMonthlyPayment,
 } from '../../../../../core/loans/utils/loan-calculator';
+import { computeIndicativeRatePercent } from '../../../../../core/loans/utils/loan-interest-rate.util';
 import { LoanDocumentType } from '../../../../../core/loans/models/loan.enums';
 import { LoanDocumentResponseDto } from '../../../../../core/loans/models/loan-document.model';
 
@@ -95,7 +96,18 @@ export class StepSummaryComponent {
     const v = this.fv();
     return calculateMonthlyPayment(
       Number(v.requestedAmount ?? 0),
-      Number(v.requestedDurationMonths ?? 0)
+      Number(v.requestedDurationMonths ?? 0),
+      undefined,
+      v.loanPurpose ?? 'PERSONAL'
+    );
+  });
+
+  readonly indicativeRatePercent = computed(() => {
+    const v = this.fv();
+    return computeIndicativeRatePercent(
+      Number(v.requestedAmount ?? 0),
+      Number(v.requestedDurationMonths ?? 0),
+      v.loanPurpose ?? 'PERSONAL'
     );
   });
 

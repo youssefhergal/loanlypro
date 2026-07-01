@@ -75,7 +75,9 @@ export class StepSituationComponent implements OnInit, OnDestroy {
     const v = this.form.getRawValue();
     return calculateMonthlyPayment(
       Number(v.requestedAmount ?? 0),
-      Number(v.requestedDurationMonths ?? 0)
+      Number(v.requestedDurationMonths ?? 0),
+      undefined,
+      v.loanPurpose ?? 'PERSONAL'
     );
   }
 
@@ -89,6 +91,10 @@ export class StepSituationComponent implements OnInit, OnDestroy {
 
   get durationMonths(): number {
     return Number(this.form.get('requestedDurationMonths')?.value) || 0;
+  }
+
+  get loanPurpose() {
+    return this.form.get('loanPurpose')?.value ?? 'PERSONAL';
   }
 
   get adviceTitle(): string {

@@ -1,0 +1,91 @@
+<section class="help-page">
+  <p class="help-page__meta">{{ totalQuestions() }} questions référencées</p>
+
+  <div class="help-layout">
+    <div class="help-layout__main">
+      @if (!hasResults()) {
+        <div class="help-empty">
+          <mat-icon aria-hidden="true">search_off</mat-icon>
+          <p>Aucun résultat pour « {{ helpFaqSearch.query() }} ».</p>
+          <button mat-stroked-button type="button" (click)="clearSearch()">
+            Effacer la recherche
+          </button>
+        </div>
+      } @else {
+        @for (category of filteredCategories(); track category.id) {
+          <section class="help-category" [attr.aria-labelledby]="'help-cat-' + category.id">
+            <h2 class="help-category__title" [id]="'help-cat-' + category.id">
+              <mat-icon aria-hidden="true">{{ category.icon }}</mat-icon>
+              {{ category.label }}
+              <span class="help-category__count">{{ category.items.length }}</span>
+            </h2>
+
+            <mat-accordion class="help-accordion" multi>
+              @for (item of category.items; track item.id) {
+                <mat-expansion-panel class="help-accordion__panel">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>{{ item.question }}</mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <div class="help-answer">{{ item.answer }}</div>
+                </mat-expansion-panel>
+              }
+            </mat-accordion>
+          </section>
+        }
+      }
+    </div>
+
+    <aside class="help-layout__aside" aria-label="Contact et raccourcis">
+      <section class="help-aside-card help-aside-card--contact">
+        <h2 class="help-aside-card__title">
+          <mat-icon>support_agent</mat-icon>
+          Besoin d'aide ?
+        </h2>
+        <p>Un conseiller peut vous accompagner du dépôt de dossier au suivi de remboursement.</p>
+        <p class="help-aside-card__hours">
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+          {{ contact.supportHours }}
+        </p>
+        <div class="help-aside-card__actions">
+          <a mat-flat-button color="primary" [routerLink]="messagesLink()">
+            <mat-icon>chat</mat-icon>
+            Messagerie
+          </a>
+          <a
+            mat-stroked-button
+            class="help-aside-card__email-btn"
+            [href]="'mailto:' + contact.supportEmail"
+          >
+            <mat-icon>mail</mat-icon>
+            {{ contact.supportEmail }}
+          </a>
+        </div>
+      </section>
+
+      <section class="help-aside-card">
+        <h2 class="help-aside-card__title help-aside-card__title--plain">Accès rapide</h2>
+        <nav class="help-aside-links">
+          @for (link of quickLinks(); track link.label) {
+            <a [routerLink]="link.routerLink" class="help-aside-links__item">
+              <mat-icon aria-hidden="true">{{ link.icon }}</mat-icon>
+              {{ link.label }}
+            </a>
+          }
+        </nav>
+      </section>
+
+      <section class="help-aside-card help-aside-card--legal">
+        <h2 class="help-aside-card__title help-aside-card__title--plain">
+          <mat-icon>shield</mat-icon>
+          Données personnelles
+        </h2>
+        <p>
+          Pour exercer vos droits RGPD (accès, rectification, suppression), contactez notre DPO :
+        </p>
+        <a class="help-aside-card__dpo-link" [href]="'mailto:' + contact.dpoEmail">
+          {{ contact.dpoEmail }}
+        </a>
+      </section>
+    </aside>
+  </div>
+</section>

@@ -72,4 +72,12 @@ export class StepNeedComponent {
   get durationMonths(): number {
     return Number(this.form.get('requestedDurationMonths')?.value) || 0;
   }
+
+  get loanPurpose() {
+    return this.form.get('loanPurpose')?.value ?? 'PERSONAL';
+  }
+
+  get selectedPurposeHint(): string | undefined {
+    return this.purposeOptions.find((opt) => opt.value === this.loanPurpose)?.hint;
+  }
 }

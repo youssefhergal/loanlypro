@@ -18,6 +18,9 @@ import { NotificationApiService } from '../../../core/notifications/services/not
 import { NotificationPageCoordinationService } from '../../../core/notifications/services/notification-page-coordination.service';
 import { NotificationUnreadService } from '../../../core/notifications/services/notification-unread.service';
 import { NotificationBellMenuComponent } from '../../../shared/notification-bell-menu/notification-bell-menu.component';
+import { HelpFaqSearchFieldComponent } from '../../../shared/help-faq-search-field/help-faq-search-field.component';
+import { HelpFaqSearchService } from '../../../core/help/services/help-faq-search.service';
+import { isHelpFaqPath } from '../../../core/help/utils/help-faq.util';
 import type { User } from '../../../core/auth/models/user.model';
 import type { BreadcrumbItem } from '../client-shell/client-shell.component';
 
@@ -36,6 +39,7 @@ const SIDEBAR_COLLAPSED_KEY = 'lf-advisor-sidebar-collapsed';
     MatTooltipModule,
     MatDividerModule,
     NotificationBellMenuComponent,
+    HelpFaqSearchFieldComponent,
   ],
   templateUrl: './advisor-shell.component.html',
   styleUrl: './advisor-shell.component.scss',
@@ -45,6 +49,7 @@ export class AdvisorShellComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly notificationApi = inject(NotificationApiService);
   private readonly notificationPageCoordination = inject(NotificationPageCoordinationService);
+  private readonly helpFaqSearch = inject(HelpFaqSearchService);
   readonly notificationUnread = inject(NotificationUnreadService);
 
   readonly sidebarCollapsed = signal(this.readSidebarPreference());
@@ -52,6 +57,7 @@ export class AdvisorShellComponent {
   readonly pageTitle = signal('');
   readonly pageDescription = signal('');
   readonly showMarkAllNotificationsCta = signal(false);
+  readonly showHelpFaqSearch = signal(false);
   readonly markingAllNotifications = signal(false);
 
   constructor(public readonly auth: AuthService) {
@@ -119,6 +125,10 @@ export class AdvisorShellComponent {
     }
 
     this.showMarkAllNotificationsCta.set(path === '/conseiller/notifications');
+    this.showHelpFaqSearch.set(isHelpFaqPath(path));
+    if (!isHelpFaqPath(path)) {
+      this.helpFaqSearch.clear();
+    }
 
     const crumbs: BreadcrumbItem[] = [];
     if (!isDashboard) {

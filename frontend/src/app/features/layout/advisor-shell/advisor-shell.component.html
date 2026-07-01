@@ -202,6 +202,9 @@
             Tout marquer comme lu
           </button>
         }
+        @if (showHelpFaqSearch()) {
+          <app-help-faq-search-field class="page-header-search" />
+        }
       </header>
     }
     <router-outlet />

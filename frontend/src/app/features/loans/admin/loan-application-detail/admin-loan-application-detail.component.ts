@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { forkJoin } from 'rxjs';
-import { EMPLOYMENT_OPTIONS, LOAN_INTEREST_RATE } from '../../../../core/loans/constants/loan.constants';
+import { EMPLOYMENT_OPTIONS } from '../../../../core/loans/constants/loan.constants';
 import { LoanDocumentResponseDto } from '../../../../core/loans/models/loan-document.model';
 import { LoanDocumentReviewResponseDto } from '../../../../core/loans/models/loan-document-review.model';
 import { LoanDocumentType } from '../../../../core/loans/models/loan.enums';
@@ -105,7 +105,8 @@ export class AdminLoanApplicationDetailComponent implements OnInit, OnDestroy {
     const payment = calculateMonthlyPayment(
       Number(l.requestedAmount),
       l.requestedDurationMonths,
-      LOAN_INTEREST_RATE
+      undefined,
+      l.loanPurpose
     );
     return Math.round(calculateDebtRatio(charges, payment, income) * 100);
   });

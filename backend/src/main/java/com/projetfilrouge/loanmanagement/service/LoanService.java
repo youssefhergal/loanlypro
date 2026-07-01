@@ -69,7 +69,6 @@ public class LoanService {
             LoanDocumentType.BANK_STATEMENTS,
             LoanDocumentType.PROOF_OF_ADDRESS
     );
-    private static final BigDecimal SYSTEM_INTEREST_RATE = new BigDecimal("3.85");
     private static final String MSG_DOSSIER_INTROUVABLE = "Dossier introuvable";
     private static final String MSG_ACCES_REFUSE = "Accès refusé";
     private static final String MSG_ACCES_REFUSE_DEMANDE = "Accès refusé à cette demande";
@@ -84,6 +83,7 @@ public class LoanService {
     private final DocumentReviewService documentReviewService;
     private final LoanDocumentStorageService documentStorage;
     private final RepaymentPlanService repaymentPlanService;
+    private final LoanInterestRateService interestRateService;
 
     @Transactional
     public LoanResponseDto createApplication(LoanRequestDto request, String currentUserEmail) {
@@ -939,9 +939,17 @@ public class LoanService {
     private void applySystemOffer(LoanApplication loan) {
         loan.setApprovedAmount(loan.getRequestedAmount());
         loan.setApprovedDurationMonths(loan.getRequestedDurationMonths());
-        loan.setInterestRate(SYSTEM_INTEREST_RATE);
+        loan.setInterestRate(systemInterestRateFor(loan));
         loan.setOfferMessage(null);
         loan.setOfferClientAccepted(null);
+    }
+
+    private BigDecimal systemInterestRateFor(LoanApplication loan) {
+        return interestRateService.calculateIndicativeRate(
+                loan.getRequestedAmount(),
+                loan.getRequestedDurationMonths(),
+                loan.getLoanPurpose()
+        );
     }
 
     private boolean isCounterOffer(LoanApplication loan) {
@@ -950,9 +958,10 @@ public class LoanService {
                 || loan.getInterestRate() == null) {
             return false;
         }
+        BigDecimal systemRate = systemInterestRateFor(loan);
         return loan.getApprovedAmount().compareTo(loan.getRequestedAmount()) != 0
                 || !loan.getApprovedDurationMonths().equals(loan.getRequestedDurationMonths())
-                || loan.getInterestRate().compareTo(SYSTEM_INTEREST_RATE) != 0;
+                || loan.getInterestRate().compareTo(systemRate) != 0;
     }
 
     private void ensureCanSubmit(LoanApplication loan) {
@@ -1095,6 +1104,7 @@ public class LoanService {
 
     private String resolvePurposeLabel(LoanPurpose loanPurpose) {
         return switch (loanPurpose) {
+            case GREEN -> "Crédit vert / éco";
             case SOFTWARE -> "Logiciel / équipement professionnel";
             case VEHICLE -> "Véhicule";
             case HOME_IMPROVEMENT -> "Travaux / aménagement";
@@ -1102,6 +1112,10 @@ public class LoanService {
             case EDUCATION -> "Formation / études";
             case OTHER -> "Autre";
         };
+    }
+
+    public BigDecimal getIndicativeInterestRate(BigDecimal amount, int durationMonths, LoanPurpose loanPurpose) {
+        return interestRateService.calculateIndicativeRate(amount, durationMonths, loanPurpose);
     }
 
     private void ensureCanEditDraft(LoanApplication loan) {
