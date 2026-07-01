@@ -14,28 +14,33 @@ export interface LoanApplicationSummaryDto {
   title: string;
   requestedAmount: number;
   requestedDurationMonths: number;
-  createdAt?: string;
-  submittedAt?: string;
-  decidedAt?: string;
+  createdAt?: string | null;
+  submittedAt?: string | null;
+  decidedAt?: string | null;
 }
 
 export interface LoanDocumentResponseDto {
   id: number;
+  loanApplicationId: number;
   documentType: string;
   originalFileName: string;
-  displayName?: string;
+  displayName?: string | null;
+  contentType?: string | null;
   fileSizeBytes: number;
   uploadedAt: string;
 }
 
 export interface PaymentTransactionDto {
   id: number;
-  amount: number;
-  status: 'PENDING' | 'SUCCESS' | 'FAILED' | string;
+  installmentId: number;
   sequenceNumber: number;
   attemptNumber: number;
-  attemptedAt?: string;
-  settledAt?: string;
+  amount: number;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | string;
+  failureReason?: string | null;
+  externalReference?: string | null;
+  attemptedAt: string;
+  settledAt?: string | null;
 }
 
 export interface DashboardResponse {
