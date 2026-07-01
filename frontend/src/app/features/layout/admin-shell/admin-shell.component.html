@@ -71,6 +71,23 @@
         </section>
 
         <section class="nav-section">
+          <h3 class="nav-section-title">Communication</h3>
+          <div class="nav-section-items">
+            <a
+              routerLink="/admin/messages"
+              routerLinkActive="active"
+              class="nav-item"
+              matTooltip="Messages"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>chat</mat-icon>
+              <span>Messages</span>
+            </a>
+          </div>
+        </section>
+
+        <section class="nav-section">
           <h3 class="nav-section-title">Gestion</h3>
           <div class="nav-section-items">
             <a

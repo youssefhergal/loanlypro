@@ -15,7 +15,10 @@ RUN mvn package -DskipTests -B
 FROM amazoncorretto:17-alpine
 WORKDIR /app
 
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN addgroup -S spring && adduser -S spring -G spring && \
+    mkdir -p /app/uploads/loan-documents /app/uploads/messaging-attachments && \
+    chown -R spring:spring /app/uploads
+
 USER spring:spring
 
 COPY --from=build /app/target/*.jar app.jar

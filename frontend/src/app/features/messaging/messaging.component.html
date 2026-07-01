@@ -1,0 +1,244 @@
+<div class="messaging-layout">
+
+  <!-- ── Sidebar conversations ─────────────────────────────────── -->
+  <aside class="conv-sidebar">
+    <header class="conv-sidebar__header">
+      <h2 class="conv-sidebar__title">
+        Messages
+        @if (totalUnread() > 0) {
+          <span class="unread-badge">{{ totalUnread() }}</span>
+        }
+      </h2>
+      <button
+        mat-icon-button
+        class="new-conv-btn"
+        (click)="openNewConversationDialog()"
+        matTooltip="Nouvelle conversation"
+      >
+        <mat-icon>edit_square</mat-icon>
+      </button>
+    </header>
+
+    <div class="conv-search">
+      <mat-icon class="conv-search__icon">search</mat-icon>
+      <input
+        class="conv-search__input"
+        type="text"
+        placeholder="Rechercher…"
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+        aria-label="Rechercher une conversation"
+      />
+    </div>
+
+    <ul class="conv-list" role="listbox" aria-label="Conversations">
+      @for (conv of filteredConversations(); track conv.id) {
+        <li
+          class="conv-item"
+          [class.conv-item--active]="selectedConv()?.id === conv.id"
+          [class.conv-item--unread]="conv.unreadCount > 0"
+          (click)="selectConversation(conv)"
+          (keydown.enter)="selectConversation(conv)"
+          role="option"
+          [attr.aria-selected]="selectedConv()?.id === conv.id"
+          tabindex="0"
+        >
+          <div class="conv-avatar" [attr.data-role]="roleColor(conv.otherUserRole)">
+            {{ initials(conv.otherUserFirstName, conv.otherUserLastName) }}
+          </div>
+
+          <div class="conv-meta">
+            <div class="conv-meta__top">
+              <span class="conv-name">{{ conv.otherUserFirstName }} {{ conv.otherUserLastName }}</span>
+              @if (conv.lastMessageAt) {
+                <span class="conv-time">{{ conv.lastMessageAt | date:'HH:mm' }}</span>
+              }
+            </div>
+            <div class="conv-meta__bottom">
+              <span class="conv-preview">
+                {{ conv.lastMessagePreview ?? 'Démarrez la conversation…' }}
+              </span>
+              @if (conv.unreadCount > 0) {
+                <span class="conv-unread-dot">{{ conv.unreadCount }}</span>
+              }
+            </div>
+            <span class="conv-role-chip" [attr.data-role]="roleColor(conv.otherUserRole)">
+              {{ roleLabel(conv.otherUserRole) }}
+            </span>
+          </div>
+        </li>
+      } @empty {
+        <li class="conv-empty">
+          <mat-icon>chat_bubble_outline</mat-icon>
+          <p>Aucune conversation</p>
+          <button mat-stroked-button (click)="openNewConversationDialog()">
+            Nouveau message
+          </button>
+        </li>
+      }
+    </ul>
+  </aside>
+
+  <!-- ── Chat panel ─────────────────────────────────────────────── -->
+  <section class="chat-panel">
+    @if (selectedConv(); as conv) {
+
+      <!-- header -->
+      <header class="chat-header">
+        <div class="chat-header__avatar" [attr.data-role]="roleColor(conv.otherUserRole)">
+          {{ initials(conv.otherUserFirstName, conv.otherUserLastName) }}
+        </div>
+        <div class="chat-header__info">
+          <span class="chat-header__name">
+            {{ conv.otherUserFirstName }} {{ conv.otherUserLastName }}
+          </span>
+          <span class="chat-header__role" [attr.data-role]="roleColor(conv.otherUserRole)">
+            {{ roleLabel(conv.otherUserRole) }}
+          </span>
+        </div>
+      </header>
+
+      <!-- messages -->
+      <div class="chat-messages" aria-live="polite" aria-label="Messages">
+        @if (loading()) {
+          <div class="chat-loading">
+            <mat-spinner diameter="36" />
+          </div>
+        } @else {
+          @for (msg of messages(); track msg.id) {
+            <div class="msg-row" [class.msg-row--own]="msg.own">
+              @if (!msg.own) {
+                <div class="msg-avatar">
+                  {{ initials(msg.senderFirstName, msg.senderLastName) }}
+                </div>
+              }
+              <div class="msg-bubble" [class.msg-bubble--own]="msg.own">
+                @if (msg.content) {
+                  <p class="msg-content">{{ msg.content }}</p>
+                }
+                @if (msg.attachmentDownloadUrl) {
+                  <div class="msg-attachment">
+                    @if (isImage(msg.attachmentContentType)) {
+                      <a [href]="msg.attachmentDownloadUrl" target="_blank" rel="noopener">
+                        <img
+                          class="msg-attachment__image"
+                          [src]="msg.attachmentDownloadUrl"
+                          [alt]="msg.attachmentName ?? 'Image'"
+                        />
+                      </a>
+                    } @else {
+                      <a
+                        class="msg-attachment__file"
+                        [href]="msg.attachmentDownloadUrl"
+                        download
+                        target="_blank"
+                        rel="noopener"
+                      >
+                        <mat-icon class="msg-attachment__icon">attach_file</mat-icon>
+                        <span class="msg-attachment__name">{{ msg.attachmentName }}</span>
+                        <mat-icon class="msg-attachment__dl">download</mat-icon>
+                      </a>
+                    }
+                  </div>
+                }
+                <div class="msg-meta">
+                  <span class="msg-time">{{ msg.sentAt | date:'HH:mm' }}</span>
+                  @if (msg.own) {
+                    <mat-icon class="msg-read-icon" [class.msg-read-icon--read]="msg.readAt">
+                      {{ msg.readAt ? 'done_all' : 'done' }}
+                    </mat-icon>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+          <div #messagesEnd></div>
+        }
+      </div>
+
+      <!-- attached file preview bar -->
+      @if (attachedFile()) {
+        <div class="attachment-preview-bar">
+          <mat-icon class="attachment-preview-bar__icon">attach_file</mat-icon>
+          <span class="attachment-preview-bar__name">{{ attachedFile()!.name }}</span>
+          <button
+            mat-icon-button
+            class="attachment-preview-bar__remove"
+            (click)="clearAttachment()"
+            matTooltip="Retirer la pièce jointe"
+            aria-label="Retirer la pièce jointe"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      }
+      @if (fileError()) {
+        <div class="attachment-error">{{ fileError() }}</div>
+      }
+
+      <!-- input -->
+      <footer class="chat-input-bar">
+        <!-- hidden file input -->
+        <input
+          #fileInput
+          type="file"
+          class="chat-file-input"
+          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+          (change)="onFileSelected($event)"
+          aria-hidden="true"
+        />
+
+        <button
+          mat-icon-button
+          class="chat-attach-btn"
+          type="button"
+          (click)="fileInput.click()"
+          matTooltip="Joindre un fichier (max 10 Mo)"
+          aria-label="Joindre un fichier"
+        >
+          <mat-icon>attach_file</mat-icon>
+        </button>
+
+        <textarea
+          class="chat-input"
+          [formControl]="messageCtrl"
+          placeholder="Écrivez un message… (Entrée pour envoyer, Maj+Entrée pour sauter une ligne)"
+          (keydown)="onKeydown($event)"
+          rows="1"
+          aria-label="Zone de saisie du message"
+        ></textarea>
+        <button
+          mat-icon-button
+          class="chat-send-btn"
+          [disabled]="(messageCtrl.value?.trim() === '' && !attachedFile()) || sending()"
+          (click)="send()"
+          matTooltip="Envoyer (Entrée)"
+          aria-label="Envoyer le message"
+        >
+          @if (sending()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            <mat-icon>send</mat-icon>
+          }
+        </button>
+      </footer>
+
+    } @else {
+      <!-- empty state -->
+      <div class="chat-empty">
+        <div class="chat-empty__illustration">
+          <mat-icon>forum</mat-icon>
+        </div>
+        <h3 class="chat-empty__title">Bienvenue dans votre messagerie</h3>
+        <p class="chat-empty__sub">
+          Sélectionnez une conversation ou démarrez-en une nouvelle.
+        </p>
+        <button mat-flat-button color="primary" (click)="openNewConversationDialog()">
+          <mat-icon>edit_square</mat-icon>
+          Nouveau message
+        </button>
+      </div>
+    }
+  </section>
+
+</div>

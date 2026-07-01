@@ -20,4 +20,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
             ORDER BY u.lastName, u.firstName
             """)
     List<User> findAllConseillers();
+
+    @Query("""
+            SELECT u FROM User u
+            JOIN u.roles r
+            WHERE r.name = 'ROLE_ADMIN'
+            ORDER BY u.lastName, u.firstName
+            """)
+    List<User> findAllAdmins();
 }

@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/verify-email").permitAll()
                         .requestMatchers("/api/auth/resend-verification").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
