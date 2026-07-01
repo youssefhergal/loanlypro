@@ -4,6 +4,7 @@ export const LOAN_AMOUNT_MIN = 1000;
 export const LOAN_AMOUNT_MAX = 200_000;
 export const LOAN_DURATION_MIN = 12;
 export const LOAN_DURATION_MAX = 240;
+/** Taux de repli si montant/durée/projet indisponibles (véhicule 15 k€ / 48 mois). */
 export const LOAN_INTEREST_RATE = 0.0385;
 export const LOAN_DEBT_RATIO_MAX = 0.33;
 /** Seuil affiché dans le simulateur d'endettement (indicatif banque). */
@@ -14,7 +15,8 @@ export const OTHER_DOCUMENT_MAX_COUNT = 2;
 export const OTHER_DOCUMENT_LABEL_MAX_LENGTH = 120;
 export const LOAN_ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 
-export const LOAN_PURPOSE_OPTIONS: { value: LoanPurpose; label: string }[] = [
+export const LOAN_PURPOSE_OPTIONS: { value: LoanPurpose; label: string; hint?: string }[] = [
+  { value: 'GREEN', label: 'Crédit vert / éco', hint: 'Taux préférentiel pour projets durables' },
   { value: 'SOFTWARE', label: 'Logiciel / équipement pro' },
   { value: 'VEHICLE', label: 'Véhicule' },
   { value: 'HOME_IMPROVEMENT', label: 'Travaux / aménagement' },

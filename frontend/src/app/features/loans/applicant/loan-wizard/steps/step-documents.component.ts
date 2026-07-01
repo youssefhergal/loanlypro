@@ -53,6 +53,10 @@ export class StepDocumentsComponent implements OnDestroy {
     return Number(this.state.form.get('requestedDurationMonths')?.value) || 0;
   }
 
+  get loanPurpose() {
+    return this.state.form.get('loanPurpose')?.value ?? 'PERSONAL';
+  }
+
   getFiles(type: LoanDocumentType) {
     return this.documents().filter((d) => d.documentType === type);
   }

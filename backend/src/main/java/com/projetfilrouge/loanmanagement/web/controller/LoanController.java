@@ -2,6 +2,7 @@ package com.projetfilrouge.loanmanagement.web.controller;
 
 import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
 import com.projetfilrouge.loanmanagement.entity.LoanDocumentType;
+import com.projetfilrouge.loanmanagement.entity.LoanPurpose;
 import com.projetfilrouge.loanmanagement.service.LoanDocumentStorageService;
 import com.projetfilrouge.loanmanagement.service.LoanService;
 import com.projetfilrouge.loanmanagement.web.dto.request.AdminApplicationListQuery;
@@ -18,6 +19,7 @@ import com.projetfilrouge.loanmanagement.web.dto.response.AdminLoanListSummaryDt
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentReviewResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanDocumentResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanHistoryEventResponseDto;
+import com.projetfilrouge.loanmanagement.web.dto.response.LoanInterestRateResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.LoanResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,6 +35,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -54,6 +57,25 @@ public class LoanController {
     ) {
         LoanResponseDto response = loanService.createApplication(request, authentication.getName());
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/interest-rate")
+    @Operation(
+            summary = "Taux indicatif",
+            description = "Calcule le taux annuel indicatif selon le montant, la durée et la finalité du prêt."
+    )
+    public ResponseEntity<LoanInterestRateResponseDto> indicativeInterestRate(
+            @RequestParam BigDecimal amount,
+            @RequestParam int durationMonths,
+            @RequestParam LoanPurpose loanPurpose
+    ) {
+        return ResponseEntity.ok(
+                LoanInterestRateResponseDto.builder()
+                        .interestRatePercent(
+                                loanService.getIndicativeInterestRate(amount, durationMonths, loanPurpose)
+                        )
+                        .build()
+        );
     }
 
     @GetMapping

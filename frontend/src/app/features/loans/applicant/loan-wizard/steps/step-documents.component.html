@@ -34,7 +34,11 @@
   </div>
 
   <aside class="step-documents__aside">
-    <app-wizard-estimation-panel [amount]="amount" [durationMonths]="durationMonths" />
+    <app-wizard-estimation-panel
+      [amount]="amount"
+      [durationMonths]="durationMonths"
+      [loanPurpose]="loanPurpose"
+    />
     <app-wizard-advice-panel
       icon="info"
       [title]="adviceTitle"

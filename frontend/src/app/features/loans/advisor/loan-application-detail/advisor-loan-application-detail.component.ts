@@ -13,7 +13,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { forkJoin } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { EMPLOYMENT_OPTIONS, LOAN_INTEREST_RATE } from '../../../../core/loans/constants/loan.constants';
+import { EMPLOYMENT_OPTIONS } from '../../../../core/loans/constants/loan.constants';
+import { computeIndicativeRatePercent } from '../../../../core/loans/utils/loan-interest-rate.util';
 import { LoanDocumentResponseDto } from '../../../../core/loans/models/loan-document.model';
 import { LoanDocumentType } from '../../../../core/loans/models/loan.enums';
 import { LoanDocumentReviewResponseDto } from '../../../../core/loans/models/loan-document-review.model';
@@ -167,7 +168,7 @@ export class AdvisorLoanApplicationDetailComponent implements OnInit, OnDestroy 
   readonly offerForm = this.fb.group({
     approvedAmount: [0, [Validators.required, Validators.min(1000)]],
     approvedDurationMonths: [12, [Validators.required, Validators.min(12)]],
-    interestRate: [3.85, [Validators.required, Validators.min(0)]],
+    interestRate: [0, [Validators.required, Validators.min(0)]],
     clientMessage: ['', Validators.maxLength(500)],
   });
 
@@ -205,7 +206,8 @@ export class AdvisorLoanApplicationDetailComponent implements OnInit, OnDestroy 
     const payment = calculateMonthlyPayment(
       Number(l.requestedAmount),
       l.requestedDurationMonths,
-      LOAN_INTEREST_RATE
+      undefined,
+      l.loanPurpose
     );
     return Math.round(calculateDebtRatio(charges, payment, income) * 100);
   });
@@ -262,11 +264,20 @@ export class AdvisorLoanApplicationDetailComponent implements OnInit, OnDestroy 
     return calculateMonthlyPayment(
       Number(l.requestedAmount),
       l.requestedDurationMonths,
-      LOAN_INTEREST_RATE
+      undefined,
+      l.loanPurpose
     );
   });
 
-  readonly systemRatePercent = computed(() => LOAN_INTEREST_RATE * 100);
+  readonly systemRatePercent = computed(() => {
+    const l = this.loan();
+    if (!l) return 0;
+    return computeIndicativeRatePercent(
+      Number(l.requestedAmount),
+      l.requestedDurationMonths,
+      l.loanPurpose
+    );
+  });
 
   readonly proposedMonthlyPayment = computed(() => {
     this.offerFormRevision();
@@ -281,7 +292,12 @@ export class AdvisorLoanApplicationDetailComponent implements OnInit, OnDestroy 
   readonly requestedMonthlyPayment = computed(() => {
     const l = this.loan();
     if (!l) return 0;
-    return calculateMonthlyPayment(Number(l.requestedAmount), l.requestedDurationMonths);
+    return calculateMonthlyPayment(
+      Number(l.requestedAmount),
+      l.requestedDurationMonths,
+      undefined,
+      l.loanPurpose
+    );
   });
 
   readonly isCounterOffer = computed(() => {

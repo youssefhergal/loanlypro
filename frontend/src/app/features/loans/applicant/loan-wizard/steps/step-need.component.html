@@ -47,6 +47,9 @@
               <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
             }
           </mat-select>
+          @if (selectedPurposeHint) {
+            <mat-hint>{{ selectedPurposeHint }}</mat-hint>
+          }
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="loan-field-compact">
@@ -79,7 +82,11 @@
   </div>
 
   <aside class="step-need__aside">
-    <app-wizard-estimation-panel [amount]="amount" [durationMonths]="durationMonths" />
+    <app-wizard-estimation-panel
+      [amount]="amount"
+      [durationMonths]="durationMonths"
+      [loanPurpose]="loanPurpose"
+    />
     <app-wizard-advice-panel />
   </aside>
 </div>

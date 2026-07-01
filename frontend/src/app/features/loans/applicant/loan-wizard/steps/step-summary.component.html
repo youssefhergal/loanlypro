@@ -92,6 +92,10 @@
                     ~{{ monthlyPayment() | currency: 'EUR' : 'symbol' : '1.0-0' }}/mois
                   </span>
                 </div>
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Taux indicatif</span>
+                  <span class="recap-grid__value">{{ indicativeRatePercent() | number: '1.2-2' }} %</span>
+                </div>
               </div>
             </div>
           </div>

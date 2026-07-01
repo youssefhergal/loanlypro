@@ -1,4 +1,5 @@
-import { LOAN_INTEREST_RATE } from '../constants/loan.constants';
+import { LoanPurpose } from '../models/loan.enums';
+import { computeIndicativeAnnualRate } from './loan-interest-rate.util';
 
 export interface LoanSimulation {
   monthlyPayment: number;
@@ -9,12 +10,17 @@ export interface LoanSimulation {
 export function calculateMonthlyPayment(
   principal: number,
   durationMonths: number,
-  annualRate = LOAN_INTEREST_RATE
+  annualRate?: number,
+  purpose?: LoanPurpose
 ): number {
+  const effectiveRate =
+    annualRate ??
+    computeIndicativeAnnualRate(principal, durationMonths, purpose ?? 'PERSONAL');
+
   if (!principal || !durationMonths || principal <= 0 || durationMonths <= 0) {
     return 0;
   }
-  const monthlyRate = annualRate / 12;
+  const monthlyRate = effectiveRate / 12;
   if (monthlyRate === 0) {
     return principal / durationMonths;
   }
@@ -24,9 +30,14 @@ export function calculateMonthlyPayment(
 
 export function calculateLoanSimulation(
   principal: number,
-  durationMonths: number
+  durationMonths: number,
+  purpose?: LoanPurpose,
+  annualRate?: number
 ): LoanSimulation {
-  const monthlyPayment = calculateMonthlyPayment(principal, durationMonths);
+  const effectiveRate =
+    annualRate ??
+    computeIndicativeAnnualRate(principal, durationMonths, purpose ?? 'PERSONAL');
+  const monthlyPayment = calculateMonthlyPayment(principal, durationMonths, effectiveRate);
   const totalCost = monthlyPayment * durationMonths;
   return {
     monthlyPayment,

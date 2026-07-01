@@ -1,11 +1,13 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
+import { CurrencyPipe, DecimalPipe } from '@angular/common';
+import { LoanPurpose } from '../../../../../core/loans/models/loan.enums';
 import {
   calculateLoanSimulation,
   LoanSimulation,
 } from '../../../../../core/loans/utils/loan-calculator';
-import { LOAN_DEBT_RATIO_MAX, LOAN_INTEREST_RATE } from '../../../../../core/loans/constants/loan.constants';
+import { LOAN_DEBT_RATIO_MAX } from '../../../../../core/loans/constants/loan.constants';
+import { computeIndicativeRatePercent } from '../../../../../core/loans/utils/loan-interest-rate.util';
 
 @Component({
   selector: 'app-loan-simulation-card',
@@ -15,7 +17,7 @@ import { LOAN_DEBT_RATIO_MAX, LOAN_INTEREST_RATE } from '../../../../../core/loa
     <mat-card class="simulation-card">
       <mat-card-header>
         <mat-card-title>Simulation indicative</mat-card-title>
-        <mat-card-subtitle>Taux {{ interestPercent }} % — hors frais</mat-card-subtitle>
+        <mat-card-subtitle>Taux {{ interestPercent | number: '1.2-2' }} % — hors frais</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <div class="simulation-metrics">
@@ -55,13 +57,19 @@ import { LOAN_DEBT_RATIO_MAX, LOAN_INTEREST_RATE } from '../../../../../core/loa
 export class LoanSimulationCardComponent implements OnChanges {
   @Input() amount = 0;
   @Input() durationMonths = 0;
+  @Input() loanPurpose: LoanPurpose = 'PERSONAL';
   @Input() debtRatio: number | null = null;
 
-  readonly interestPercent = LOAN_INTEREST_RATE * 100;
   readonly debtRatioMax = LOAN_DEBT_RATIO_MAX;
+  interestPercent = 0;
   simulation: LoanSimulation = { monthlyPayment: 0, totalCost: 0, totalInterest: 0 };
 
   ngOnChanges(): void {
-    this.simulation = calculateLoanSimulation(this.amount, this.durationMonths);
+    this.interestPercent = computeIndicativeRatePercent(
+      this.amount,
+      this.durationMonths,
+      this.loanPurpose
+    );
+    this.simulation = calculateLoanSimulation(this.amount, this.durationMonths, this.loanPurpose);
   }
 }

@@ -96,6 +96,7 @@ const STATUS_STYLES: Record<LoanApplicationStatus, LoanCardStatusStyle> = {
 };
 
 const PURPOSE_ICONS: Record<LoanPurpose, string> = {
+  GREEN: 'energy_savings_leaf',
   SOFTWARE: 'computer',
   VEHICLE: 'directions_car',
   HOME_IMPROVEMENT: 'home_repair_service',
