@@ -23,4 +23,5 @@ public class LoanApplicationSummaryDto {
     private Instant createdAt;
     private Instant submittedAt;
     private Instant decidedAt;
+    private String applicantName;
 }

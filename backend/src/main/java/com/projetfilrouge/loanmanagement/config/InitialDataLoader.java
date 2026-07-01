@@ -51,6 +51,7 @@ public class InitialDataLoader implements CommandLineRunner {
     private static final String PROFILE_D_EMAIL = "pierre.client@test.com";
     private static final String PROFILE_D_REFERENCE = "LF-DEMO-0000";
     private static final String PROFILE_D_ARCHIVED_REFERENCE = "LF-DEMO-D002";
+    private static final String ADVISOR_DEMO_OFFER_REFERENCE = "LF-DEMO-0003";
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
@@ -73,6 +74,7 @@ public class InitialDataLoader implements CommandLineRunner {
         createSampleClientDataIfMissing();
         createProfileBClientDataIfMissing();
         createProfileDClientDataIfMissing();
+        ensureAdvisorDashboardDemoDossiers();
         log.info("Données initiales : rôles et utilisateurs de test vérifiés.");
     }
 
@@ -142,6 +144,7 @@ public class InitialDataLoader implements CommandLineRunner {
 
             // Si le client n'a aucune donnée, on crée un jeu complet (brouillon + soumis + approuvé)
             if (!hasAny) {
+                User advisor = userRepository.findByEmail("conseiller@test.com").orElse(null);
                 // Dossier 1: brouillon
                 LoanApplication draft = LoanApplication.builder()
                         .reference(generateUniqueReference())
@@ -162,6 +165,7 @@ public class InitialDataLoader implements CommandLineRunner {
                 LoanApplication submitted = LoanApplication.builder()
                         .reference(generateUniqueReference())
                         .applicant(client)
+                        .assignedAdvisor(advisor)
                         .status(LoanApplicationStatus.SUBMITTED)
                         .requestedAmount(new BigDecimal("15000.00"))
                         .requestedDurationMonths(48)
@@ -456,6 +460,61 @@ public class InitialDataLoader implements CommandLineRunner {
                 PROFILE_D_REFERENCE,
                 plan != null ? plan.getInstallmentCount() : 0
         );
+    }
+
+    /**
+     * Diversifie les statuts visibles sur le dashboard conseiller (étude, offre, soumis).
+     */
+    private void ensureAdvisorDashboardDemoDossiers() {
+        User advisor = userRepository.findByEmail("conseiller@test.com").orElse(null);
+        User jean = userRepository.findByEmail("client@test.com").orElse(null);
+        if (advisor == null) {
+            return;
+        }
+
+        if (jean != null) {
+            loanApplicationRepository.findByApplicantEmail(jean.getEmail()).stream()
+                    .filter(app -> app.getStatus() == LoanApplicationStatus.SUBMITTED
+                            && app.getAssignedAdvisor() == null)
+                    .findFirst()
+                    .ifPresent(app -> {
+                        app.setAssignedAdvisor(advisor);
+                        loanApplicationRepository.save(app);
+                        log.info("Dossier {} assigné à {} pour la démo conseiller.", app.getReference(), advisor.getEmail());
+                    });
+        }
+
+        if (loanApplicationRepository.findByReference(ADVISOR_DEMO_OFFER_REFERENCE).isPresent()) {
+            return;
+        }
+
+        if (jean == null) {
+            return;
+        }
+
+        Instant now = Instant.now();
+        LoanApplication offerPending = LoanApplication.builder()
+                .reference(ADVISOR_DEMO_OFFER_REFERENCE)
+                .applicant(jean)
+                .assignedAdvisor(advisor)
+                .status(LoanApplicationStatus.OFFER_PENDING)
+                .requestedAmount(new BigDecimal("8000.00"))
+                .requestedDurationMonths(36)
+                .title("Crédit personnel")
+                .loanPurpose(LoanPurpose.PERSONAL)
+                .purpose("Projet personnel — offre en attente client")
+                .monthlyIncome(new BigDecimal("2800.00"))
+                .employmentStatus(EmploymentStatus.CDI)
+                .approvedAmount(new BigDecimal("8000.00"))
+                .approvedDurationMonths(36)
+                .interestRate(new BigDecimal("3.90"))
+                .submittedAt(now.minus(12, ChronoUnit.DAYS))
+                .decidedAt(now.minus(2, ChronoUnit.DAYS))
+                .offerMessage("Offre transmise — en attente de réponse du client.")
+                .offerClientAccepted(false)
+                .build();
+        loanApplicationRepository.save(offerPending);
+        log.info("Dossier démo {} (OFFER_PENDING) créé pour le dashboard conseiller.", ADVISOR_DEMO_OFFER_REFERENCE);
     }
 
     private void seedTransactionsIfMissing(Long loanId) {

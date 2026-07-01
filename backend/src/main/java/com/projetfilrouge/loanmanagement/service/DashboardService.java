@@ -1,6 +1,8 @@
 package com.projetfilrouge.loanmanagement.service;
 
 import com.projetfilrouge.loanmanagement.entity.LoanApplication;
+import com.projetfilrouge.loanmanagement.entity.LoanApplicationStatus;
+import com.projetfilrouge.loanmanagement.entity.User;
 import com.projetfilrouge.loanmanagement.repository.LoanApplicationRepository;
 import com.projetfilrouge.loanmanagement.web.dto.response.*;
 import lombok.RequiredArgsConstructor;
@@ -40,17 +42,7 @@ public class DashboardService {
                 .reversed());
 
         List<LoanApplicationSummaryDto> demandes = applications.stream()
-                .map(app -> LoanApplicationSummaryDto.builder()
-                        .id(app.getId())
-                        .reference(app.getReference())
-                        .status(app.getStatus())
-                        .title(app.getTitle())
-                        .requestedAmount(app.getRequestedAmount())
-                        .requestedDurationMonths(app.getRequestedDurationMonths())
-                        .createdAt(app.getCreatedAt())
-                        .submittedAt(app.getSubmittedAt())
-                        .decidedAt(app.getDecidedAt())
-                        .build())
+                .map(this::toApplicationSummary)
                 .toList();
 
         // 2) Documents du client (tous documents de toutes ses demandes)
@@ -114,17 +106,12 @@ public class DashboardService {
         }
 
         List<LoanApplicationSummaryDto> applications = assignedApps.stream()
-                .map(app -> LoanApplicationSummaryDto.builder()
-                        .id(app.getId())
-                        .reference(app.getReference())
-                        .status(app.getStatus())
-                        .title(app.getTitle())
-                        .requestedAmount(app.getRequestedAmount())
-                        .requestedDurationMonths(app.getRequestedDurationMonths())
-                        .createdAt(app.getCreatedAt())
-                        .submittedAt(app.getSubmittedAt())
-                        .decidedAt(app.getDecidedAt())
-                        .build())
+                .filter(app -> !List.of(
+                        LoanApplicationStatus.APPROVED,
+                        LoanApplicationStatus.REJECTED,
+                        LoanApplicationStatus.CANCELLED
+                ).contains(app.getStatus()))
+                .map(this::toApplicationSummary)
                 .toList();
 
         return AdvisorDashboardResponse.builder()
@@ -139,5 +126,30 @@ public class DashboardService {
     public AdminLoanListSummaryDto getAdminDashboard(String search) {
         String email = profilService.getCurrentUser().getEmail();
         return loanService.getAdminListSummary(email, search);
+    }
+
+    private LoanApplicationSummaryDto toApplicationSummary(LoanApplication app) {
+        return LoanApplicationSummaryDto.builder()
+                .id(app.getId())
+                .reference(app.getReference())
+                .status(app.getStatus())
+                .title(app.getTitle())
+                .requestedAmount(app.getRequestedAmount())
+                .requestedDurationMonths(app.getRequestedDurationMonths())
+                .createdAt(app.getCreatedAt())
+                .submittedAt(app.getSubmittedAt())
+                .decidedAt(app.getDecidedAt())
+                .applicantName(applicantDisplayName(app.getApplicant()))
+                .build();
+    }
+
+    private static String applicantDisplayName(User applicant) {
+        if (applicant == null) {
+            return null;
+        }
+        String first = applicant.getFirstName() != null ? applicant.getFirstName().trim() : "";
+        String last = applicant.getLastName() != null ? applicant.getLastName().trim() : "";
+        String full = (first + " " + last).trim();
+        return full.isEmpty() ? null : full;
     }
 }
