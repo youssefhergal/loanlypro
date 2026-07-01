@@ -104,6 +104,12 @@ export const routes: Routes = [
         data: { title: 'Messages', description: 'Messagerie en temps réel.' },
       },
       {
+        path: 'conseiller-ia',
+        loadComponent: () =>
+          import('./features/ai-advisor/ai-advisor.component').then((m) => m.AiAdvisorComponent),
+        data: { title: 'Conseiller IA', description: 'Votre conseiller financier personnalisé propulsé par IA.' },
+      },
+      {
         path: 'notifications',
         loadComponent: () =>
           import('./features/notifications/notifications.component').then(
@@ -197,6 +203,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/messaging/messaging.component').then((m) => m.MessagingComponent),
         data: { title: 'Messages', description: 'Messagerie en temps réel.' },
+      },
+      {
+        path: 'conseiller-ia',
+        loadComponent: () =>
+          import('./features/ai-advisor/ai-advisor.component').then((m) => m.AiAdvisorComponent),
+        data: { title: 'Conseiller IA', description: 'Votre conseiller financier personnalisé propulsé par IA.' },
       },
       {
         path: 'utilisateurs',
@@ -373,6 +385,12 @@ export const routes: Routes = [
           title: 'Messages',
           description: "Échangez avec nos équipes et consultez l\'historique de vos conversations.",
         },
+      },
+      {
+        path: 'conseiller-ia',
+        loadComponent: () =>
+          import('./features/ai-advisor/ai-advisor.component').then((m) => m.AiAdvisorComponent),
+        data: { title: 'Conseiller IA', description: 'Votre conseiller financier personnalisé propulsé par IA.' },
       },
       {
         path: 'notifications',

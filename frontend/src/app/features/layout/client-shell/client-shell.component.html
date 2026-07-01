@@ -173,6 +173,17 @@
             <span>Messages</span>
           </a>
           <a
+            routerLink="/conseiller-ia"
+            routerLinkActive="active"
+            class="nav-item nav-item--ai"
+            matTooltip="Conseiller IA"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon>auto_awesome</mat-icon>
+            <span>Conseiller IA</span>
+          </a>
+          <a
             routerLink="/notifications"
             routerLinkActive="active"
             class="nav-item nav-item--notifications"
