@@ -36,7 +36,7 @@ public class LoanApplication {
     private User assignedAdvisor;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 32)
     private LoanApplicationStatus status;
 
     @Column(name = "requested_amount", nullable = false, precision = 15, scale = 2)
