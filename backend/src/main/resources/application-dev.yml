@@ -24,9 +24,9 @@ app:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/loan_management?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
-    username: app
-    password: app
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/loan_management?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
+    username: ${SPRING_DATASOURCE_USERNAME:app}
+    password: ${SPRING_DATASOURCE_PASSWORD:app}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
