@@ -44,6 +44,7 @@ import { SendProposalDialogService } from '../../../../shared/send-proposal-dial
 import { ApproveLoanDialogService } from '../../../../shared/approve-loan-dialog/approve-loan-dialog.service';
 import { RejectLoanDialogService } from '../../../../shared/reject-loan-dialog/reject-loan-dialog.service';
 import { AdvisorDocumentPreviewPanelComponent } from './advisor-document-preview-panel/advisor-document-preview-panel.component';
+import { NotificationUnreadService } from '../../../../core/notifications/services/notification-unread.service';
 
 type OfferMode = 'system' | 'custom';
 
@@ -78,6 +79,7 @@ export class AdvisorLoanApplicationDetailComponent implements OnInit, OnDestroy 
   private readonly rejectLoanDialog = inject(RejectLoanDialogService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
+  private readonly notificationUnread = inject(NotificationUnreadService);
   private readonly destroyRef = inject(DestroyRef);
 
   /** Réactivité des computed qui lisent offerForm (valueChanges ne déclenche pas les signals seuls). */
@@ -631,6 +633,7 @@ export class AdvisorLoanApplicationDetailComponent implements OnInit, OnDestroy 
         this.loanApi.validateDocument(l.id, row.type).subscribe({
           next: () => {
             this.actionLoading.set(false);
+            this.notificationUnread.refresh();
             this.snackBar.open('Pièce validée.', 'OK', { duration: 3000 });
             this.reloadHistoryAndDocs(l.id);
           },
@@ -659,6 +662,7 @@ export class AdvisorLoanApplicationDetailComponent implements OnInit, OnDestroy 
         this.loanApi.rejectDocument(l.id, { documentType: row.type, comment: comment.trim() }).subscribe({
           next: () => {
             this.actionLoading.set(false);
+            this.notificationUnread.refresh();
             this.snackBar.open('Pièce rejetée. Le client pourra déposer un complément.', 'OK', {
               duration: 4000,
             });
@@ -826,6 +830,7 @@ export class AdvisorLoanApplicationDetailComponent implements OnInit, OnDestroy 
         next: (approved) => {
           this.loan.set(approved);
           this.actionLoading.set(false);
+          this.notificationUnread.refresh();
           this.reloadHistory(l.id);
           this.snackBar.open('Dossier approuvé.', 'OK', { duration: 3000 });
         },
@@ -866,6 +871,7 @@ export class AdvisorLoanApplicationDetailComponent implements OnInit, OnDestroy 
       next: (updated) => {
         this.loan.set(updated);
         this.actionLoading.set(false);
+        this.notificationUnread.refresh();
         onSuccess?.(updated);
         if (!onSuccess) {
           this.reloadHistory(updated.id);

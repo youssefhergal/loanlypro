@@ -7,6 +7,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { forkJoin } from 'rxjs';
 import { AuthService } from '../../../../core/auth/services/auth.service';
+import { NotificationUnreadService } from '../../../../core/notifications/services/notification-unread.service';
 import { LoanApiService } from '../../../../core/loans/services/loan-api.service';
 import { RepaymentApiService } from '../../../../core/loans/repayment/services/repayment-api.service';
 import { LoanSummaryDto } from '../../../../core/loans/repayment/models/loan-summary.model';
@@ -76,6 +77,7 @@ export class LoanDetailComponent implements OnInit {
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly acceptCounterOfferDialog = inject(AcceptCounterOfferDialogService);
   private readonly rejectCounterOfferDialog = inject(RejectCounterOfferDialogService);
+  private readonly notificationUnread = inject(NotificationUnreadService);
   readonly auth = inject(AuthService);
   readonly debtRatioMaxPercent = LOAN_DEBT_RATIO_DISPLAY_MAX * 100;
 
@@ -413,6 +415,7 @@ export class LoanDetailComponent implements OnInit {
     this.loanApi.uploadComplementDocument(loanId, row.type, file).subscribe({
       next: () => {
         this.complementUploading.set(null);
+        this.notificationUnread.refresh();
         this.reloadDocumentsAndHistory(loanId);
         this.snackBar.open(
           'Document envoyé. En attente de validation par votre conseiller.',
@@ -473,6 +476,7 @@ export class LoanDetailComponent implements OnInit {
         this.loanApi.acceptOffer(loan.id).subscribe({
           next: (updated) => {
             this.loan.set(updated);
+            this.notificationUnread.refresh();
             this.reloadDocumentsAndHistory(loan.id);
             this.offerActionLoading.set(false);
             this.snackBar.open('Contre-offre acceptée. Votre dossier reprend son analyse.', 'OK', {
@@ -517,6 +521,7 @@ export class LoanDetailComponent implements OnInit {
         this.loanApi.rejectOffer(loan.id, comment || undefined).subscribe({
           next: (updated) => {
             this.loan.set(updated);
+            this.notificationUnread.refresh();
             this.reloadDocumentsAndHistory(loan.id);
             this.offerActionLoading.set(false);
             this.snackBar.open('Contre-offre refusée. Votre conseiller a été informé.', 'OK', {

@@ -75,6 +75,9 @@ export class ClientShellComponent {
   constructor(public readonly auth: AuthService) {
     this.userSettings.applyToDocument(this.userSettings.load('client'));
     this.notificationUnread.refresh();
+    this.notificationUnread.startPolling();
+
+    this.destroyRef.onDestroy(() => this.notificationUnread.stopPolling());
 
     this.router.events
       .pipe(

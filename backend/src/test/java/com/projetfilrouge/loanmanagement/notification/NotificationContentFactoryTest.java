@@ -40,6 +40,20 @@ class NotificationContentFactoryTest {
     }
 
     @Test
+    void offerAccepted_usesAdvisorMessageForAdvisor() {
+        NotificationContent content = NotificationContentFactory.forEvent(
+                LoanApplicationEventType.OFFER_ACCEPTED,
+                loan,
+                NotificationAudience.ADVISOR
+        );
+
+        assertThat(content.title()).isEqualTo("Contre-offre acceptée");
+        assertThat(content.message()).isEqualTo(
+                "Le client a accepté votre contre-offre pour le dossier LF-DEMO-0001."
+        );
+    }
+
+    @Test
     void applicationSubmitted_usesAdvisorSpecificMessage() {
         NotificationContent content = NotificationContentFactory.forEvent(
                 LoanApplicationEventType.APPLICATION_SUBMITTED,

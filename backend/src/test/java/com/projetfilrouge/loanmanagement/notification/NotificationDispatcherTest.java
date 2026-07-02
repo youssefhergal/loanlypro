@@ -117,4 +117,32 @@ class NotificationDispatcherTest {
                         "Le dossier LF-001 vous a été assigné."
                 )), eq(10L));
     }
+
+    @Test
+    void dispatch_notifiesAdvisorOnOfferAccepted() {
+        User applicant = User.builder().id(1L).email("client@test.com").build();
+        User advisor = User.builder().id(2L).email("advisor@test.com").build();
+        LoanApplication loan = LoanApplication.builder()
+                .id(10L)
+                .reference("LF-001")
+                .status(LoanApplicationStatus.UNDER_REVIEW)
+                .applicant(applicant)
+                .assignedAdvisor(advisor)
+                .build();
+        LoanApplicationEvent event = LoanApplicationEvent.builder()
+                .loanApplication(loan)
+                .eventType(LoanApplicationEventType.OFFER_ACCEPTED)
+                .build();
+
+        when(loanApplicationRepository.findByIdWithApplicantAndAdvisor(10L)).thenReturn(Optional.of(loan));
+
+        notificationDispatcher.dispatch(event);
+
+        verify(notificationService, never()).createInApp(eq(applicant), any(), any(), any());
+        verify(notificationService).createInApp(eq(advisor), eq(LoanApplicationEventType.OFFER_ACCEPTED),
+                eq(new NotificationContent(
+                        "Contre-offre acceptée",
+                        "Le client a accepté votre contre-offre pour le dossier LF-001."
+                )), eq(10L));
+    }
 }

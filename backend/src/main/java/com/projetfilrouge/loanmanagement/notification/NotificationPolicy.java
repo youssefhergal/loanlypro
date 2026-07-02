@@ -49,6 +49,7 @@ public final class NotificationPolicy {
     private static final Set<LoanApplicationEventType> ADVISOR_IN_APP_EVENTS = EnumSet.of(
             LoanApplicationEventType.APPLICATION_SUBMITTED,
             LoanApplicationEventType.DOCUMENT_UPLOADED,
+            LoanApplicationEventType.OFFER_ACCEPTED,
             LoanApplicationEventType.APPLICATION_APPROVED,
             LoanApplicationEventType.APPLICATION_REJECTED,
             LoanApplicationEventType.PAYMENT_FAILED,

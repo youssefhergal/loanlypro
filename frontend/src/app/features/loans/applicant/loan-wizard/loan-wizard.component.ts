@@ -23,6 +23,7 @@ import { StepSummaryComponent } from './steps/step-summary.component';
 import { applyApiErrorsToForm, getErrorMessage } from '../../../../core/loans/utils/api-error.util';
 import { switchMap, filter } from 'rxjs';
 import { ConfirmDialogService } from '../../../../shared/confirm-dialog/confirm-dialog.service';
+import { NotificationUnreadService } from '../../../../core/notifications/services/notification-unread.service';
 
 @Component({
   selector: 'app-loan-wizard',
@@ -50,6 +51,7 @@ export class LoanWizardComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly state = inject(LoanWizardStateService);
   private readonly loanApi = inject(LoanApiService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly notificationUnread = inject(NotificationUnreadService);
 
   readonly loading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -194,6 +196,7 @@ export class LoanWizardComponent implements OnInit, AfterViewInit, OnDestroy {
       )
       .subscribe({
         next: (loan) => {
+          this.notificationUnread.refresh();
           this.router.navigate(['/demande-soumise', loan.id]);
         },
         error: (err) => {
