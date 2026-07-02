@@ -17,7 +17,6 @@ import {
   applicationStatusIcon,
   buildClosedLoanHeroCarouselSlides,
   buildHeroCarouselSlides,
-  buildNewClientHeroCarouselSlides,
   computeClosedLoanRecap,
   computeRepaymentProgress,
   countArchivedApplications,
@@ -144,8 +143,6 @@ export class DashboardComponent implements OnInit {
     computeClosedLoanRecap(this.primaryClosedLoan()),
   );
 
-  readonly totalDemandesCount = computed(() => this.demandes().length);
-
   readonly newClientOnboardingSteps = NEW_CLIENT_ONBOARDING_STEPS;
 
   readonly nextPaymentDays = computed(() =>
@@ -157,9 +154,6 @@ export class DashboardComponent implements OnInit {
   );
 
   readonly heroSlides = computed(() => {
-    if (this.isNewClientProfile()) {
-      return buildNewClientHeroCarouselSlides();
-    }
     if (this.isClosedLoanProfile()) {
       return buildClosedLoanHeroCarouselSlides();
     }

@@ -1,249 +1,534 @@
 <div class="landing">
+  <!-- Navbar -->
+  <header class="landing-nav" [class.landing-nav--scrolled]="navbarScrolled()">
+    <div class="landing-container landing-nav__inner">
+      <app-logo
+        linkClass="landing-nav__brand"
+        routerLink="/"
+        [fullLogoHeight]="100"
+        (logoClick)="closeMobileNav()"
+      />
 
-  <!-- ══════════ NAV ══════════ -->
-  <nav class="lnav">
-    <a class="lnav__logo" routerLink="/">
-      <div class="lnav__logo-icon">
-        <mat-icon>account_balance</mat-icon>
-      </div>
-      <span>LoanlyPro</span>
-    </a>
-    <div class="lnav__actions">
-      <a routerLink="/login" mat-button class="lnav__login-btn">Se connecter</a>
-      <a routerLink="/register" mat-flat-button class="lnav__cta-btn">Créer un compte</a>
-    </div>
-  </nav>
+      <nav class="landing-nav__links" aria-label="Navigation principale">
+        @for (link of navLinks; track link.anchor) {
+          <button type="button" class="landing-nav__link" (click)="scrollToAnchor(link.anchor)">
+            {{ link.label }}
+          </button>
+        }
+      </nav>
 
-  <!-- ══════════ HERO ══════════ -->
-  <section class="hero">
-    <div class="hero__blobs">
-      <div class="blob blob--1"></div>
-      <div class="blob blob--2"></div>
-      <div class="blob blob--3"></div>
-    </div>
-    <div class="hero__particles">
-      @for (p of [1,2,3,4,5,6,7,8]; track p) {
-        <div class="particle" [style]="'--i:' + p"></div>
-      }
-    </div>
-    <div class="hero__content">
-      <div class="hero__badge aos" data-delay="0">
-        <span class="badge-dot"></span>
-        Propulsé par l'Intelligence Artificielle
-      </div>
-      <h1 class="hero__title aos" data-delay="100">
-        Vos finances,<br>
-        <span class="gradient-text">réinventées</span>
-      </h1>
-      <p class="hero__sub aos" data-delay="200">
-        La plateforme de gestion de prêt qui vous accompagne intelligemment,
-        de la demande au dernier remboursement.
-      </p>
-      <div class="hero__actions aos" data-delay="300">
-        <a routerLink="/register" mat-flat-button class="btn-primary-hero">
-          <mat-icon>rocket_launch</mat-icon>
-          Commencer gratuitement
+      <div class="landing-nav__actions">
+        <a mat-button class="landing-nav__login" routerLink="/login">Se connecter</a>
+        <a mat-flat-button color="primary" class="landing-nav__register" routerLink="/register">
+          Créer mon compte
         </a>
-        <a routerLink="/login" class="btn-ghost-hero">
-          Déjà client ? <mat-icon>arrow_forward</mat-icon>
+        <button
+          type="button"
+          class="landing-nav__menu-btn"
+          (click)="toggleMobileNav()"
+          [attr.aria-expanded]="mobileNavOpen()"
+          aria-label="Menu"
+        >
+          <mat-icon>{{ mobileNavOpen() ? 'close' : 'menu' }}</mat-icon>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (mobileNavOpen()) {
+    <div class="landing-mobile-nav" role="dialog" aria-label="Menu mobile">
+      <div class="landing-container landing-mobile-nav__inner">
+        @for (link of navLinks; track link.anchor) {
+          <button type="button" class="landing-mobile-nav__link" (click)="scrollToAnchor(link.anchor)">
+            {{ link.label }}
+          </button>
+        }
+        <a mat-stroked-button routerLink="/login" (click)="closeMobileNav()">Se connecter</a>
+        <a mat-flat-button color="primary" routerLink="/register" (click)="closeMobileNav()">
+          Créer mon compte
         </a>
       </div>
-      <div class="hero__trust aos" data-delay="400">
-        <div class="trust-item">
-          <mat-icon>verified</mat-icon>
-          <span>Sans engagement</span>
-        </div>
-        <div class="trust-item">
-          <mat-icon>lock</mat-icon>
-          <span>100 % sécurisé</span>
-        </div>
-        <div class="trust-item">
-          <mat-icon>schedule</mat-icon>
-          <span>Réponse en 48h</span>
-        </div>
-      </div>
     </div>
-    <div class="hero__visual aos" data-delay="200">
-      <div class="dashboard-mock">
-        <div class="mock-header">
-          <div class="mock-dots">
-            <span></span><span></span><span></span>
+  }
+
+  <main>
+    <!-- Hero + barre confiance -->
+    <div class="landing-hero-block">
+    <section class="landing-hero" aria-labelledby="hero-title">
+      <div class="landing-container landing-hero__grid">
+        <div class="landing-hero__content">
+          <span class="landing-chip">Crédit en ligne simplifié</span>
+          <h1 id="hero-title">Financez vos projets en toute clarté</h1>
+          <p class="landing-hero__lead">
+            Déposez votre demande en quelques minutes, suivez votre dossier pas à pas et échangez
+            avec un conseiller — ou notre assistant IA — quand vous en avez besoin.
+          </p>
+          <div class="landing-hero__ctas">
+            <button mat-flat-button color="primary" type="button" (click)="scrollToAnchor('simulateur')">
+              Simuler mon prêt
+            </button>
+            <a mat-flat-button color="primary" routerLink="/register">Créer mon compte</a>
           </div>
-          <span class="mock-title">Mon espace</span>
+          <ul class="landing-hero__trust-list">
+            @for (item of heroTrustItems; track item.line1) {
+              <li>
+                <span class="landing-hero__trust-icon" aria-hidden="true">
+                  <mat-icon>{{ item.icon }}</mat-icon>
+                </span>
+                <span class="landing-hero__trust-text">
+                  <span class="landing-hero__trust-line">{{ item.line1 }}</span>
+                  <span class="landing-hero__trust-line landing-hero__trust-line--muted">{{ item.line2 }}</span>
+                </span>
+              </li>
+            }
+          </ul>
         </div>
-        <div class="mock-body">
-          <div class="mock-stat">
-            <mat-icon>account_balance_wallet</mat-icon>
-            <div>
-              <span class="mock-label">Mensualité</span>
-              <span class="mock-value">342 €</span>
+
+        <div class="landing-hero__visual">
+          <img
+            class="landing-hero__image"
+            [src]="heroImageSrc"
+            alt="Aperçu du tableau de bord client LoanlyPro — suivi de demande en cours"
+            width="960"
+            height="640"
+            fetchpriority="high"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-trust-bar" aria-label="Indicateurs de confiance">
+      <div class="landing-container landing-trust-bar__inner">
+        <div class="landing-trust-bar__item">
+          <mat-icon>groups</mat-icon>
+          <span>+2&nbsp;500 demandes accompagnées</span>
+        </div>
+        <div class="landing-trust-bar__item">
+          <mat-icon>schedule</mat-icon>
+          <span>Réponse conseiller sous 48&nbsp;h ouvrées</span>
+        </div>
+        <div class="landing-trust-bar__item">
+          <mat-icon>verified_user</mat-icon>
+          <span>Données hébergées en UE</span>
+        </div>
+      </div>
+    </section>
+    </div>
+
+    <!-- Simulator -->
+    <section id="simulateur" class="landing-section landing-section--simulator">
+      <div class="landing-container">
+        <header class="landing-section__header">
+          <h2>Estimez votre mensualité</h2>
+          <p>Simulation instantanée selon votre projet — sans engagement.</p>
+        </header>
+
+        <div class="simulator-card">
+          <div class="simulator-card__body">
+            <div class="simulator-card__form">
+              <div class="simulator-card__fields">
+                <div class="simulator-card__field">
+                  <label for="amount-slider">Montant souhaité</label>
+                  <div class="simulator-card__field-control">
+                    <div class="simulator-card__value-display">{{ formattedAmount() }}</div>
+                    <mat-slider
+                      id="amount-slider"
+                      class="simulator-card__slider"
+                      [min]="amountMin"
+                      [max]="amountMax"
+                      [step]="500"
+                      discrete
+                      [displayWith]="formatSliderLabel"
+                    >
+                      <input matSliderThumb [ngModel]="amount()" (ngModelChange)="amount.set($event)" />
+                    </mat-slider>
+                    <div class="simulator-card__range-labels">
+                      <span>1&nbsp;000&nbsp;€</span>
+                      <span>75&nbsp;000&nbsp;€</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="simulator-card__field">
+                  <label for="duration-slider">Durée</label>
+                  <div class="simulator-card__field-control">
+                    <div class="simulator-card__value-display">{{ durationMonths() }} mois</div>
+                    <mat-slider
+                      id="duration-slider"
+                      class="simulator-card__slider"
+                      [min]="durationMin"
+                      [max]="durationMax"
+                      [step]="durationStep"
+                      discrete
+                      [displayWith]="formatDurationLabel"
+                    >
+                      <input
+                        matSliderThumb
+                        [ngModel]="durationMonths()"
+                        (ngModelChange)="durationMonths.set($event)"
+                      />
+                    </mat-slider>
+                    <div class="simulator-card__range-labels">
+                      <span>12 mois</span>
+                      <span>84 mois</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="simulator-card__field">
+                  <label for="purpose-select">Type de projet</label>
+                  <div class="simulator-card__field-control">
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="simulator-card__select">
+                      <mat-select
+                        id="purpose-select"
+                        [ngModel]="purpose()"
+                        (ngModelChange)="purpose.set($event)"
+                        aria-label="Type de projet"
+                      >
+                        <mat-select-trigger>
+                          <span class="simulator-card__select-value">
+                            <mat-icon>{{ selectedPurposeIcon() }}</mat-icon>
+                            {{ selectedPurposeLabel() }}
+                          </span>
+                        </mat-select-trigger>
+                        @for (opt of simulatorPurposes; track opt.value) {
+                          <mat-option [value]="opt.value">
+                            <span class="simulator-card__option">
+                              <mat-icon>{{ opt.icon }}</mat-icon>
+                              {{ opt.label }}
+                            </span>
+                          </mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                    <p class="simulator-card__hint">
+                      <mat-icon>energy_savings_leaf</mat-icon>
+                      Crédit vert : taux préférentiel
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <aside
+              class="simulator-card__result"
+              [class.simulator-card__result--pulse]="resultAnimating()"
+            >
+              <div class="simulator-card__result-rate-row">
+                <div>
+                  <p class="simulator-card__result-label">Taux indicatif</p>
+                  <p class="simulator-card__result-rate">{{ ratePercent() | number: '1.2-2' }} %</p>
+                </div>
+                @if (showExcellentRate()) {
+                  <span class="simulator-card__rate-badge">Excellent taux</span>
+                }
+              </div>
+
+              <p class="simulator-card__result-label">Mensualité estimée</p>
+              <p class="simulator-card__result-payment">
+                {{ simulation().monthlyPayment | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                <span>/ mois</span>
+              </p>
+
+              <p class="simulator-card__result-interest">
+                Total intérêts :
+                {{ simulation().totalInterest | currency: 'EUR' : 'symbol' : '1.0-0' }}
+              </p>
+
+              <p class="simulator-card__disclaimer">
+                Simulation non contractuelle — offre personnalisée après étude.
+              </p>
+            </aside>
+          </div>
+
+          <a mat-flat-button color="primary" class="simulator-card__cta" routerLink="/register">
+            Lancer ma demande
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="fonctionnalites" class="landing-section landing-section--features">
+      <div class="landing-container">
+        <header class="landing-section__header">
+          <h2>Tout pour votre dossier, au même endroit</h2>
+          <p>De la simulation à la signature, LoanlyPro vous guide.</p>
+        </header>
+        <div class="features-grid">
+          @for (feature of features; track feature.title) {
+            <article class="feature-card" [class.feature-card--highlight]="feature.highlight">
+              <div class="feature-card__icon-wrap">
+                <mat-icon>{{ feature.icon }}</mat-icon>
+              </div>
+              <div class="feature-card__content">
+                <div class="feature-card__head">
+                  <h3>{{ feature.title }}</h3>
+                  @if (feature.badge) {
+                    <span class="feature-card__badge">{{ feature.badge }}</span>
+                  }
+                </div>
+                <p>{{ feature.description }}</p>
+              </div>
+            </article>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Steps -->
+    <section id="parcours" class="landing-section landing-section--muted">
+      <div class="landing-container">
+        <header class="landing-section__header landing-section__header--compact">
+          <h2>4 étapes, zéro surprise</h2>
+        </header>
+        <ol class="steps-timeline">
+          @for (step of steps; track step.title; let i = $index) {
+            <li class="steps-timeline__item">
+              <div class="steps-timeline__icon"><mat-icon>{{ step.icon }}</mat-icon></div>
+              <span class="steps-timeline__number">{{ i + 1 }}</span>
+              <h3>{{ step.title }}</h3>
+              <p>{{ step.description }}</p>
+            </li>
+          }
+        </ol>
+        <p class="steps-note">Vous pouvez reprendre un brouillon à tout moment.</p>
+      </div>
+    </section>
+
+    <!-- Green credit -->
+    <section id="credit-vert" class="landing-section landing-section--green-credit">
+      <div class="landing-container">
+        <article class="green-credit-card">
+          <div class="green-credit-card__visual">
+            <img
+              class="green-credit-card__image"
+              [src]="greenCreditImageSrc"
+              alt="Illustration crédit vert : maison solaire, véhicule électrique et éolienne"
+            />
+          </div>
+          <div class="green-credit-card__content">
+            <span class="landing-chip landing-chip--green">Crédit vert</span>
+            <h2>Financez vos projets durables à taux préférentiel</h2>
+            <p>
+              Travaux d'isolation, véhicule propre, équipements basse consommation… Agissez pour
+              la planète et bénéficiez d'un taux réduit.
+            </p>
+            <p class="green-credit-card__highlight">
+              − 0,75 point de taux sur les projets éligibles
+            </p>
+            <button mat-stroked-button color="primary" type="button" (click)="scrollToAnchor('simulateur')">
+              Découvrir le crédit vert
+            </button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- AI -->
+    <section id="ia" class="landing-section landing-section--muted landing-section--ia">
+      <div class="landing-container">
+        <header class="landing-section__header">
+          <h2>Un conseil adapté à votre profil</h2>
+          <p>Assistant IA et formation sur mesure, disponibles dans votre espace client.</p>
+        </header>
+        <div class="ai-panel">
+          <div class="ai-grid">
+            <article class="ai-card">
+              <div class="ai-card__head">
+                <mat-icon>auto_awesome</mat-icon>
+                <h3>Conseiller IA</h3>
+              </div>
+              <p class="ai-card__intro">
+                Posez vos questions sur le crédit, les documents, votre dossier.
+              </p>
+              <div class="ai-chat">
+                <div class="ai-chat__row ai-chat__row--user">
+                  <div class="ai-chat__bubble ai-chat__bubble--user">
+                    Quels justificatifs pour un prêt véhicule ?
+                  </div>
+                  <div class="ai-chat__avatar ai-chat__avatar--user" aria-hidden="true">V</div>
+                </div>
+                <div class="ai-chat__row ai-chat__row--bot">
+                  <div class="ai-chat__avatar ai-chat__avatar--ai" aria-hidden="true">
+                    <mat-icon>auto_awesome</mat-icon>
+                  </div>
+                  <div class="ai-chat__bubble ai-chat__bubble--bot">
+                    Pièce d'identité, justificatif de domicile, relevés de compte et carte grise ou bon
+                    de commande.
+                  </div>
+                </div>
+                <div class="ai-chat__row ai-chat__row--bot">
+                  <div class="ai-chat__avatar ai-chat__avatar--ai" aria-hidden="true">
+                    <mat-icon>auto_awesome</mat-icon>
+                  </div>
+                  <div class="ai-chat__bubble ai-chat__bubble--bot">
+                    Je peux aussi vous aider à préparer votre dossier étape par étape.
+                  </div>
+                </div>
+              </div>
+              <p class="ai-card__note">
+                Assistant IA — ne remplace pas l'avis d'un conseiller humain.
+              </p>
+            </article>
+
+            <article class="ai-card">
+              <div class="ai-card__head">
+                <mat-icon>school</mat-icon>
+                <h3>Formation sur mesure</h3>
+              </div>
+              <p>Parcours d'apprentissage généré selon vos objectifs financiers.</p>
+              <ol class="learning-path">
+                @for (step of learningSteps; track step.label; let i = $index) {
+                  <li class="learning-path__step">
+                    <span class="learning-path__num">{{ i + 1 }}</span>
+                    <div class="learning-path__icon"><mat-icon>{{ step.icon }}</mat-icon></div>
+                    <span class="learning-path__label">{{ step.label }}</span>
+                  </li>
+                }
+              </ol>
+            </article>
+          </div>
+          <a mat-flat-button color="primary" class="ai-panel__cta" routerLink="/register">
+            Découvrir après inscription
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust + testimonial -->
+    <section class="landing-section landing-section--trust-block">
+      <div class="landing-container">
+        <div class="trust-block">
+          <div class="trust-block__main">
+            <header class="landing-section__header landing-section__header--compact">
+              <h2>Vos données, notre priorité</h2>
+            </header>
+            <div class="trust-grid">
+              @for (pillar of trustPillars; track pillar.label) {
+                <div class="trust-pillar">
+                  <div class="trust-pillar__icon"><mat-icon>{{ pillar.icon }}</mat-icon></div>
+                  <span>{{ pillar.label }}</span>
+                </div>
+              }
             </div>
           </div>
-          <div class="mock-bar-wrap">
-            <span class="mock-bar-label">Remboursé</span>
-            <div class="mock-bar"><div class="mock-bar-fill" style="width:65%"></div></div>
-            <span class="mock-bar-pct">65 %</span>
-          </div>
-          <div class="mock-ai">
-            <mat-icon>psychology</mat-icon>
-            <div class="mock-ai-bubble">Alex IA est disponible pour vous conseiller…</div>
-          </div>
-          <div class="mock-badges">
-            <span class="mock-badge mock-badge--green">
-              <mat-icon>eco</mat-icon> Taux vert actif
-            </span>
-            <span class="mock-badge mock-badge--blue">
-              <mat-icon>school</mat-icon> 3 étapes complétées
-            </span>
-          </div>
+          <blockquote class="testimonial">
+            <mat-icon class="testimonial__quote">format_quote</mat-icon>
+            <p>
+              « J'ai pu suivre ma demande LF-DEMO-0001 sans relancer personne. Le wizard est
+              vraiment clair. »
+            </p>
+            <footer>
+              <img
+                class="testimonial__avatar"
+                [src]="testimonialAvatarSrc"
+                alt="Photo de Youssef .H"
+                width="36"
+                height="36"
+              />
+              <cite>— Youssef .H, demande véhicule</cite>
+            </footer>
+          </blockquote>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ══════════ STATS ══════════ -->
-  <section class="stats-section">
-    <div class="stats-inner">
-      @for (stat of stats; track stat.label) {
-        <div class="stat-card aos">
-          <span
-            class="stat-value"
-            [attr.data-target]="stat.value"
-            [attr.data-suffix]="stat.suffix"
-          >0{{ stat.suffix }}</span>
-          <span class="stat-label">{{ stat.label }}</span>
+    <!-- FAQ -->
+    <section id="faq" class="landing-section landing-section--faq">
+      <div class="landing-container">
+        <header class="landing-section__header">
+          <h2>Questions fréquentes</h2>
+        </header>
+        <div class="faq-list">
+          @for (item of faqItems; track item.id) {
+            <article class="faq-item" [class.faq-item--open]="expandedFaqId() === item.id">
+              <button type="button" class="faq-item__trigger" (click)="toggleFaq(item.id)">
+                <span>{{ item.question }}</span>
+                <mat-icon>{{ expandedFaqId() === item.id ? 'expand_less' : 'expand_more' }}</mat-icon>
+              </button>
+              @if (expandedFaqId() === item.id) {
+                <div class="faq-item__content">
+                  <p>{{ item.answer }}</p>
+                </div>
+              }
+            </article>
+          }
         </div>
-      }
-    </div>
-  </section>
-
-  <!-- ══════════ ADVANTAGES ══════════ -->
-  <section class="advantages-section">
-    <div class="section-header aos">
-      <p class="section-eyebrow">Nos avantages</p>
-      <h2>Pourquoi choisir <span class="text-green">LoanlyPro</span> ?</h2>
-      <p class="section-sub">Tout ce dont vous avez besoin pour gérer votre crédit sereinement et progresser financièrement.</p>
-    </div>
-    <div class="adv-grid">
-      @for (adv of advantages; track adv.title; let i = $index) {
-        <div class="adv-card aos" [attr.data-delay]="(i % 3) * 100">
-          <div class="adv-card__tag">{{ adv.tag }}</div>
-          <div class="adv-card__icon-wrap">
-            <mat-icon>{{ adv.icon }}</mat-icon>
-          </div>
-          <h3 class="adv-card__title">{{ adv.title }}</h3>
-          <p class="adv-card__desc">{{ adv.description }}</p>
-          <div class="adv-card__arrow">
-            <mat-icon>arrow_forward</mat-icon>
-          </div>
-        </div>
-      }
-    </div>
-  </section>
-
-  <!-- ══════════ GREEN HIGHLIGHT ══════════ -->
-  <section class="green-section">
-    <div class="green-section__inner">
-      <div class="green-section__text aos">
-        <div class="green-badge">
-          <mat-icon>eco</mat-icon>
-          Finance verte
-        </div>
-        <h2>Engagez-vous pour la planète,<br>on réduit votre taux</h2>
-        <p>
-          Voiture électrique, pompe à chaleur, isolation thermique, panneaux photovoltaïques…
-          Chaque projet écologique mérite un financement avantageux.
-          Nos taux verts peuvent aller jusqu'à <strong>30 % moins chers</strong> que les taux classiques.
+        <p class="faq-more">
+          <a routerLink="/register">Voir toute l'aide →</a>
+          <span> — disponible dans votre espace client après inscription.</span>
         </p>
-        <ul class="green-list">
-          <li><mat-icon>check_circle</mat-icon> Véhicules électriques &amp; hybrides</li>
-          <li><mat-icon>check_circle</mat-icon> Rénovation énergétique du logement</li>
-          <li><mat-icon>check_circle</mat-icon> Panneaux solaires &amp; éoliennes</li>
-          <li><mat-icon>check_circle</mat-icon> Équipements à faible consommation</li>
-        </ul>
-        <a routerLink="/register" mat-flat-button class="btn-green-cta">
-          Simuler mon taux vert <mat-icon>arrow_forward</mat-icon>
-        </a>
       </div>
-      <div class="green-section__visual aos" data-delay="150">
-        <div class="green-card-big">
-          <div class="leaf-bg"></div>
-          <mat-icon class="big-eco-icon">eco</mat-icon>
-          <div class="rate-display">
-            <span class="rate-label">Votre taux vert</span>
-            <span class="rate-value">dès 3,2 %</span>
-            <span class="rate-instead">au lieu de 5,8 %</span>
+    </section>
+
+    <!-- CTA + Footer -->
+    <section class="landing-closing" aria-labelledby="cta-title">
+      <div class="landing-container">
+        <div
+          class="landing-closing__panel"
+          [style.--cta-bg-image]="'url(' + ctaBackgroundImageSrc + ')'"
+        >
+          <div class="landing-cta__inner">
+            <mat-icon class="landing-cta__icon">rocket_launch</mat-icon>
+            <div class="landing-cta__copy">
+              <h2 id="cta-title">Prêt à lancer votre projet ?</h2>
+              <p>
+                Créez votre compte gratuitement — simulation et dépôt de demande en quelques minutes.
+              </p>
+            </div>
+            <div class="landing-cta__actions">
+              <a mat-flat-button class="landing-cta__btn-light" routerLink="/register">Créer mon compte</a>
+              <a mat-stroked-button class="landing-cta__btn-outline" routerLink="/login">Se connecter</a>
+            </div>
           </div>
-          <div class="rate-savings">
-            <mat-icon>savings</mat-icon>
-            <span>Économisez jusqu'à <strong>2 600 €</strong> sur votre crédit</span>
-          </div>
+
+          <footer class="landing-footer">
+            <div class="landing-footer__grid">
+            <div class="landing-footer__brand">
+              <app-logo
+                linkClass="landing-nav__brand landing-nav__brand--footer"
+                routerLink="/"
+                [fullLogoHeight]="88"
+              />
+              <p>Le crédit en ligne simple, transparent et accompagné.</p>
+              <div class="landing-footer__social" aria-label="Réseaux sociaux">
+                <span class="landing-footer__social-icon" aria-hidden="true"><mat-icon>language</mat-icon></span>
+                <span class="landing-footer__social-icon" aria-hidden="true"><mat-icon>share</mat-icon></span>
+                <span class="landing-footer__social-icon" aria-hidden="true"><mat-icon>mail</mat-icon></span>
+              </div>
+            </div>
+            <div>
+              <h3>Produit</h3>
+              <ul>
+                <li><button type="button" (click)="scrollToAnchor('fonctionnalites')">Fonctionnalités</button></li>
+                <li><button type="button" (click)="scrollToAnchor('credit-vert')">Crédit vert</button></li>
+                <li><button type="button" (click)="scrollToAnchor('simulateur')">Simulateur</button></li>
+              </ul>
+            </div>
+            <div>
+              <h3>Légal</h3>
+              <ul>
+                <li><span>Mentions légales</span></li>
+                <li><span>Confidentialité</span></li>
+                <li><span>Cookies</span></li>
+              </ul>
+            </div>
+            <div>
+              <h3>Contact</h3>
+              <ul>
+                <li><a href="mailto:conseil&#64;loanlypro.fr">conseil&#64;loanlypro.fr</a></li>
+                <li><a href="mailto:dpo&#64;loanly.fr">dpo&#64;loanly.fr</a></li>
+              </ul>
+            </div>
+            </div>
+            <div class="landing-footer__bottom">
+              <span>Propulsé par LoanlyPro pour les équipes conseillers</span>
+              <span>© {{ currentYear }} LoanlyPro</span>
+            </div>
+          </footer>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- ══════════ HOW IT WORKS ══════════ -->
-  <section class="how-section">
-    <div class="section-header aos">
-      <p class="section-eyebrow">Simple &amp; rapide</p>
-      <h2>En 3 étapes vers votre prêt</h2>
-    </div>
-    <div class="steps-row">
-      @for (step of steps; track step.num; let last = $last) {
-        <div class="step-card aos" [attr.data-delay]="$index * 120">
-          <div class="step-card__num">{{ step.num }}</div>
-          <div class="step-card__icon">
-            <mat-icon>{{ step.icon }}</mat-icon>
-          </div>
-          <h3>{{ step.title }}</h3>
-          <p>{{ step.desc }}</p>
-        </div>
-        @if (!last) {
-          <div class="step-connector aos">
-            <div class="connector-line"></div>
-            <mat-icon class="connector-arrow">east</mat-icon>
-          </div>
-        }
-      }
-    </div>
-  </section>
-
-  <!-- ══════════ FINAL CTA ══════════ -->
-  <section class="cta-section">
-    <div class="cta-blobs">
-      <div class="cta-blob cta-blob--1"></div>
-      <div class="cta-blob cta-blob--2"></div>
-    </div>
-    <div class="cta-content aos">
-      <mat-icon class="cta-icon">star</mat-icon>
-      <h2>Prêt à reprendre le contrôle<br>de vos finances ?</h2>
-      <p>Rejoignez plus de 2 500 clients qui font confiance à LoanlyPro</p>
-      <div class="cta-actions">
-        <a routerLink="/register" mat-flat-button class="cta-btn-primary">
-          Créer mon compte — c'est gratuit
-        </a>
-        <a routerLink="/login" class="cta-btn-ghost">
-          Se connecter <mat-icon>login</mat-icon>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ FOOTER ══════════ -->
-  <footer class="landing-footer">
-    <div class="footer-inner">
-      <div class="footer-logo">
-        <mat-icon>account_balance</mat-icon>
-        <span>LoanlyPro</span>
-      </div>
-      <p class="footer-copy">© 2026 LoanlyPro · Tous droits réservés</p>
-      <div class="footer-links">
-        <a href="#">Mentions légales</a>
-        <a href="#">Confidentialité</a>
-        <a href="#">Contact</a>
-      </div>
-    </div>
-  </footer>
-
+    </section>
+  </main>
 </div>

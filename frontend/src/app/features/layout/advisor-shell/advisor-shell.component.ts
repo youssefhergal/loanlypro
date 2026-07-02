@@ -19,6 +19,7 @@ import { NotificationPageCoordinationService } from '../../../core/notifications
 import { NotificationUnreadService } from '../../../core/notifications/services/notification-unread.service';
 import { NotificationBellMenuComponent } from '../../../shared/notification-bell-menu/notification-bell-menu.component';
 import { HelpFaqSearchFieldComponent } from '../../../shared/help-faq-search-field/help-faq-search-field.component';
+import { AppLogoComponent } from '../../../shared/app-logo/app-logo.component';
 import { HelpFaqSearchService } from '../../../core/help/services/help-faq-search.service';
 import { isHelpFaqPath } from '../../../core/help/utils/help-faq.util';
 import type { User } from '../../../core/auth/models/user.model';
@@ -40,6 +41,7 @@ const SIDEBAR_COLLAPSED_KEY = 'lf-advisor-sidebar-collapsed';
     MatDividerModule,
     NotificationBellMenuComponent,
     HelpFaqSearchFieldComponent,
+    AppLogoComponent,
   ],
   templateUrl: './advisor-shell.component.html',
   styleUrl: './advisor-shell.component.scss',

@@ -1,5 +1,6 @@
 .navbar {
-  height: 64px;
+  min-height: 96px;
+  height: auto;
   background: var(--color-surface);
   display: flex;
   align-items: center;
@@ -20,18 +21,6 @@
   font-weight: 700;
   color: var(--color-primary);
   text-decoration: none;
-}
-
-.logo-icon {
-  background: var(--color-primary);
-  color: var(--color-surface);
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
 }
 
 .nav-actions {

@@ -20,6 +20,7 @@ import { NotificationUnreadService } from '../../../core/notifications/services/
 import { NotificationBellMenuComponent } from '../../../shared/notification-bell-menu/notification-bell-menu.component';
 import { PaymentsScheduleLoanPickerComponent } from '../../../shared/payments-schedule-loan-picker/payments-schedule-loan-picker.component';
 import { HelpFaqSearchFieldComponent } from '../../../shared/help-faq-search-field/help-faq-search-field.component';
+import { AppLogoComponent } from '../../../shared/app-logo/app-logo.component';
 import { HelpFaqSearchService } from '../../../core/help/services/help-faq-search.service';
 import { isHelpFaqPath } from '../../../core/help/utils/help-faq.util';
 import type { User } from '../../../core/auth/models/user.model';
@@ -46,6 +47,7 @@ export interface BreadcrumbItem {
     NotificationBellMenuComponent,
     PaymentsScheduleLoanPickerComponent,
     HelpFaqSearchFieldComponent,
+    AppLogoComponent,
   ],
   templateUrl: './client-shell.component.html',
   styleUrl: './client-shell.component.scss',

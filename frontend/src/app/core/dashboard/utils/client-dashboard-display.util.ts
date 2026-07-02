@@ -272,7 +272,7 @@ export function buildNewClientHeroCarouselSlides(): HeroCarouselSlide[] {
   return [
     {
       id: 'welcome',
-      eyebrow: 'Bienvenue sur LoanlyFans',
+      eyebrow: 'Bienvenue sur LoanlyPro',
       amountLine: 'Simulez votre crédit en 2 minutes',
       ctaLabel: 'Nouvelle demande',
       routerLink: ['/nouvelle-demande'],
@@ -384,7 +384,7 @@ export function buildHeroCarouselSlides(input: {
   if (slides.length === 0) {
     slides.push({
       id: 'welcome',
-      eyebrow: 'Bienvenue sur LoanlyFans',
+      eyebrow: 'Bienvenue sur LoanlyPro',
       amountLine: 'Déposez votre première demande de prêt en quelques minutes',
       ctaLabel: 'Nouvelle demande',
       routerLink: ['/nouvelle-demande'],

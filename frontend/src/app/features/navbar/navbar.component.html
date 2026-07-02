@@ -1,9 +1,6 @@
 <nav class="navbar">
 
-  <a class="logo" routerLink="/">
-    <span class="logo-icon">✓</span>
-    LoanlyPro
-  </a>
+  <app-logo linkClass="logo" routerLink="/" [fullLogoHeight]="88" />
 
   <div class="nav-actions">
     @if (auth.isLoggedIn()) {

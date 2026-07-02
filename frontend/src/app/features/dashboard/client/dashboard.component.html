@@ -62,37 +62,15 @@
           </section>
         }
 
-        <app-dashboard-hero-carousel
-          [slides]="heroSlides()"
-          [activeIndex]="heroSlideIndex()"
-          (indexChange)="onHeroSlideChange($event)"
-        />
+        @if (!isNewClientProfile()) {
+          <app-dashboard-hero-carousel
+            [slides]="heroSlides()"
+            [activeIndex]="heroSlideIndex()"
+            (indexChange)="onHeroSlideChange($event)"
+          />
+        }
 
         @if (isNewClientProfile()) {
-          <div class="kpi-row kpi-row--compact">
-            <a routerLink="/mes-demandes" class="kpi-card kpi-card--link">
-              <div class="kpi-card__head">
-                <span class="kpi-card__icon" aria-hidden="true">
-                  <mat-icon>description</mat-icon>
-                </span>
-                <span class="kpi-card__label">Mes demandes</span>
-              </div>
-              <strong class="kpi-card__value">{{ totalDemandesCount() }}</strong>
-              <span class="kpi-card__muted">Aucune demande pour le moment</span>
-            </a>
-
-            <a routerLink="/documents" class="kpi-card kpi-card--link">
-              <div class="kpi-card__head">
-                <span class="kpi-card__icon" aria-hidden="true">
-                  <mat-icon>folder</mat-icon>
-                </span>
-                <span class="kpi-card__label">Documents</span>
-              </div>
-              <strong class="kpi-card__value">{{ documentsToProcessCount() }}</strong>
-              <span class="kpi-card__muted">À jour</span>
-            </a>
-          </div>
-
           <section class="new-client-empty" aria-labelledby="new-client-empty-title">
             <img
               class="new-client-empty__illustration"
@@ -351,7 +329,7 @@
               <div>
                 <h3 class="dossier-reassurance__title">Votre demande est entre de bonnes mains</h3>
                 <p class="dossier-reassurance__text">
-                  Un conseiller LoanlyFans examine votre dossier
+                  Un conseiller LoanlyPro examine votre dossier
                   <strong>{{ demande.reference }}</strong>.
                   Vous serez notifié dès qu'une décision sera disponible.
                 </p>

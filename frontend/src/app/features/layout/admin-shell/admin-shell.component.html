@@ -2,10 +2,13 @@
   <aside class="sidebar" aria-label="Navigation administrateur">
     <div class="sidebar-header">
       <div class="sidebar-brand">
-        <a routerLink="/admin/dashboard" class="logo">
-          <span class="logo-icon">✓</span>
-          <span class="logo-text">LoanlyPro</span>
-        </a>
+        <app-logo
+          linkClass="logo"
+          routerLink="/admin/dashboard"
+          [showText]="!sidebarCollapsed()"
+          [iconSize]="28"
+          [fullLogoHeight]="72"
+        />
       </div>
       <button
         type="button"

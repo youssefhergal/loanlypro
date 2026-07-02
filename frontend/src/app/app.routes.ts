@@ -4,6 +4,8 @@ import { clientAreaGuard } from './core/auth/guards/client-area.guard';
 import { roleGuard } from './core/auth/guards/role.guard';
 import { ROLES } from './core/auth/constants/auth.constants';
 
+import { guestOnlyGuard } from './core/auth/guards/guest-only.guard';
+
 const comingSoon = () =>
   import('./features/shared/coming-soon/coming-soon.component').then(
     (m) => m.ComingSoonComponent
@@ -18,6 +20,7 @@ export const routes: Routes = [
     pathMatch: 'full',
     loadComponent: () =>
       import('./features/landing/landing.component').then((m) => m.LandingComponent),
+    canActivate: [guestOnlyGuard],
   },
   {
     path: 'login',

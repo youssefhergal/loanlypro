@@ -1,128 +1,292 @@
-import { Component, AfterViewInit, NgZone, inject } from '@angular/core';
+import { Component, HostListener, computed, effect, signal, untracked } from '@angular/core';
+import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { FormsModule } from '@angular/forms';
+import { LoanPurpose } from '../../core/loans/models/loan.enums';
+import {
+  LOAN_AMOUNT_MAX,
+  LOAN_AMOUNT_MIN,
+  LOAN_DURATION_MAX,
+  LOAN_DURATION_MIN,
+} from '../../core/loans/constants/loan.constants';
+import { calculateLoanSimulation } from '../../core/loans/utils/loan-calculator';
+import { computeIndicativeRatePercent } from '../../core/loans/utils/loan-interest-rate.util';
+import { AppLogoComponent } from '../../shared/app-logo/app-logo.component';
+
+interface LandingFeature {
+  icon: string;
+  title: string;
+  description: string;
+  badge?: string;
+  highlight?: boolean;
+}
+
+interface SimulatorPurposeOption {
+  value: LoanPurpose;
+  label: string;
+  icon: string;
+}
+
+interface LandingStep {
+  icon: string;
+  title: string;
+  description: string;
+}
+
+interface LandingFaqItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+interface LearningStep {
+  label: string;
+  icon: string;
+}
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatIconModule],
+  imports: [
+    RouterLink,
+    AppLogoComponent,
+    CurrencyPipe,
+    DecimalPipe,
+    FormsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatSliderModule,
+    MatSelectModule,
+    MatFormFieldModule,
+  ],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.scss',
 })
-export class LandingComponent implements AfterViewInit {
-  private readonly zone = inject(NgZone);
+export class LandingComponent {
+  readonly currentYear = new Date().getFullYear();
 
-  readonly advantages = [
+  readonly amountMin = LOAN_AMOUNT_MIN;
+  readonly amountMax = 75_000;
+  readonly durationMin = LOAN_DURATION_MIN;
+  readonly durationMax = Math.min(LOAN_DURATION_MAX, 84);
+  readonly durationStep = 12;
+
+  readonly amount = signal(15_000);
+  readonly durationMonths = signal(48);
+  readonly purpose = signal<LoanPurpose>('VEHICLE');
+  readonly mobileNavOpen = signal(false);
+  readonly navbarScrolled = signal(false);
+  readonly expandedFaqId = signal<string | null>('faq-1');
+  readonly resultAnimating = signal(false);
+
+  /** Visuel hero (mockup dashboard) — asset dans public/images/landing */
+  readonly heroImageSrc = '/images/landing/image_hero_landing.png';
+  readonly greenCreditImageSrc = '/images/landing/vert%20credit.png';
+  readonly testimonialAvatarSrc = '/images/landing/Youssef%20Hergal%20Image.png';
+  readonly ctaBackgroundImageSrc = '/images/landing/cta%20images.png';
+
+  readonly heroTrustItems = [
+    { icon: 'person', line1: 'Parcours 100 %', line2: 'en ligne' },
+    { icon: 'schedule', line1: 'Suivi', line2: 'en temps réel' },
+    { icon: 'energy_savings_leaf', line1: 'Crédit vert', line2: 'avantageux' },
+  ];
+
+  readonly navLinks = [
+    { label: 'Fonctionnalités', anchor: 'fonctionnalites' },
+    { label: 'Comment ça marche', anchor: 'parcours' },
+    { label: 'Crédit vert', anchor: 'credit-vert' },
+    { label: 'IA & conseil', anchor: 'ia' },
+    { label: 'FAQ', anchor: 'faq' },
+  ];
+
+  readonly simulatorPurposes: SimulatorPurposeOption[] = [
+    { value: 'PERSONAL', label: 'Projet personnel', icon: 'person' },
+    { value: 'VEHICLE', label: 'Véhicule', icon: 'directions_car' },
+    { value: 'HOME_IMPROVEMENT', label: 'Travaux / aménagement', icon: 'home_repair_service' },
+    { value: 'GREEN', label: 'Crédit vert / éco', icon: 'energy_savings_leaf' },
+  ];
+
+  readonly features: LandingFeature[] = [
     {
-      icon: 'psychology',
-      tag: 'IA Exclusif',
-      title: 'Conseiller Financier IA',
-      description:
-        "Posez toutes vos questions à Alex, votre conseiller IA disponible 24h/24. Il analyse votre profil et vous guide vers les meilleures décisions financières en temps réel.",
+      icon: 'description',
+      title: 'Demande guidée',
+      description: 'Wizard étape par étape, brouillon sauvegardé à tout moment.',
     },
     {
-      icon: 'school',
-      tag: 'Apprentissage',
-      title: 'Formation Sur Mesure',
-      description:
-        "Un parcours d'apprentissage généré par IA, adapté à vos lacunes et vos objectifs. Progressez étape par étape vers la maîtrise de vos finances personnelles.",
+      icon: 'trending_up',
+      title: 'Taux transparent',
+      description: 'Calcul indicatif selon votre profil et le type de projet.',
     },
     {
-      icon: 'eco',
-      tag: "Jusqu’à −30 %",
-      title: 'Taux Verts Avantageux',
-      description:
-        "Voiture électrique, rénovation énergétique, panneaux solaires… Profitez de taux préférentiels pour tous vos projets écologiques et contribuez à un avenir durable.",
+      icon: 'energy_savings_leaf',
+      title: 'Crédit vert',
+      description: 'Réduction de taux sur les projets durables et éco-responsables.',
     },
     {
-      icon: 'pause_circle',
-      tag: 'Flexibilité',
-      title: 'Pause Remboursement',
-      description:
-        "La vie réserve des surprises. Mettez votre remboursement en pause temporairement selon votre profil et reprenez sereinement quand vous êtes prêt.",
+      icon: 'sync',
+      title: 'Suivi live',
+      description: 'Statuts clairs, historique et notifications en temps réel.',
     },
     {
-      icon: 'folder_open',
-      tag: 'Tout-en-un',
-      title: 'Dossier 100 % Numérique',
-      description:
-        "Déposez, signez et suivez tous vos documents en ligne. Zéro papier, zéro déplacement. Votre dossier avance en temps réel avec des notifications instantanées.",
+      icon: 'chat',
+      title: 'Messagerie conseiller',
+      description: 'Échanges sécurisés avec votre conseiller dédié.',
     },
     {
-      icon: 'shield',
-      tag: 'Sécurisé',
-      title: 'Données Protégées',
-      description:
-        "Vos données financières sont chiffrées et hébergées en France. Authentification sécurisée et confidentialité totale garanties.",
+      icon: 'auto_awesome',
+      title: 'Conseiller IA',
+      description: 'Réponses personnalisées 24/7 sur vos questions crédit.',
+      badge: 'Nouveau',
+      highlight: true,
     },
   ];
 
-  readonly stats = [
-    { value: 2500, suffix: '+', label: 'Clients actifs' },
-    { value: 98, suffix: '%', label: 'Satisfaction client' },
-    { value: 48, suffix: 'h', label: 'Délai de réponse' },
-    { value: 30, suffix: '%', label: 'Taux vert réduit' },
+  readonly steps: LandingStep[] = [
+    {
+      icon: 'account_circle',
+      title: 'Créez votre compte',
+      description: 'Inscription rapide et vérification e-mail.',
+    },
+    {
+      icon: 'edit_note',
+      title: 'Complétez votre demande',
+      description: 'Projet, situation, justificatifs : on vous guide.',
+    },
+    {
+      icon: 'support_agent',
+      title: 'Étude & échange',
+      description: 'Un conseiller instruit votre dossier et reste à vos côtés.',
+    },
+    {
+      icon: 'account_balance',
+      title: 'Prêt & remboursement',
+      description: 'Offre, mandat SEPA et échéancier clair.',
+    },
   ];
 
-  readonly steps = [
-    { num: '01', icon: 'person_add', title: 'Créez votre compte', desc: 'Inscription en 2 minutes, sans engagement.' },
-    { num: '02', icon: 'description', title: 'Déposez votre dossier', desc: "L'IA analyse votre demande instantanément." },
-    { num: '03', icon: 'trending_up', title: 'Gérez & progressez', desc: 'Suivez, apprenez et optimisez vos finances.' },
+  readonly trustPillars = [
+    { icon: 'lock', label: 'Chiffrement & authentification sécurisée' },
+    { icon: 'shield', label: 'Conformité RGPD' },
+    { icon: 'mark_email_read', label: 'Vérification e-mail à l\'inscription' },
+    { icon: 'visibility', label: 'Transparence sur le statut de votre dossier' },
   ];
 
-  ngAfterViewInit(): void {
-    this.zone.runOutsideAngular(() => {
-      this.initScrollAnimations();
+  readonly faqItems: LandingFaqItem[] = [
+    {
+      id: 'faq-1',
+      question: 'Combien de temps pour une réponse ?',
+      answer:
+        'Après soumission complète de votre dossier, un conseiller vous recontacte généralement sous 48 h ouvrées. Vous suivez l\'avancement en direct depuis votre espace.',
+    },
+    {
+      id: 'faq-2',
+      question: 'Puis-je enregistrer un brouillon ?',
+      answer:
+        'Oui. Le wizard enregistre votre progression : vous pouvez quitter et reprendre votre demande à tout moment avant l\'envoi final.',
+    },
+    {
+      id: 'faq-3',
+      question: 'Quels documents sont demandés ?',
+      answer:
+        'Selon votre projet : pièce d\'identité, justificatif de domicile, relevés de compte et justificatifs de revenus. La liste exacte s\'adapte à votre situation.',
+    },
+    {
+      id: 'faq-4',
+      question: 'Comment contacter un conseiller ?',
+      answer:
+        'Via la messagerie intégrée une fois connecté, ou par e-mail à conseil@loanlypro.fr. L\'assistant IA répond aussi à vos questions courantes 24 h/24.',
+    },
+  ];
+
+  readonly learningSteps: LearningStep[] = [
+    { label: 'Budget', icon: 'savings' },
+    { label: 'Taux', icon: 'percent' },
+    { label: 'Assurance emprunteur', icon: 'health_and_safety' },
+  ];
+
+  readonly ratePercent = computed(() =>
+    computeIndicativeRatePercent(this.amount(), this.durationMonths(), this.purpose())
+  );
+
+  readonly simulation = computed(() =>
+    calculateLoanSimulation(this.amount(), this.durationMonths(), this.purpose())
+  );
+
+  readonly showExcellentRate = computed(() => this.ratePercent() <= 4);
+
+  readonly selectedPurposeLabel = computed(
+    () => this.simulatorPurposes.find((p) => p.value === this.purpose())?.label ?? ''
+  );
+
+  readonly selectedPurposeIcon = computed(
+    () => this.simulatorPurposes.find((p) => p.value === this.purpose())?.icon ?? 'help_outline'
+  );
+
+  readonly formattedAmount = computed(() =>
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(
+      this.amount()
+    )
+  );
+
+  constructor() {
+    effect(() => {
+      this.amount();
+      this.durationMonths();
+      this.purpose();
+      untracked(() => {
+        this.resultAnimating.set(true);
+        window.setTimeout(() => this.resultAnimating.set(false), 450);
+      });
     });
   }
 
-  private initScrollAnimations(): void {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry, i) => {
-          if (entry.isIntersecting) {
-            const el = entry.target as HTMLElement;
-            const delay = el.dataset['delay'] ?? '0';
-            setTimeout(() => el.classList.add('visible'), +delay);
-            observer.unobserve(el);
-          }
-        });
-      },
-      { threshold: 0.12 }
-    );
-    document.querySelectorAll('.aos').forEach((el) => observer.observe(el));
-
-    // Counter animation
-    const counterObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            this.animateCounters();
-            counterObserver.disconnect();
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-    const statsSection = document.querySelector('.stats-section');
-    if (statsSection) counterObserver.observe(statsSection);
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    this.navbarScrolled.set(window.scrollY > 8);
   }
 
-  private animateCounters(): void {
-    document.querySelectorAll<HTMLElement>('.stat-value').forEach((el) => {
-      const target = +(el.dataset['target'] ?? 0);
-      const suffix = el.dataset['suffix'] ?? '';
-      const duration = 1800;
-      const start = performance.now();
-      const update = (now: number) => {
-        const progress = Math.min((now - start) / duration, 1);
-        const ease = 1 - Math.pow(1 - progress, 3);
-        const current = target < 10 ? (target * ease).toFixed(1) : Math.round(target * ease);
-        el.textContent = `${current}${suffix}`;
-        if (progress < 1) requestAnimationFrame(update);
-      };
-      requestAnimationFrame(update);
-    });
+  toggleMobileNav(): void {
+    this.mobileNavOpen.update((open) => !open);
+  }
+
+  closeMobileNav(): void {
+    this.mobileNavOpen.set(false);
+  }
+
+  scrollToAnchor(anchor: string): void {
+    this.closeMobileNav();
+    const el = document.getElementById(anchor);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  toggleFaq(id: string): void {
+    this.expandedFaqId.update((current) => (current === id ? null : id));
+  }
+
+  onAmountInput(value: string): void {
+    const parsed = Number(value.replace(/\s/g, ''));
+    if (!Number.isFinite(parsed)) return;
+    this.amount.set(this.clampAmount(parsed));
+  }
+
+  formatSliderLabel(value: number): string {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
+
+  formatDurationLabel(value: number): string {
+    return `${value} mois`;
+  }
+
+  private clampAmount(value: number): number {
+    return Math.min(this.amountMax, Math.max(this.amountMin, value));
   }
 }
