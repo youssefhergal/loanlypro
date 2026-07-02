@@ -1,0 +1,8 @@
+# Profil seed — activer avec SPRING_PROFILES_ACTIVE=prod,seed (ou dev,seed)
+# Usage one-shot : SEED_BULK_ENABLED=true au démarrage, puis repasser à false.
+
+app:
+  seed:
+    bulk:
+      enabled: ${SEED_BULK_ENABLED:false}
+      password: ${SEED_BULK_PASSWORD:LoanlyPro2026!}

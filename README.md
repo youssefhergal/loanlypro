@@ -8,15 +8,52 @@ Wiki par **dossiers** (`auth/`, `demande-pret-client/`, …) : [`wiki/README.md`
 
 Audit pré-livraison (parcours client) : [`wiki/demande-pret-client/08-audit-pre-livraison.md`](wiki/demande-pret-client/08-audit-pre-livraison.md).
 
-## Comptes de démonstration
+## Comptes et données de démonstration
 
-| Rôle | Email | Mot de passe |
-|------|-------|--------------|
-| Client | `client@test.com` | `password` |
-| Conseiller | `conseiller@test.com` | `password` |
-| Admin | `admin@test.com` | `password` |
+Le profil **`dev` seul** ne crée que les rôles. Pour un jeu de données complet, utilisez le **seed bulk** (voir ci-dessous).
 
-Les demandes de prêt ne sont pas pré-remplies : créez-les via l'application (wizard client).
+### Jeu de données bulk (staging / prod / local)
+
+Pour charger **25 clients**, **4 conseillers**, **2 admins**, demandes variées, prêts, justificatifs réels et historique :
+
+1. Les fichiers justificatifs doivent être dans `backend/src/main/resources/seed/documents/` (5 fichiers PDF/PNG).
+2. Au démarrage du backend, activer le profil `seed` et le flag one-shot :
+
+```bash
+# Local (après docker compose up -d db)
+cd backend
+set SPRING_PROFILES_ACTIVE=dev,seed
+set SEED_BULK_ENABLED=true
+.\mvnw.cmd spring-boot:run
+```
+
+```bash
+# Production (Cloud Run) — une seule fois après wipe BDD + bucket GCS
+SPRING_PROFILES_ACTIVE=prod,seed
+SEED_BULK_ENABLED=true
+```
+
+3. **Remettre `SEED_BULK_ENABLED=false`** (ou retirer le profil `seed`) après le premier démarrage réussi. Le seeder est idempotent : il skip si `client.seed.01@loanlypro.fr` existe déjà.
+
+| Rôle | Emails | Mot de passe |
+|------|--------|--------------|
+| Client | `client.seed.01@loanlypro.fr` … `client.seed.25@loanlypro.fr` | `LoanlyPro2026!` (ou `SEED_BULK_PASSWORD`) |
+| Conseiller | `conseiller.seed.01@loanlypro.fr` … `conseiller.seed.04@loanlypro.fr` | idem |
+| Admin | `admin.seed.01@loanlypro.fr`, `admin.seed.02@loanlypro.fr` | idem |
+
+Références dossiers : `LF-SEED-C01-A01`, etc.
+
+### Réinitialiser les données (avant un nouveau seed)
+
+**Local :**
+
+```powershell
+docker compose down -v
+docker compose up -d db
+Remove-Item -Recurse -Force backend\uploads\loan-documents -ErrorAction SilentlyContinue
+```
+
+**Staging / prod :** vider la base Cloud SQL + le bucket GCS (`loan-management-docs-dev` ou `-prod`), puis relancer le seed one-shot (voir commandes `gcloud` dans la doc équipe).
 
 ## Comment lancer le projet (BDD, backend, frontend)
 

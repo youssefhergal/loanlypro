@@ -19,10 +19,6 @@ export {
 
 const ACTIVE_APPLICATION_STATUSES = ['SUBMITTED', 'UNDER_REVIEW', 'OFFER_PENDING'] as const;
 
-const DEMO_APPLICATION_HINTS: Record<string, string> = {
-  'LF-DEMO-B001': '2 documents refusés — en attente client',
-};
-
 export interface AdvisorPriorityAlert {
   reference: string;
   message: string;
@@ -68,9 +64,6 @@ function hoursSince(isoDate: string | null | undefined): number | null {
 }
 
 export function advisorApplicationHint(app: LoanApplicationSummaryDto): string | null {
-  if (DEMO_APPLICATION_HINTS[app.reference]) {
-    return DEMO_APPLICATION_HINTS[app.reference];
-  }
   if (app.status === 'OFFER_PENDING') {
     return 'Réponse client attendue';
   }
@@ -88,7 +81,7 @@ export function advisorApplicationHint(app: LoanApplicationSummaryDto): string |
 export function advisorApplicationHintTone(
   app: LoanApplicationSummaryDto,
 ): 'warning' | 'info' | 'neutral' {
-  if (DEMO_APPLICATION_HINTS[app.reference] || app.status === 'OFFER_PENDING') {
+  if (app.status === 'OFFER_PENDING') {
     return 'warning';
   }
   const hours = hoursSince(app.submittedAt ?? app.createdAt);
@@ -99,9 +92,6 @@ export function advisorApplicationHintTone(
 }
 
 function applicationPriorityScore(app: LoanApplicationSummaryDto): number {
-  if (DEMO_APPLICATION_HINTS[app.reference]) {
-    return 1000;
-  }
   switch (app.status) {
     case 'UNDER_REVIEW':
       return 800;
@@ -187,16 +177,13 @@ export function buildAdvisorHeroSlides(
   const slides: HeroCarouselSlide[] = [];
 
   if (underReview > 0 || actionRequired > 0) {
-    const refusedHint = applications.some((app) => DEMO_APPLICATION_HINTS[app.reference]);
     slides.push({
       id: 'dossiers-etude',
       eyebrow:
         underReview > 0
           ? `${underReview} dossier${underReview > 1 ? 's' : ''} en cours d'étude`
           : `${actionRequired} dossier${actionRequired > 1 ? 's' : ''} à traiter`,
-      amountLine: refusedHint
-        ? 'Dont 1 avec documents refusés en attente client'
-        : 'Consultez vos dossiers assignés et avancez les dossiers en attente',
+      amountLine: 'Consultez vos dossiers assignés et avancez les dossiers en attente',
       ctaLabel: 'Traiter les dossiers',
       routerLink: ['/conseiller/dossiers'],
       visual: 'advisor-dossiers',
