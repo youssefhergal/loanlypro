@@ -1,6 +1,7 @@
 package com.projetfilrouge.loanmanagement.web.controller;
 
 import com.projetfilrouge.loanmanagement.service.NotificationService;
+import com.projetfilrouge.loanmanagement.security.AuthPrincipalUtils;
 import com.projetfilrouge.loanmanagement.web.dto.response.NotificationResponseDto;
 import com.projetfilrouge.loanmanagement.web.dto.response.UnreadNotificationCountDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,7 +29,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "20") int size
     ) {
         Page<NotificationResponseDto> result = notificationService.getMyNotifications(
-                authentication.getName(),
+                AuthPrincipalUtils.resolveEmail(authentication),
                 PageRequest.of(page, Math.min(size, 50))
         );
         return ResponseEntity.ok(result);
@@ -37,7 +38,7 @@ public class NotificationController {
     @GetMapping("/unread-count")
     @Operation(summary = "Nombre de notifications non lues")
     public ResponseEntity<UnreadNotificationCountDto> getUnreadCount(Authentication authentication) {
-        long count = notificationService.countUnread(authentication.getName());
+        long count = notificationService.countUnread(AuthPrincipalUtils.resolveEmail(authentication));
         return ResponseEntity.ok(UnreadNotificationCountDto.builder().count(count).build());
     }
 
@@ -47,14 +48,14 @@ public class NotificationController {
             Authentication authentication,
             @PathVariable Long id
     ) {
-        notificationService.markAsRead(authentication.getName(), id);
+        notificationService.markAsRead(AuthPrincipalUtils.resolveEmail(authentication), id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/read-all")
     @Operation(summary = "Tout marquer comme lu")
     public ResponseEntity<Void> markAllAsRead(Authentication authentication) {
-        notificationService.markAllAsRead(authentication.getName());
+        notificationService.markAllAsRead(AuthPrincipalUtils.resolveEmail(authentication));
         return ResponseEntity.noContent().build();
     }
 }

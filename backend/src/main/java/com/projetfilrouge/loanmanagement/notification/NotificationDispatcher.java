@@ -50,12 +50,25 @@ public class NotificationDispatcher {
                     type, loan.getId(), ex.getMessage());
         }
 
-        if (NotificationPolicy.shouldCreateInAppForClient(type) && loan.getApplicant() != null) {
-            notificationService.createInApp(loan.getApplicant(), type, clientContent, loan.getId());
+        try {
+            if (NotificationPolicy.shouldCreateInAppForClient(type) && loan.getApplicant() != null) {
+                notificationService.createInApp(loan.getApplicant(), type, clientContent, loan.getId());
+                log.debug("Notification in-app client créée pour {} ({})", loan.getApplicant().getEmail(), type);
+            }
+        } catch (Exception ex) {
+            log.error("Échec notification in-app client {} pour dossier {}: {}",
+                    type, loan.getId(), ex.getMessage(), ex);
         }
 
-        if (NotificationPolicy.shouldCreateInAppForAdvisor(type) && loan.getAssignedAdvisor() != null) {
-            notificationService.createInApp(loan.getAssignedAdvisor(), type, advisorContent, loan.getId());
+        try {
+            if (NotificationPolicy.shouldCreateInAppForAdvisor(type) && loan.getAssignedAdvisor() != null) {
+                notificationService.createInApp(loan.getAssignedAdvisor(), type, advisorContent, loan.getId());
+                log.debug("Notification in-app conseiller créée pour {} ({})",
+                        loan.getAssignedAdvisor().getEmail(), type);
+            }
+        } catch (Exception ex) {
+            log.error("Échec notification in-app conseiller {} pour dossier {}: {}",
+                    type, loan.getId(), ex.getMessage(), ex);
         }
     }
 }

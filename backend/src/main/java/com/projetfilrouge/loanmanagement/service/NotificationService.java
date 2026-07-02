@@ -6,19 +6,23 @@ import com.projetfilrouge.loanmanagement.entity.User;
 import com.projetfilrouge.loanmanagement.notification.NotificationContent;
 import com.projetfilrouge.loanmanagement.repository.NotificationRepository;
 import com.projetfilrouge.loanmanagement.repository.UserRepository;
+import com.projetfilrouge.loanmanagement.security.AuthPrincipalUtils;
 import com.projetfilrouge.loanmanagement.web.dto.response.NotificationResponseDto;
 import com.projetfilrouge.loanmanagement.web.exception.ForbiddenOperationException;
 import com.projetfilrouge.loanmanagement.web.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
 
     private static final String REFERENCE_LOAN_APPLICATION = "LOAN_APPLICATION";
@@ -26,22 +30,29 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Notification createInApp(
             User recipient,
             LoanApplicationEventType eventType,
             NotificationContent content,
             Long loanApplicationId
     ) {
+        if (recipient == null || recipient.getId() == null) {
+            throw new IllegalArgumentException("Destinataire notification invalide");
+        }
+        User managedRecipient = userRepository.getReferenceById(recipient.getId());
         Notification notification = Notification.builder()
-                .recipient(recipient)
+                .recipient(managedRecipient)
                 .eventType(eventType)
                 .title(content.title())
                 .message(content.message())
                 .referenceType(REFERENCE_LOAN_APPLICATION)
                 .referenceId(loanApplicationId)
                 .build();
-        return notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+        log.info("Notification in-app #{} créée pour {} ({})",
+                saved.getId(), recipient.getEmail(), eventType);
+        return saved;
     }
 
     @Transactional(readOnly = true)
@@ -73,7 +84,7 @@ public class NotificationService {
     }
 
     private User requireUser(String email) {
-        return userRepository.findByEmail(email.trim().toLowerCase())
+        return userRepository.findByEmail(AuthPrincipalUtils.normalizeEmail(email))
                 .orElseThrow(() -> new ForbiddenOperationException("Utilisateur introuvable"));
     }
 
