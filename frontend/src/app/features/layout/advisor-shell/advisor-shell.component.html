@@ -143,6 +143,17 @@
               <span>Mon profil</span>
             </a>
             <a
+              routerLink="/conseiller/parametres"
+              routerLinkActive="active"
+              class="nav-item"
+              matTooltip="Paramètres"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>settings</mat-icon>
+              <span>Paramètres</span>
+            </a>
+            <a
               routerLink="/conseiller/aide"
               routerLinkActive="active"
               class="nav-item nav-item--support"

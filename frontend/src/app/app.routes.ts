@@ -6,13 +6,11 @@ import { ROLES } from './core/auth/constants/auth.constants';
 
 import { guestOnlyGuard } from './core/auth/guards/guest-only.guard';
 
-const comingSoon = () =>
-  import('./features/shared/coming-soon/coming-soon.component').then(
-    (m) => m.ComingSoonComponent
-  );
-
 const helpFaq = () =>
   import('./features/help/help-faq.component').then((m) => m.HelpFaqComponent);
+
+const settingsPage = () =>
+  import('./features/settings/settings.component').then((m) => m.SettingsComponent);
 
 export const routes: Routes = [
   {
@@ -142,6 +140,15 @@ export const routes: Routes = [
         data: { title: 'Mon profil', description: 'Gérez votre profil et la sécurité de votre compte.' },
       },
       {
+        path: 'parametres',
+        loadComponent: settingsPage,
+        data: {
+          title: 'Paramètres',
+          description: 'Préférences d’affichage et notifications conseiller.',
+          settingsRole: 'advisor',
+        },
+      },
+      {
         path: 'aide',
         loadComponent: helpFaq,
         data: { title: 'Aide', description: 'FAQ et support.' },
@@ -244,10 +251,11 @@ export const routes: Routes = [
       },
       {
         path: 'parametres',
-        loadComponent: comingSoon,
+        loadComponent: settingsPage,
         data: {
           title: 'Paramètres',
-          description: 'Paramétrage plateforme — bientôt disponible.',
+          description: 'Préférences d’affichage et alertes de supervision.',
+          settingsRole: 'admin',
         },
       },
       {
@@ -443,11 +451,12 @@ export const routes: Routes = [
       },
       {
         path: 'parametres',
-        loadComponent: comingSoon,
+        loadComponent: settingsPage,
         data: {
           title: 'Paramètres',
           description:
-            "Gérez la sécurité du compte, les préférences d'affichage et les notifications.",
+            "Gérez l'affichage, les notifications et les raccourcis de votre espace client.",
+          settingsRole: 'client',
         },
       },
       {

@@ -112,3 +112,23 @@ a {
 .cdk-overlay-container:has(.reject-document-dialog-panel) {
   z-index: 1300 !important;
 }
+
+html.compact-tables {
+  .mat-mdc-row,
+  .widget-list__item,
+  .application-card,
+  .kpi-card {
+    --compact-pad: 0.35rem;
+  }
+
+  .mat-mdc-cell,
+  .mat-mdc-header-cell {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .widget-list__item,
+  .application-card {
+    padding-block: 0.65rem;
+  }
+}

@@ -19,6 +19,7 @@ import type { BreadcrumbItem } from '../client-shell/client-shell.component';
 import { HelpFaqSearchFieldComponent } from '../../../shared/help-faq-search-field/help-faq-search-field.component';
 import { AppLogoComponent } from '../../../shared/app-logo/app-logo.component';
 import { HelpFaqSearchService } from '../../../core/help/services/help-faq-search.service';
+import { UserSettingsService } from '../../../core/settings/user-settings.service';
 import { isHelpFaqPath } from '../../../core/help/utils/help-faq.util';
 
 const SIDEBAR_COLLAPSED_KEY = 'lf-admin-sidebar-collapsed';
@@ -45,6 +46,7 @@ export class AdminShellComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly helpFaqSearch = inject(HelpFaqSearchService);
+  private readonly userSettings = inject(UserSettingsService);
 
   readonly sidebarCollapsed = signal(this.readSidebarPreference());
   readonly breadcrumbs = signal<BreadcrumbItem[]>([]);
@@ -53,6 +55,7 @@ export class AdminShellComponent {
   readonly showHelpFaqSearch = signal(false);
 
   constructor(public readonly auth: AuthService) {
+    this.userSettings.applyToDocument(this.userSettings.load('admin'));
     this.router.events
       .pipe(
         filter((e): e is NavigationEnd => e instanceof NavigationEnd),

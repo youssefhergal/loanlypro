@@ -22,6 +22,7 @@ import { PaymentsScheduleLoanPickerComponent } from '../../../shared/payments-sc
 import { HelpFaqSearchFieldComponent } from '../../../shared/help-faq-search-field/help-faq-search-field.component';
 import { AppLogoComponent } from '../../../shared/app-logo/app-logo.component';
 import { HelpFaqSearchService } from '../../../core/help/services/help-faq-search.service';
+import { UserSettingsService } from '../../../core/settings/user-settings.service';
 import { isHelpFaqPath } from '../../../core/help/utils/help-faq.util';
 import type { User } from '../../../core/auth/models/user.model';
 
@@ -58,6 +59,7 @@ export class ClientShellComponent {
   private readonly notificationApi = inject(NotificationApiService);
   private readonly notificationPageCoordination = inject(NotificationPageCoordinationService);
   private readonly helpFaqSearch = inject(HelpFaqSearchService);
+  private readonly userSettings = inject(UserSettingsService);
   readonly notificationUnread = inject(NotificationUnreadService);
 
   readonly sidebarCollapsed = signal(this.readSidebarPreference());
@@ -71,6 +73,7 @@ export class ClientShellComponent {
   readonly markingAllNotifications = signal(false);
 
   constructor(public readonly auth: AuthService) {
+    this.userSettings.applyToDocument(this.userSettings.load('client'));
     this.notificationUnread.refresh();
 
     this.router.events
