@@ -15,7 +15,10 @@
 
 ## Modèle de données
 
-Un seul diagramme de classes : [projet/diagrams/classes-domaine.puml](./projet/diagrams/classes-domaine.puml).
+Diagrammes de classes :
+- [Complet (PlantUML)](./projet/diagrams/classes-domaine.puml) — référence technique
+- [Synthèse slide (PlantUML)](./projet/diagrams/classes-domaine-slide.puml)
+- [Synthèse slide (Mermaid)](./projet/diagrams/classes-domaine-slide.md) — preview GitLab / VS Code
 
 ## Nouveau module wiki
 

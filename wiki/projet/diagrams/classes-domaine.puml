@@ -1,169 +1,471 @@
-@startuml classes-domaine-loanlyfans
-' Diagramme de classes — domaine JPA (demande de prêt + utilisateurs)
-' Prévisualisation : https://www.plantuml.com/plantuml/uml/
+@startuml classes-domaine-loanlypro
+' Diagramme de classes complet — entités JPA LoanlyPro
+' Prévisualisation : https://www.plantuml.com/plantuml/uml/  |  VS Code : Alt+D
 
 skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
 top to bottom direction
 
-' ---------- Énumérations ----------
+title LoanlyPro — Modèle de domaine JPA (complet)
 
-enum LoanApplicationStatus {
-  DRAFT
-  SUBMITTED
-  UNDER_REVIEW
-  APPROVED
-  REJECTED
-  CANCELLED
+' =============================================================================
+' Énumérations
+' =============================================================================
+
+package "Énumérations — demande & dossier" #F8F9FA {
+  enum LoanApplicationStatus {
+    DRAFT
+    SUBMITTED
+    UNDER_REVIEW
+    OFFER_PENDING
+    APPROVED
+    REJECTED
+    CANCELLED
+  }
+
+  enum LoanPurpose {
+    GREEN
+    SOFTWARE
+    VEHICLE
+    HOME_IMPROVEMENT
+    PERSONAL
+    EDUCATION
+    OTHER
+  }
+
+  enum EmploymentStatus {
+    CDI
+    CDD
+    FREELANCE
+    PUBLIC_SECTOR
+    UNEMPLOYED
+    RETIRED
+    STUDENT
+  }
+
+  enum LoanDocumentType {
+    IDENTITY
+    PAYSLIPS
+    TAX_NOTICE
+    BANK_STATEMENTS
+    PROOF_OF_ADDRESS
+    OTHER
+  }
+
+  enum LoanDocumentReviewStatus {
+    PENDING_REVIEW
+    VALIDATED
+    REJECTED
+  }
+
+  enum LoanApplicationEventType {
+    APPLICATION_CREATED
+    APPLICATION_SUBMITTED
+    DOCUMENT_UPLOADED
+    ADVISOR_ASSIGNED
+    REVIEW_STARTED
+    DOCUMENT_REJECTED
+    DOCUMENT_VALIDATED
+    OFFER_PROPOSED
+    OFFER_ACCEPTED
+    OFFER_REJECTED
+    APPLICATION_APPROVED
+    APPLICATION_REJECTED
+    APPLICATION_CANCELLED
+    FUNDS_RELEASED
+    LOAN_CREATED
+    MANDATE_ACTIVATED
+    MANDATE_REVOKED
+    PAYMENT_SUCCEEDED
+    PAYMENT_FAILED
+    INSTALLMENT_OVERDUE
+    LOAN_CLOSED
+    LOAN_DEFAULTED
+  }
+
+  enum LoanEventActorType {
+    CLIENT
+    ADVISOR
+    ADMIN
+    SYSTEM
+  }
+
+  enum IssuedDocumentType {
+    APPLICATION_RECAP
+    OFFER
+    LOAN_CONTRACT
+    SEPA_MANDATE
+  }
 }
 
-enum LoanPurpose {
-  SOFTWARE
-  VEHICLE
-  HOME_IMPROVEMENT
-  PERSONAL
-  EDUCATION
-  OTHER
+package "Énumérations — prêt & paiement" #F8F9FA {
+  enum LoanStatus {
+    PENDING_MANDATE
+    ACTIVE
+    DEFAULTED
+    CLOSED
+  }
+
+  enum InstallmentStatus {
+    UPCOMING
+    DUE
+    PAID
+    FAILED
+    OVERDUE
+    BLOCKED
+  }
+
+  enum PaymentTransactionStatus {
+    PENDING
+    SUCCESS
+    FAILED
+    CANCELLED
+  }
+
+  enum MandateStatus {
+    PENDING
+    ACTIVE
+    REVOKED
+  }
+
+  enum LearningSessionStatus {
+    IN_PROGRESS
+    COMPLETED
+  }
 }
 
-enum EmploymentStatus {
-  CDI
-  CDD
-  FREELANCE
-  PUBLIC_SECTOR
-  UNEMPLOYED
-  RETIRED
-  STUDENT
+' =============================================================================
+' Identité & accès
+' =============================================================================
+
+package "Identité & accès" #E8F4FD {
+  class User <<Entity>> {
+    - Long id
+    - String email
+    - String passwordHash
+    - String firstName
+    - String lastName
+    - boolean emailVerified
+    - String emailVerificationCode
+    - Instant emailVerificationExpiresAt
+  }
+
+  class Role <<Entity>> {
+    - Long id
+    - String name
+  }
 }
 
-enum LoanDocumentType {
-  IDENTITY
-  PAYSLIPS
-  TAX_NOTICE
-  BANK_STATEMENTS
-  PROOF_OF_ADDRESS
-  OTHER
+' =============================================================================
+' Demande de prêt
+' =============================================================================
+
+package "Demande de prêt" #E8F5E9 {
+  class LoanApplication <<Entity>> {
+    - Long id
+    - String reference
+    - LoanApplicationStatus status
+    - String title
+    - LoanPurpose loanPurpose
+    - String purpose
+    - String comment
+    - BigDecimal requestedAmount
+    - Integer requestedDurationMonths
+    - BigDecimal monthlyIncome
+    - BigDecimal additionalIncome
+    - EmploymentStatus employmentStatus
+    - String employerName
+    - String jobTitle
+    - String employerSector
+    - LocalDate hireDate
+    - Integer seniorityMonths
+    - BigDecimal monthlyRent
+    - BigDecimal monthlyLoanPayments
+    - BigDecimal monthlyAlimony
+    - BigDecimal monthlyOtherCharges
+    - BigDecimal approvedAmount
+    - Integer approvedDurationMonths
+    - BigDecimal interestRate
+    - String offerMessage
+    - Boolean offerClientAccepted
+    - String decisionComment
+    - Instant submittedAt
+    - Instant decidedAt
+    - Instant createdAt
+    - Instant updatedAt
+  }
+
+  class LoanDocument <<Entity>> {
+    - Long id
+    - LoanDocumentType documentType
+    - String originalFileName
+    - String displayName
+    - String storedFileName
+    - String contentType
+    - Long fileSizeBytes
+    - String storagePath
+    - Instant uploadedAt
+  }
+
+  class LoanDocumentReview <<Entity>> {
+    - Long id
+    - LoanDocumentType documentType
+    - LoanDocumentReviewStatus reviewStatus
+    - String reviewComment
+    - Instant updatedAt
+  }
+
+  class LoanApplicationEvent <<Entity>> {
+    - Long id
+    - LoanApplicationEventType eventType
+    - Instant occurredAt
+    - LoanEventActorType actorType
+    - String actorEmail
+    - String actorDisplayName
+    - String payloadJson
+  }
+
+  class IssuedDocument <<Entity>> {
+    - Long id
+    - Long loanId
+    - IssuedDocumentType documentType
+    - String fileName
+    - String storagePath
+    - Instant issuedAt
+  }
 }
 
-enum LoanApplicationEventType {
-  APPLICATION_CREATED
-  APPLICATION_SUBMITTED
-  DOCUMENT_UPLOADED
-  ADVISOR_ASSIGNED
-  REVIEW_STARTED
-  DOCUMENT_REJECTED
-  DOCUMENT_VALIDATED
-  APPLICATION_APPROVED
-  APPLICATION_REJECTED
-  APPLICATION_CANCELLED
-  FUNDS_RELEASED
+' =============================================================================
+' Prêt actif & remboursement
+' =============================================================================
+
+package "Prêt & remboursement" #FFF3E0 {
+  class Loan <<Entity>> {
+    - Long id
+    - LoanStatus status
+    - BigDecimal principalAmount
+    - Integer durationMonths
+    - BigDecimal annualRate
+    - BigDecimal remainingBalance
+    - Instant activatedAt
+    - Instant closedAt
+    - Instant createdAt
+    - Instant updatedAt
+  }
+
+  class RepaymentPlan <<Entity>> {
+    - Long id
+    - BigDecimal totalRepayable
+    - BigDecimal monthlyPayment
+    - Integer installmentCount
+    - Instant generatedAt
+  }
+
+  class Installment <<Entity>> {
+    - Long id
+    - Integer sequenceNumber
+    - LocalDate dueDate
+    - BigDecimal amountDue
+    - BigDecimal principalPart
+    - BigDecimal interestPart
+    - BigDecimal remainingBalance
+    - InstallmentStatus status
+    - Integer attemptCount
+    - LocalDate nextRetryDate
+  }
+
+  class PaymentTransaction <<Entity>> {
+    - Long id
+    - Integer attemptNumber
+    - BigDecimal amount
+    - PaymentTransactionStatus status
+    - String failureReason
+    - String externalReference
+    - String idempotencyKey
+    - Instant attemptedAt
+    - Instant settledAt
+    - Instant createdAt
+  }
+
+  class PaymentMethod <<Entity>> {
+    - Long id
+    - String ibanMasked
+    - String ibanToken
+    - String holderName
+    - Instant createdAt
+  }
+
+  class DirectDebitMandate <<Entity>> {
+    - Long id
+    - String mandateReference
+    - MandateStatus status
+    - Instant signedAt
+    - Instant revokedAt
+    - Instant createdAt
+  }
 }
 
-enum LoanEventActorType {
-  CLIENT
-  ADVISOR
-  ADMIN
-  SYSTEM
+' =============================================================================
+' Notifications & messagerie
+' =============================================================================
+
+package "Notifications" #F3E5F5 {
+  class Notification <<Entity>> {
+    - Long id
+    - LoanApplicationEventType eventType
+    - String title
+    - String message
+    - String referenceType
+    - Long referenceId
+    - Instant readAt
+    - Instant createdAt
+  }
 }
 
-' ---------- Entités ----------
+package "Messagerie" #E0F7FA {
+  class Conversation <<Entity>> {
+    - Long id
+    - Instant createdAt
+    - Instant lastMessageAt
+    - String lastMessagePreview
+  }
 
-class User {
-  - Long id
-  - String email
-  - String passwordHash
-  - String firstName
-  - String lastName
+  class Message <<Entity>> {
+    - Long id
+    - String content
+    - Instant sentAt
+    - Instant readAt
+    - String attachmentPath
+    - String attachmentName
+    - String attachmentContentType
+  }
 }
 
-class Role {
-  - Long id
-  - String name
+package "IA — parcours d'apprentissage" #FBE9E7 {
+  class LearningSession <<Entity>> {
+    - Long id
+    - String objective
+    - String roadmapJson
+    - String completedSteps
+    - LearningSessionStatus status
+    - Instant createdAt
+    - Instant updatedAt
+  }
 }
 
-class LoanApplication {
-  - Long id
-  - String reference
-  - LoanApplicationStatus status
-  - String title
-  - LoanPurpose loanPurpose
-  - String purpose
-  - BigDecimal requestedAmount
-  - Integer requestedDurationMonths
-  - String comment
-  - BigDecimal monthlyIncome
-  - BigDecimal additionalIncome
-  - EmploymentStatus employmentStatus
-  - String employerName
-  - String jobTitle
-  - String employerSector
-  - LocalDate hireDate
-  - Integer seniorityMonths
-  - BigDecimal monthlyRent
-  - BigDecimal monthlyLoanPayments
-  - BigDecimal monthlyAlimony
-  - BigDecimal monthlyOtherCharges
-  - BigDecimal approvedAmount
-  - Integer approvedDurationMonths
-  - BigDecimal interestRate
-  - String decisionComment
-  - Instant submittedAt
-  - Instant decidedAt
-  - Instant createdAt
-  - Instant updatedAt
-}
+' =============================================================================
+' Relations — identité
+' =============================================================================
 
-class LoanDocument {
-  - Long id
-  - LoanDocumentType documentType
-  - String originalFileName
-  - String displayName
-  - String storedFileName
-  - String contentType
-  - Long fileSizeBytes
-  - String storagePath
-  - Instant uploadedAt
-}
-
-class LoanApplicationEvent {
-  - Long id
-  - LoanApplicationEventType eventType
-  - Instant occurredAt
-  - LoanEventActorType actorType
-  - String actorEmail
-  - String actorDisplayName
-  - String payloadJson
-}
-
-' ---------- Relations ----------
-
+User "0..*" -- "0..*" Role : roles\n<<user_roles>>
 User "1" -- "0..*" LoanApplication : applicant >
-User "1" -- "0..*" LoanApplication : assignedAdvisor >
-User "0..*" -- "0..*" Role : roles >
+User "0..1" -- "0..*" LoanApplication : assignedAdvisor >
+User "1" -- "0..*" Loan : borrower >
+User "0..1" -- "0..*" Loan : assignedAdvisor >
+User "1" -- "0..*" PaymentMethod : possède >
+User "1" -- "0..*" Notification : recipient >
+User "1" -- "0..*" Conversation : participant1 >
+User "1" -- "0..*" Conversation : participant2 >
+User "1" -- "0..*" Message : sender >
+User "1" -- "0..*" LearningSession : user >
+
+' =============================================================================
+' Relations — demande & prêt
+' =============================================================================
 
 LoanApplication "1" *-- "0..*" LoanDocument : documents
+LoanApplication "1" *-- "0..*" LoanDocumentReview : reviews
 LoanApplication "1" *-- "0..*" LoanApplicationEvent : events
+LoanApplication "1" *-- "0..*" IssuedDocument : issuedDocuments
+LoanApplication "1" -- "0..1" Loan : génère >
+
+Loan "1" -- "1" RepaymentPlan : plan
+RepaymentPlan "1" *-- "1..*" Installment : installments
+Installment "1" *-- "0..*" PaymentTransaction : transactions
+
+Loan "1" -- "0..1" DirectDebitMandate : mandat
+PaymentMethod "1" -- "0..*" DirectDebitMandate : utilisé par >
+
+Conversation "1" *-- "0..*" Message : messages
+
+' =============================================================================
+' Associations vers énumérations
+' =============================================================================
 
 LoanApplication --> LoanApplicationStatus
 LoanApplication --> LoanPurpose
 LoanApplication --> EmploymentStatus
 LoanDocument --> LoanDocumentType
+LoanDocumentReview --> LoanDocumentType
+LoanDocumentReview --> LoanDocumentReviewStatus
 LoanApplicationEvent --> LoanApplicationEventType
 LoanApplicationEvent --> LoanEventActorType
+IssuedDocument --> IssuedDocumentType
+Loan --> LoanStatus
+Installment --> InstallmentStatus
+PaymentTransaction --> PaymentTransactionStatus
+DirectDebitMandate --> MandateStatus
+Notification --> LoanApplicationEventType
+LearningSession --> LearningSessionStatus
+
+' =============================================================================
+' Notes tables
+' =============================================================================
+
+note right of User
+  **users**
+  Vérification e-mail (code + expiration)
+end note
 
 note bottom of LoanApplication
-  Table : loan_applications
-  Référence unique (ex. LOAN-XXXXXXXX)
+  **loan_applications**
+  Référence unique (ex. LF-SEED-C01-A01)
+  offerClientAccepted : null | false | true
 end note
 
 note bottom of LoanDocument
-  Table : loan_documents
-  Fichier physique via storagePath
+  **loan_documents**
+  Fichier : local ou GCS (storagePath)
 end note
 
-note bottom of LoanApplicationEvent
-  Table : loan_application_events
-  payloadJson : métadonnées JSON
+note bottom of Loan
+  **loans**
+  1:1 avec LoanApplication (APPROVED)
 end note
+
+note bottom of RepaymentPlan
+  **repayment_plans**
+  Échéances en cascade (orphanRemoval)
+end note
+
+note bottom of PaymentMethod
+  **payment_methods**
+  IBAN chiffré (ibanToken via IbanVaultService)
+end note
+
+note bottom of Notification
+  **notifications**
+  referenceType / referenceId → dossier lié
+end note
+
+note bottom of Conversation
+  **conversations**
+  participant1_id < participant2_id (ordre canonique)
+end note
+
+note bottom of LearningSession
+  **learning_sessions**
+  roadmapJson : étapes IA (TEXT)
+end note
+
+legend right
+  |= Symbole |= Signification |
+  | <<Entity>> | Table JPA (@Entity) |
+  | *-- | Composition |
+  | -- | Association |
+  | Mise à jour | LoanlyPro — 17 entités, 13 énumérations |
+endlegend
 
 @enduml
