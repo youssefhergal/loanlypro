@@ -170,13 +170,78 @@ docker compose down
 
 ---
 
-## CI/CD & Environnements
+## CI/CD & Déploiement GCP
 
-| Environnement | Frontend | Backend | Déclencheur |
+### Environnements
+
+| Environnement | Frontend (Firebase) | Backend (Cloud Run) | Déclencheur |
 |---|---|---|---|
-| **Dev** | https://pfr-dev.web.app | Cloud Run `backend-dev` | push `develop` |
-| **Prod** | https://pfr-prod.web.app | Cloud Run `backend-prod` | push `main` |
+| **Dev** | https://pfr-dev.web.app | `backend-dev` — `europe-west1` | push `develop` |
+| **Prod** | https://pfr-prod.web.app | `backend-prod` — `europe-west1` | push `main` (manuel) |
 
-Pipeline GitLab CI/CD : `test → build → deploy` (automatique sur `develop` et `main`).
+### Pipeline GitLab CI/CD
+
+```
+push develop / main
+       │
+       ▼
+  [test]          test-backend (Maven) + test-frontend (ng build)
+       │
+       ▼
+  [build]         backend → image Docker → Artifact Registry GCP
+                  frontend → ng build production → artifact GitLab
+       │
+       ▼
+  [deploy-dev]    backend-dev → Cloud Run (auto)
+                  frontend → Firebase Hosting pfr-dev (auto)
+       │
+       ▼
+  [deploy-prod]   backend-prod → Cloud Run (manuel, on_success sur main)
+                  frontend → Firebase Hosting pfr-prod (manuel)
+```
+
+### Infrastructure GCP
+
+| Service GCP | Usage |
+|-------------|-------|
+| **Cloud Run** | Backend Spring Boot conteneurisé (scale-to-zero en dev, min 1 instance en prod) |
+| **Artifact Registry** | Stockage des images Docker backend (`europe-west1-docker.pkg.dev/…/loan-management/backend`) |
+| **Cloud SQL (MySQL 8)** | Base de données — instance `loan-management-sql` (partagée dev/prod, bases séparées) |
+| **Firebase Hosting** | Frontend Angular — CDN mondial, HTTPS automatique |
+| **Google Cloud Storage** | Stockage des fichiers uploadés (justificatifs, pièces jointes) — buckets `loan-management-docs-dev` et `loan-management-docs-prod` |
+| **Secret Manager** | Secrets production : `db-url-prod`, `db-password-prod`, `jwt-secret-prod` |
+
+### Variables GitLab CI/CD à configurer
+
+Settings → CI/CD → Variables :
+
+| Variable | Description | Options |
+|----------|-------------|---------|
+| `GCP_PROJECT_ID` | ID du projet GCP | Protected |
+| `GCP_SERVICE_ACCOUNT_KEY` | JSON du compte de service (base64) | Masked + Protected |
+| `FIREBASE_PROJECT_ID` | ID projet Firebase | Protected |
+| `ANTHROPIC_API_KEY` | Clé API Claude (Anthropic) | **Masked** + Protected |
+
+### Clé API Anthropic (IA)
+
+La clé API Anthropic est nécessaire pour le **Conseiller IA** et la **Formation sur mesure**.
+
+- **Local dev** : créer un fichier `.env` à la racine (déjà dans `.gitignore`) :
+  ```
+  ANTHROPIC_API_KEY=sk-ant-api03-...
+  ```
+- **CI/CD / Cloud Run** : variable GitLab `ANTHROPIC_API_KEY` injectée automatiquement dans le container.
+- Elle est lue par Spring Boot via `${ANTHROPIC_API_KEY:}` dans `application.yml`.
+- **Ne jamais la mettre dans le code ou dans un fichier `.yml` commité.**
+
+### Secrets Cloud SQL (production)
+
+Les secrets de prod sont dans **Google Secret Manager** et injectés dans Cloud Run via `--set-secrets` :
+
+```
+db-url-prod      → SPRING_DATASOURCE_URL
+db-password-prod → SPRING_DATASOURCE_PASSWORD
+jwt-secret-prod  → JWT_SECRET
+```
 
 Documentation complète : [`docs/CICD.md`](docs/CICD.md)

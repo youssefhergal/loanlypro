@@ -11,6 +11,8 @@
 | [**module-pret/**](./module-pret/README.md) | Prêt & paiements — prélèvement auto, échéancier, KPI |
 | [**module-notifications/**](./module-notifications/README.md) | E-mails (Resend) + centre de notifications in-app |
 | [**module-documents/**](./module-documents/README.md) | GED client — justificatifs, documents crédit, exports PDF |
+| [**module-messagerie/**](./module-messagerie/README.md) | Messagerie temps réel WebSocket STOMP + pièces jointes |
+| [**module-ia/**](./module-ia/README.md) | Conseiller IA (Alex) + Formation sur mesure — propulsés par Claude |
 | [projet/](./projet/README.md) | Architecture + diagramme de classes |
 
 ## Modèle de données
