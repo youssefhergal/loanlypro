@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { JustificatifGroupDto } from '../../documents/models/justificatif.model';
 import { NotificationDto } from '../../notifications/models/notification.model';
-import { AdminLoanListSummary } from '../../loans/models/admin-loan-list-summary.model';
 import { LoanSummaryDto } from '../../loans/repayment/models/loan-summary.model';
 
 export interface LoanApplicationSummaryDto {
@@ -73,13 +72,5 @@ export class DashboardApiService {
 
   getAdvisorDashboard(): Observable<AdvisorDashboardResponse> {
     return this.http.get<AdvisorDashboardResponse>(`${this.baseUrl}/advisor`);
-  }
-
-  getAdminDashboard(params?: { search?: string }): Observable<AdminLoanListSummary> {
-    let httpParams = new HttpParams();
-    if (params?.search?.trim()) {
-      httpParams = httpParams.set('search', params.search.trim());
-    }
-    return this.http.get<AdminLoanListSummary>(`${this.baseUrl}/admin`, { params: httpParams });
   }
 }

@@ -1,4 +1,38 @@
 import { InstallmentStatus, RepaymentLoanStatus } from '../models/repayment.enums';
+import { LoanSummaryDto } from '../models/loan-summary.model';
+
+export type RepaymentLoanStatusFilter = 'ALL' | RepaymentLoanStatus;
+
+export const REPAYMENT_LOAN_LIST_PAGE_SIZE = 10;
+
+export const REPAYMENT_LOAN_STATUS_FILTER_OPTIONS: {
+  value: RepaymentLoanStatusFilter;
+  label: string;
+}[] = [
+  { value: 'ALL', label: 'Tous les statuts' },
+  { value: 'ACTIVE', label: 'Actif' },
+  { value: 'DEFAULTED', label: 'En défaut' },
+  { value: 'CLOSED', label: 'Soldé' },
+  { value: 'PENDING_MANDATE', label: 'Mandat en attente' },
+];
+
+export function matchesRepaymentLoanSummarySearch(
+  loan: LoanSummaryDto,
+  query: string,
+): boolean {
+  const haystack = [loan.reference, loan.borrowerName, loan.borrowerEmail]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  return haystack.includes(query);
+}
+
+export function formatOverdueInstallmentsLabel(count: number): string {
+  if (count <= 0) {
+    return '—';
+  }
+  return count === 1 ? '1 éch. en retard' : `${count} éch. en retard`;
+}
 
 export interface StatusChipStyle {
   label: string;

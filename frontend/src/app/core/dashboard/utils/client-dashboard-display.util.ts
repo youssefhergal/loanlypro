@@ -268,35 +268,6 @@ export function dossierVerticalTimelineSteps(status: string): ApplicationProgres
   });
 }
 
-export function buildNewClientHeroCarouselSlides(): HeroCarouselSlide[] {
-  return [
-    {
-      id: 'welcome',
-      eyebrow: 'Bienvenue sur LoanlyPro',
-      amountLine: 'Simulez votre crédit en 2 minutes',
-      ctaLabel: 'Nouvelle demande',
-      routerLink: ['/nouvelle-demande'],
-      visual: 'welcome',
-    },
-    {
-      id: 'personal-loan',
-      eyebrow: 'Crédit personnel',
-      amountLine: 'Taux à partir de 3,5 % TAEG',
-      ctaLabel: 'Simuler mon projet',
-      routerLink: ['/nouvelle-demande'],
-      visual: 'personal-loan',
-    },
-    {
-      id: 'works-loan',
-      eyebrow: 'Crédit travaux',
-      amountLine: "Jusqu'à 75 000 € pour vos rénovations",
-      ctaLabel: "Découvrir l'offre",
-      routerLink: ['/nouvelle-demande'],
-      visual: 'works-loan',
-    },
-  ];
-}
-
 export function buildHeroCarouselSlides(input: {
   loan: LoanSummaryDto | null;
   primaryDemande?: LoanApplicationSummaryDto | null;

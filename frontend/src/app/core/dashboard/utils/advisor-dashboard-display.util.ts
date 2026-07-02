@@ -36,7 +36,7 @@ export function isEmptyAdvisorProfile(
   return applications.length === 0 && loans.length === 0;
 }
 
-export function countUnderReviewApplications(applications: LoanApplicationSummaryDto[]): number {
+function countUnderReviewApplications(applications: LoanApplicationSummaryDto[]): number {
   return applications.filter((app) => app.status === 'UNDER_REVIEW').length;
 }
 
@@ -50,13 +50,13 @@ export function countActiveLoans(loans: LoanSummaryDto[]): number {
   return loans.filter((loan) => loan.status === 'ACTIVE').length;
 }
 
-export function totalOutstandingBalance(loans: LoanSummaryDto[]): number {
+function totalOutstandingBalance(loans: LoanSummaryDto[]): number {
   return loans
     .filter((loan) => loan.status === 'ACTIVE')
     .reduce((sum, loan) => sum + (loan.remainingBalance ?? 0), 0);
 }
 
-export function hoursSince(isoDate: string | null | undefined): number | null {
+function hoursSince(isoDate: string | null | undefined): number | null {
   if (!isoDate) {
     return null;
   }
@@ -172,17 +172,6 @@ export function advisorApplicationCtaLabel(status: string): string {
 
 export function displayApplicantName(app: LoanApplicationSummaryDto): string {
   return app.applicantName?.trim() || app.title || app.reference;
-}
-
-export function applicantInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return '?';
-  }
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase();
-  }
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
 export function buildAdvisorHeroSlides(

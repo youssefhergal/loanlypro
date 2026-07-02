@@ -206,29 +206,6 @@ export function matchesAdvisorLoanSearch(loan: LoanResponseDto, query: string): 
   return (loan.applicantName?.toLowerCase().includes(q) ?? false);
 }
 
-export function loanAdvisorCardMetaLine(loan: LoanResponseDto): string {
-  const parts: string[] = [];
-
-  if (loan.applicantName?.trim()) {
-    parts.push(loan.applicantName.trim());
-  }
-
-  if (loan.submittedAt) {
-    parts.push(`Soumise le ${formatDateFrLong(loan.submittedAt)}`);
-  } else {
-    const rel = formatRelativeTimeFr(loan.updatedAt);
-    if (rel) parts.push(`Modifiée ${rel}`);
-  }
-
-  parts.push(`${loan.requestedDurationMonths} mois`);
-
-  if (loan.status === 'REJECTED' && loan.decisionComment?.trim()) {
-    parts.push(loan.decisionComment.trim());
-  }
-
-  return parts.join(' · ');
-}
-
 export function sortLoans(loans: LoanResponseDto[], sort: LoanListSort): LoanResponseDto[] {
   const copy = [...loans];
   copy.sort((a, b) => {
@@ -257,14 +234,6 @@ export function countByStatus(
 ): number {
   if (status === 'ALL') return loans.length;
   return loans.filter((l) => l.status === status).length;
-}
-
-export function isUnassignedLoan(loan: LoanResponseDto): boolean {
-  return loan.advisorId == null && loan.status !== 'DRAFT';
-}
-
-export function countUnassignedLoans(loans: LoanResponseDto[]): number {
-  return loans.filter(isUnassignedLoan).length;
 }
 
 export function matchesAdminLoanSearch(loan: LoanResponseDto, query: string): boolean {

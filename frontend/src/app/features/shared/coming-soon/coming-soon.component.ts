@@ -1,5 +1,4 @@
-import { Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 
 @Component({
@@ -24,6 +23,4 @@ import { MatCardModule } from '@angular/material/card';
     `,
   ],
 })
-export class ComingSoonComponent {
-  private readonly route = inject(ActivatedRoute);
-}
+export class ComingSoonComponent {}

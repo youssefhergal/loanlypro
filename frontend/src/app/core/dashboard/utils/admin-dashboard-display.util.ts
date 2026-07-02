@@ -1,5 +1,4 @@
 import { LoanApplicationStatus } from '../../loans/models/loan.enums';
-import { AdminAdvisorOption } from '../../loans/models/admin-loan-list-summary.model';
 
 export interface PipelineSegment {
   key: LoanApplicationStatus;
@@ -31,27 +30,6 @@ const PIPELINE_STATUSES: {
   { key: 'REJECTED', label: 'Refusée', color: '#d32f2f' },
   { key: 'CANCELLED', label: 'Annulée', color: '#9e9e9e' },
 ];
-
-export function applicationStatusLabel(status: string): string {
-  switch (status) {
-    case 'DRAFT':
-      return 'Brouillon';
-    case 'SUBMITTED':
-      return 'Soumise';
-    case 'UNDER_REVIEW':
-      return 'En étude';
-    case 'OFFER_PENDING':
-      return 'Offre en attente';
-    case 'APPROVED':
-      return 'Approuvée';
-    case 'REJECTED':
-      return 'Refusée';
-    case 'CANCELLED':
-      return 'Annulée';
-    default:
-      return status;
-  }
-}
 
 export function buildPipelineSegments(
   statusCounts: Partial<Record<LoanApplicationStatus, number>>,
@@ -163,66 +141,6 @@ export function buildExtremesAdvisorWorkloadRows(
       barGradient: workloadBarGradientByTier(tier),
     };
   });
-}
-
-/** @deprecated Utiliser buildExtremesAdvisorWorkloadRows */
-export function buildTopAdvisorWorkloadRows(
-  advisorCounts: { id: number; name: string; count: number }[],
-  limit = 4,
-): AdvisorWorkloadRow[] {
-  const sorted = [...advisorCounts].sort((a, b) => b.count - a.count).slice(0, limit);
-  if (sorted.length === 0) {
-    return [];
-  }
-
-  const counts = sorted.map((item) => item.count);
-  const min = Math.min(...counts);
-  const max = Math.max(...counts);
-
-  return sorted.map((item) => {
-    const tier = chargeTier(item.count, min, max);
-    return {
-      id: item.id,
-      name: item.name,
-      count: item.count,
-      percent: max > 0 ? Math.round((item.count / max) * 100) : 0,
-      chargeTier: tier,
-      barGradient: workloadBarGradientByTier(tier),
-    };
-  });
-}
-
-export function buildAdvisorWorkloadRows(
-  advisors: AdminAdvisorOption[],
-  advisorCounts: { id: number; name: string; count: number }[],
-  unassignedCount: number,
-): AdvisorWorkloadRow[] {
-  const rows: AdvisorWorkloadRow[] = advisorCounts.map((item) => ({
-    id: item.id,
-    name: item.name,
-    count: item.count,
-    percent: 0,
-    chargeTier: 'medium' as const,
-    barGradient: workloadBarGradientByTier('medium'),
-  }));
-
-  if (unassignedCount > 0) {
-    rows.push({
-      id: null,
-      name: 'Non affecté',
-      count: unassignedCount,
-      percent: 0,
-      chargeTier: 'high',
-      barGradient: workloadBarGradientByTier('high'),
-      isUnassigned: true,
-    });
-  }
-
-  const max = Math.max(...rows.map((row) => row.count), 1);
-  return rows.map((row) => ({
-    ...row,
-    percent: Math.round((row.count / max) * 100),
-  }));
 }
 
 export function formatRelativeSubmittedAt(iso: string | null | undefined): string {

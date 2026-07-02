@@ -15,7 +15,6 @@ import {
   advisorApplicationHint,
   advisorApplicationHintTone,
   advisorApplicationRouterLink,
-  applicantInitials,
   applicationProgressSteps,
   applicationStatusClass,
   applicationStatusIcon,
@@ -60,7 +59,6 @@ export class AdvisorDashboardComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly loans = signal<LoanSummaryDto[]>([]);
   readonly applications = signal<LoanApplicationSummaryDto[]>([]);
-  readonly loansTotal = signal(0);
   readonly applicationsTotal = signal(0);
   readonly unreadMessages = signal(0);
   readonly heroSlideIndex = signal(0);
@@ -76,7 +74,6 @@ export class AdvisorDashboardComponent implements OnInit {
     advisorApplicationRouterLink,
     advisorApplicationCtaLabel,
     displayApplicantName,
-    applicantInitials,
     formatNextInstallment,
   };
 
@@ -110,7 +107,6 @@ export class AdvisorDashboardComponent implements OnInit {
     }).subscribe({
       next: ({ dashboard, unread }) => {
         this.loans.set(dashboard.loans ?? []);
-        this.loansTotal.set(dashboard.totalCount ?? dashboard.loans?.length ?? 0);
         this.applications.set(dashboard.applications ?? []);
         this.applicationsTotal.set(
           dashboard.applicationsCount ?? dashboard.applications?.length ?? 0,

@@ -12,7 +12,6 @@ import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { AdminApiService } from '../../../core/admin/services/admin-api.service';
 import {
-  applicationStatusLabel,
   buildPipelineConicGradient,
   buildPipelineSegments,
   buildExtremesAdvisorWorkloadRows,
@@ -77,7 +76,6 @@ export class AdminDashboardComponent implements OnInit {
   readonly advisorCounts = signal<{ id: number; name: string; count: number }[]>([]);
 
   readonly helpers = {
-    applicationStatusLabel,
     formatRelativeSubmittedAt,
     loanCardStatusStyle,
   };

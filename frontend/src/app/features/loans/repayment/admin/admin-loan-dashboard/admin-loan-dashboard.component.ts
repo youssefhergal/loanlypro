@@ -15,21 +15,15 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RepaymentApiService } from '../../../../../core/loans/repayment/services/repayment-api.service';
 import { LoanSummaryDto } from '../../../../../core/loans/repayment/models/loan-summary.model';
 import { RepaymentKpiDto } from '../../../../../core/loans/repayment/models/repayment-kpi.model';
-import { RepaymentLoanStatus } from '../../../../../core/loans/repayment/models/repayment.enums';
-import { advisorRepaymentLoanStatusStyle } from '../../../../../core/loans/repayment/constants/repayment.constants';
+import {
+  advisorRepaymentLoanStatusStyle,
+  formatOverdueInstallmentsLabel,
+  matchesRepaymentLoanSummarySearch,
+  REPAYMENT_LOAN_LIST_PAGE_SIZE,
+  REPAYMENT_LOAN_STATUS_FILTER_OPTIONS,
+  RepaymentLoanStatusFilter,
+} from '../../../../../core/loans/repayment/constants/repayment.constants';
 import { getErrorMessage } from '../../../../../core/loans/utils/api-error.util';
-
-type RepaymentStatusFilter = 'ALL' | RepaymentLoanStatus;
-
-const PAGE_SIZE = 10;
-
-const STATUS_OPTIONS: { value: RepaymentStatusFilter; label: string }[] = [
-  { value: 'ALL', label: 'Tous les statuts' },
-  { value: 'ACTIVE', label: 'Actif' },
-  { value: 'DEFAULTED', label: 'En défaut' },
-  { value: 'CLOSED', label: 'Soldé' },
-  { value: 'PENDING_MANDATE', label: 'Mandat en attente' },
-];
 
 @Component({
   selector: 'app-admin-loan-dashboard',
@@ -59,9 +53,9 @@ export class AdminLoanDashboardComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
 
-  readonly statusOptions = STATUS_OPTIONS;
+  readonly statusOptions = REPAYMENT_LOAN_STATUS_FILTER_OPTIONS;
   readonly statusStyle = advisorRepaymentLoanStatusStyle;
-  readonly PAGE_SIZE = PAGE_SIZE;
+  readonly PAGE_SIZE = REPAYMENT_LOAN_LIST_PAGE_SIZE;
 
   readonly displayedColumns = [
     'reference',
@@ -80,7 +74,7 @@ export class AdminLoanDashboardComponent implements OnInit {
   readonly loading = signal(false);
   readonly kpiLoading = signal(false);
   readonly searchQuery = signal('');
-  readonly statusFilter = signal<RepaymentStatusFilter>('ALL');
+  readonly statusFilter = signal<RepaymentLoanStatusFilter>('ALL');
   readonly pageIndex = signal(0);
 
   private readonly searchResults = signal<LoanSummaryDto[]>([]);
@@ -90,7 +84,7 @@ export class AdminLoanDashboardComponent implements OnInit {
     if (!total) {
       return 0;
     }
-    return this.pageIndex() * PAGE_SIZE + 1;
+    return this.pageIndex() * REPAYMENT_LOAN_LIST_PAGE_SIZE + 1;
   });
 
   readonly rangeEnd = computed(() => {
@@ -98,7 +92,7 @@ export class AdminLoanDashboardComponent implements OnInit {
     if (!total) {
       return 0;
     }
-    return Math.min((this.pageIndex() + 1) * PAGE_SIZE, total);
+    return Math.min((this.pageIndex() + 1) * REPAYMENT_LOAN_LIST_PAGE_SIZE, total);
   });
 
   ngOnInit(): void {
@@ -125,7 +119,7 @@ export class AdminLoanDashboardComponent implements OnInit {
     const status = this.statusFilter();
     const search = this.searchQuery().trim();
     const serverPage = search ? 0 : this.pageIndex();
-    const serverSize = search ? 200 : PAGE_SIZE;
+    const serverSize = search ? 200 : REPAYMENT_LOAN_LIST_PAGE_SIZE;
 
     this.repaymentApi
       .getAdminLoans({
@@ -137,7 +131,7 @@ export class AdminLoanDashboardComponent implements OnInit {
         next: (page) => {
           if (search) {
             const filtered = page.content.filter((loan) =>
-              matchesSearch(loan, search.toLowerCase()),
+              matchesRepaymentLoanSummarySearch(loan, search.toLowerCase()),
             );
             this.searchResults.set(filtered);
             this.totalElements.set(filtered.length);
@@ -167,7 +161,7 @@ export class AdminLoanDashboardComponent implements OnInit {
     this.load();
   }
 
-  onStatusChange(value: RepaymentStatusFilter): void {
+  onStatusChange(value: RepaymentLoanStatusFilter): void {
     this.statusFilter.set(value);
     this.pageIndex.set(0);
     this.load();
@@ -184,26 +178,13 @@ export class AdminLoanDashboardComponent implements OnInit {
 
   private applySearchPage(): void {
     const filtered = this.searchResults();
-    const start = this.pageIndex() * PAGE_SIZE;
-    this.allLoans.set(filtered.slice(start, start + PAGE_SIZE));
+    const start = this.pageIndex() * REPAYMENT_LOAN_LIST_PAGE_SIZE;
+    this.allLoans.set(filtered.slice(start, start + REPAYMENT_LOAN_LIST_PAGE_SIZE));
   }
 
   open(loan: LoanSummaryDto): void {
     this.router.navigate(['/admin/prets', loan.id]);
   }
 
-  overdueLabel(count: number): string {
-    if (count <= 0) {
-      return '—';
-    }
-    return count === 1 ? '1 éch. en retard' : `${count} éch. en retard`;
-  }
-}
-
-function matchesSearch(loan: LoanSummaryDto, query: string): boolean {
-  const haystack = [loan.reference, loan.borrowerName, loan.borrowerEmail]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
-  return haystack.includes(query);
+  overdueLabel = formatOverdueInstallmentsLabel;
 }
