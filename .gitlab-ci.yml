@@ -113,7 +113,7 @@ deploy-backend-dev:
   <<: *gcloud-auth
   script:
     - |
-      ENV_VARS="SPRING_PROFILES_ACTIVE=dev,gcp,SPRING_DATASOURCE_USERNAME=app,STORAGE_TYPE=gcs,GCS_BUCKET=loan-management-docs-dev"
+      ENV_VARS="SPRING_PROFILES_ACTIVE=dev\,gcp,SPRING_DATASOURCE_USERNAME=app,STORAGE_TYPE=gcs,GCS_BUCKET=loan-management-docs-dev"
       SECRETS="SPRING_DATASOURCE_URL=db-url-dev:latest,SPRING_DATASOURCE_PASSWORD=db-password-dev:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest"
       gcloud run deploy backend-dev \
         --image="${BACKEND_IMAGE}:${CI_COMMIT_SHA}" \
