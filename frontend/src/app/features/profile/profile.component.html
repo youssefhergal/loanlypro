@@ -1,0 +1,165 @@
+<div class="profile-page">
+  @if (loading() && !user()) {
+    <div class="profile-page__loading" aria-busy="true">
+      <mat-spinner diameter="32" />
+      <span>Chargement du profil…</span>
+    </div>
+  }
+
+  @if (globalError()) {
+    <p class="profile-alert profile-alert--error" role="alert">{{ globalError() }}</p>
+  }
+
+  @if (user(); as u) {
+    <header class="profile-summary">
+      <div class="profile-summary__avatar" aria-hidden="true">
+        <mat-icon>person</mat-icon>
+      </div>
+      <dl class="profile-summary__details">
+        <div>
+          <dt>Prénom</dt>
+          <dd>{{ u.firstName }}</dd>
+        </div>
+        <div>
+          <dt>Nom</dt>
+          <dd>{{ u.lastName }}</dd>
+        </div>
+        <div class="profile-summary__email-col">
+          <dt>Email actuel</dt>
+          <dd>{{ u.email }}</dd>
+        </div>
+      </dl>
+    </header>
+  }
+
+  <section class="loan-detail-card">
+    <h2 class="loan-detail-card__title">
+      <mat-icon>mail</mat-icon>
+      Mettre à jour mon email
+      <span class="loan-detail-card__desc loan-detail-card__desc--inline">
+        Un nouveau jeton de session sera émis après la modification.
+      </span>
+    </h2>
+    <form class="profile-form" [formGroup]="emailForm" (ngSubmit)="onUpdateEmail()">
+      <div class="profile-form__fields">
+        <mat-form-field appearance="outline" class="profile-field" subscriptSizing="dynamic">
+          <mat-label>Nouvel email</mat-label>
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            placeholder="vous@exemple.com"
+            autocomplete="email"
+          />
+          @if (emailForm.controls.email.touched && emailForm.controls.email.invalid) {
+            <mat-error>
+              @if (emailForm.controls.email.errors?.['required']) {
+                L'email est obligatoire
+              } @else if (emailForm.controls.email.errors?.['email']) {
+                Format email invalide
+              } @else if (emailForm.controls.email.errors?.['maxlength']) {
+                255 caractères max
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+      </div>
+      <div class="profile-form__actions">
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="emailForm.invalid || loading()"
+        >
+          {{ loading() ? 'Mise à jour…' : 'Mettre à jour' }}
+        </button>
+        @if (emailSuccess()) {
+          <span class="profile-alert profile-alert--success profile-alert--inline">Email mis à jour</span>
+        }
+        @if (emailError()) {
+          <span class="profile-alert profile-alert--error profile-alert--inline" role="alert">{{ emailError() }}</span>
+        }
+      </div>
+    </form>
+  </section>
+
+  <section class="loan-detail-card">
+    <h2 class="loan-detail-card__title">
+      <mat-icon>lock</mat-icon>
+      Changer mon mot de passe
+      <span class="loan-detail-card__desc loan-detail-card__desc--inline">
+        Minimum 8 caractères.
+      </span>
+    </h2>
+    <form class="profile-form" [formGroup]="passwordForm" (ngSubmit)="onChangePassword()">
+      <div class="profile-form__fields">
+        <mat-form-field appearance="outline" class="profile-field" subscriptSizing="dynamic">
+          <mat-label>Mot de passe actuel</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="currentPassword"
+            autocomplete="current-password"
+          />
+          @if (passwordForm.controls.currentPassword.touched && passwordForm.controls.currentPassword.invalid) {
+            <mat-error>Obligatoire</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="profile-field" subscriptSizing="dynamic">
+          <mat-label>Nouveau mot de passe</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="newPassword"
+            autocomplete="new-password"
+          />
+          @if (passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.invalid) {
+            <mat-error>
+              @if (passwordForm.controls.newPassword.errors?.['required']) {
+                Obligatoire
+              } @else if (passwordForm.controls.newPassword.errors?.['minlength']) {
+                Au moins 8 caractères
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="profile-field" subscriptSizing="dynamic">
+          <mat-label>Confirmez le nouveau mot de passe</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+          />
+          @if (showConfirmPasswordError()) {
+            <mat-error>
+              @if (passwordForm.controls.confirmPassword.errors?.['required']) {
+                Obligatoire
+              } @else if (passwordForm.errors?.['passwordMismatch']) {
+                Les mots de passe ne correspondent pas
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+      </div>
+      <div class="profile-form__actions">
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="passwordForm.invalid || loading()"
+        >
+          {{ loading() ? 'Modification…' : 'Changer le mot de passe' }}
+        </button>
+        @if (passwordSuccess()) {
+          <span class="profile-alert profile-alert--success profile-alert--inline">Mot de passe changé</span>
+        }
+        @if (passwordError()) {
+          <span class="profile-alert profile-alert--error profile-alert--inline" role="alert">{{ passwordError() }}</span>
+        }
+      </div>
+    </form>
+  </section>
+</div>

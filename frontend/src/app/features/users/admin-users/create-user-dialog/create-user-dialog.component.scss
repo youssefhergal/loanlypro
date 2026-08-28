@@ -1,0 +1,76 @@
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  padding: 20px 24px 12px !important;
+
+  mat-icon {
+    color: var(--color-primary);
+  }
+}
+
+.dialog-content {
+  padding: 0 24px 8px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: min(480px, 100%);
+}
+
+.dialog-intro {
+  margin: 0 0 8px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.dialog-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0 0 8px;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm, 8px);
+  background: #ffebee;
+  color: var(--color-error, #d32f2f);
+  font-size: 0.8125rem;
+
+  mat-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+}
+
+.dialog-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.dialog-actions {
+  padding: 8px 16px 16px !important;
+
+  button[mat-flat-button] {
+    width: auto !important;
+    height: 40px !important;
+    padding: 0 1rem !important;
+  }
+}
+
+.dialog-actions__submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+@media (max-width: 520px) {
+  .dialog-row {
+    grid-template-columns: 1fr;
+  }
+}

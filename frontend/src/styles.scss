@@ -1,0 +1,134 @@
+@use '@angular/material' as mat;
+@use './app/features/loans/shared/styles/loan-section.shared';
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-primary: #1a7a4a;
+  --color-primary-light: #e8f5ee;
+  --color-primary-dark: #0f5431;
+  --color-accent: #5db885;
+  --color-bg: #f7faf8;
+  --color-surface: #ffffff;
+  --color-text: #1a2e22;
+  --color-text-muted: #6b7c72;
+  --color-border: #d8e8de;
+  --color-error: #d32f2f;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-card: 0 2px 16px rgba(26, 122, 74, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  @include mat.theme((
+    color: (
+      theme-type: light,
+      primary: mat.$green-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
+
+html,
+body {
+  height: 100%;
+}
+
+app-root {
+  display: block;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+/* ── Material overrides ─────────────────────────────────────── */
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.mat-mdc-raised-button,
+.mat-mdc-outlined-button,
+.mat-mdc-stroked-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-button .mdc-button {
+  border-radius: var(--radius-sm) !important;
+}
+
+.mat-mdc-raised-button.mat-primary {
+  background-color: var(--color-primary) !important;
+  height: 48px;
+  font-size: 15px;
+  font-weight: 600;
+  width: 100%;
+}
+
+.mat-mdc-raised-button.mat-primary .mdc-button__label {
+  color: white !important;
+}
+
+.mat-mdc-outlined-button.mat-primary .mdc-button__label {
+  color: var(--color-primary) !important;
+}
+
+.mat-mdc-button {
+  color: var(--color-primary) !important;
+}
+
+.mat-mdc-raised-button.mat-primary:hover {
+  background-color: var(--color-primary-dark) !important;
+  transition: background-color 0.2s ease;
+}
+
+.mat-mdc-outlined-button.mat-primary:hover {
+  background-color: var(--color-primary-light) !important;
+  transition: background-color 0.2s ease;
+}
+
+.mat-mdc-button:hover {
+  background-color: var(--color-primary-light) !important;
+  transition: background-color 0.2s ease;
+}
+
+/* Advisor document preview panel uses z-index 1201 — dialogs must render above it */
+.cdk-overlay-container:has(.validate-document-dialog-panel),
+.cdk-overlay-container:has(.reject-document-dialog-panel) {
+  z-index: 1300 !important;
+}
+
+html.compact-tables {
+  .mat-mdc-row,
+  .widget-list__item,
+  .application-card,
+  .kpi-card {
+    --compact-pad: 0.35rem;
+  }
+
+  .mat-mdc-cell,
+  .mat-mdc-header-cell {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .widget-list__item,
+  .application-card {
+    padding-block: 0.65rem;
+  }
+}

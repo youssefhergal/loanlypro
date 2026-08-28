@@ -1,0 +1,84 @@
+import { Injectable, signal, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { Observable, tap } from 'rxjs';
+import { AUTH_TOKEN_KEY, AUTH_USER_KEY } from '../constants/auth.constants';
+import type { User } from '../models/user.model';
+import type { LoginRequest } from '../models/login-request.model';
+import type { LoginResponse } from '../models/login-response.model';
+import type { RegisterRequest } from '../models/register-request.model';
+import type { RegisterResponse } from '../models/register-response.model';
+import type { VerifyEmailResponse } from '../models/verify-email-response.model';
+import { environment } from '../../../../environments/environment';
+
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly apiUrl = `${environment.apiUrl}/auth`;
+  private readonly currentUserSignal = signal<User | null>(this.loadUserFromStorage());
+  readonly currentUser = this.currentUserSignal.asReadonly();
+  readonly isAuthenticated = computed(() => this.currentUserSignal() !== null);
+
+  constructor(
+    private readonly http: HttpClient,
+    private readonly router: Router
+  ) {}
+
+  login(credentials: LoginRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
+      tap((res) => {
+        localStorage.setItem(AUTH_TOKEN_KEY, res.token);
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(res.user));
+        this.currentUserSignal.set(res.user);
+      })
+    );
+  }
+
+  updateSession(user: User, token: string): void {
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+    this.currentUserSignal.set(user);
+  }
+
+  register(payload: RegisterRequest): Observable<unknown> {
+    return this.http.post(`${this.apiUrl}/register`, payload);
+  }
+
+  verifyEmail(email: string, token: string): Observable<VerifyEmailResponse> {
+    return this.http.post<VerifyEmailResponse>(`${this.apiUrl}/verify-email`, { email, token });
+  }
+
+  resendVerificationEmail(email: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/resend-verification`, { email });
+  }
+
+  logout(): void {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
+    this.currentUserSignal.set(null);
+    this.router.navigate(['/login']);
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+  }
+
+  hasRole(allowedRoles: string[]): boolean {
+    const user = this.currentUserSignal();
+    if (!user?.roles?.length) return false;
+    return allowedRoles.some((role) => user.roles.includes(role));
+  }
+
+  isLoggedIn(): boolean {
+    return !!this.getToken();
+  }
+
+  private loadUserFromStorage(): User | null {
+    const raw = localStorage.getItem(AUTH_USER_KEY);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as User;
+    } catch {
+      return null;
+    }
+  }
+}

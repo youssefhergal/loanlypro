@@ -1,0 +1,119 @@
+<div class="submitted-page">
+  @if (loading()) {
+    <p class="submitted-page__loading">Chargement…</p>
+  } @else if (error()) {
+    <p class="submitted-page__error">{{ error() }}</p>
+    <a mat-flat-button color="primary" routerLink="/mes-demandes">Retour à mes demandes</a>
+  } @else {
+    @if (loan(); as l) {
+    <div class="submitted-hero">
+      <div class="submitted-hero__icon" aria-hidden="true">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <h1>Demande soumise !</h1>
+      <p class="submitted-hero__lead">
+        Votre dossier de prêt a été transmis avec succès. Notre équipe va l'analyser dans les plus
+        brefs délais.
+      </p>
+      <p class="submitted-hero__ref">
+        <span class="submitted-hero__ref-label">Référence dossier</span>
+        <span class="submitted-hero__ref-value">{{ referenceDisplay() }}</span>
+      </p>
+      @if (auth.currentUser()?.email; as email) {
+        <p class="submitted-hero__email">
+          Un email de confirmation a été envoyé à <strong>{{ email }}</strong>
+        </p>
+      }
+    </div>
+
+    <section class="submitted-steps" aria-label="Prochaines étapes">
+      <h2>Prochaines étapes</h2>
+      <ol class="submitted-steps__list">
+        <li class="submitted-steps__item submitted-steps__item--done">
+          <span class="submitted-steps__marker">
+            <mat-icon>check_circle</mat-icon>
+          </span>
+          <div>
+            <div class="submitted-steps__head">
+              <h3>Confirmation immédiate</h3>
+              <span class="submitted-steps__badge submitted-steps__badge--done">Fait</span>
+            </div>
+            <p>
+              Votre dossier a été reçu et enregistré. Un email de confirmation vous a été envoyé
+              avec votre numéro de référence.
+            </p>
+          </div>
+        </li>
+        <li class="submitted-steps__item submitted-steps__item--pending">
+          <span class="submitted-steps__marker">
+            <mat-icon>schedule</mat-icon>
+          </span>
+          <div>
+            <div class="submitted-steps__head">
+              <h3>Analyse du dossier</h3>
+              <span class="submitted-steps__badge submitted-steps__badge--pending">En attente</span>
+            </div>
+            <p>
+              Nos conseillers vont examiner votre dossier et vérifier les documents fournis. Ce
+              processus prend généralement 2 à 5 jours ouvrés.
+            </p>
+          </div>
+        </li>
+        <li class="submitted-steps__item submitted-steps__item--upcoming">
+          <span class="submitted-steps__marker">
+            <mat-icon>flag</mat-icon>
+          </span>
+          <div>
+            <div class="submitted-steps__head">
+              <h3>Décision finale</h3>
+              <span class="submitted-steps__badge submitted-steps__badge--upcoming">À venir</span>
+            </div>
+            <p>
+              Vous recevrez notre décision par email et SMS. En cas d'approbation, les fonds seront
+              disponibles sous 24 à 48 heures.
+            </p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="submitted-recap">
+      <h2>Récapitulatif de la demande</h2>
+      <dl class="submitted-recap__grid">
+        <div>
+          <dt>Montant</dt>
+          <dd>{{ l.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+        </div>
+        <div>
+          <dt>Durée</dt>
+          <dd>{{ durationLabel() }}</dd>
+        </div>
+        <div>
+          <dt>Mensualité</dt>
+          <dd class="submitted-recap__accent">
+            {{ monthlyPayment() | currency: 'EUR' : 'symbol' : '1.0-0' }}
+          </dd>
+        </div>
+        <div>
+          <dt>Objet</dt>
+          <dd>{{ purposeLabel() }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <div class="submitted-actions">
+      <a mat-flat-button color="primary" [routerLink]="['/mes-demandes', l.id]">
+        Voir ma demande
+      </a>
+      <a mat-stroked-button routerLink="/dashboard">Retour au tableau de bord</a>
+    </div>
+
+    <p class="submitted-footer">
+      Une question ?
+      <a href="mailto:conseil@loanlypro.fr">Contactez notre support</a>
+      ou
+      <a routerLink="/aide">consultez notre FAQ</a>.
+    </p>
+    }
+  }
+</div>

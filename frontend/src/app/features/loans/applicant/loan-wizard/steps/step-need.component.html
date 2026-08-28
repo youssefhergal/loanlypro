@@ -1,0 +1,92 @@
+<div class="step-need" [formGroup]="form">
+  <div class="step-need__main">
+    <section class="loan-detail-card">
+      <h2 class="loan-detail-card__title">
+        <mat-icon>payments</mat-icon>
+        Montant et durée
+      </h2>
+      <div class="loan-detail-card__body">
+        <app-labeled-slider-field
+          [form]="form"
+          controlName="requestedAmount"
+          label="Montant emprunté"
+          [min]="amountMin"
+          [max]="amountMax"
+          [sliderStep]="500"
+          [inputStep]="100"
+          unit="€"
+          [formatValue]="formatAmountSlider"
+          [formatRangeValue]="formatAmountRange"
+        />
+
+        <app-labeled-slider-field
+          [form]="form"
+          controlName="requestedDurationMonths"
+          label="Durée du prêt"
+          [min]="durationMin"
+          [max]="durationMax"
+          [sliderStep]="6"
+          [inputStep]="1"
+          unit="mois"
+          [formatValue]="formatDurationSlider"
+          [formatRangeValue]="formatDurationRange"
+        />
+      </div>
+    </section>
+
+    <section class="loan-detail-card">
+      <h2 class="loan-detail-card__title">
+        <mat-icon>description</mat-icon>
+        Objet de la demande
+      </h2>
+      <div class="loan-detail-card__body loan-detail-card__body--after-title">
+        <mat-form-field appearance="outline" class="loan-field-compact">
+          <mat-label>Finalité de la demande</mat-label>
+          <mat-select formControlName="loanPurpose">
+            @for (opt of purposeOptions; track opt.value) {
+              <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+            }
+          </mat-select>
+          @if (selectedPurposeHint) {
+            <mat-hint>{{ selectedPurposeHint }}</mat-hint>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="loan-field-compact">
+          <mat-label>Intitulé de la demande</mat-label>
+          <input
+            matInput
+            formControlName="title"
+            placeholder="Ex. Achat véhicule professionnel"
+          />
+          @if (form.get('title')?.hasError('required') && form.get('title')?.touched) {
+            <mat-error>L'intitulé est obligatoire</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="loan-field-compact loan-field-compact--textarea">
+          <mat-label>Commentaire / justification</mat-label>
+          <textarea
+            matInput
+            formControlName="comment"
+            rows="2"
+            [maxlength]="commentMaxLength"
+            placeholder="Précisez le contexte de votre demande (optionnel)"
+          ></textarea>
+          <mat-hint align="end">
+            {{ form.get('comment')?.value?.length ?? 0 }} / {{ commentMaxLength }}
+          </mat-hint>
+        </mat-form-field>
+      </div>
+    </section>
+  </div>
+
+  <aside class="step-need__aside">
+    <app-wizard-estimation-panel
+      [amount]="amount"
+      [durationMonths]="durationMonths"
+      [loanPurpose]="loanPurpose"
+    />
+    <app-wizard-advice-panel />
+  </aside>
+</div>

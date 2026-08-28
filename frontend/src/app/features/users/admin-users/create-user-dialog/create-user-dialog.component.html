@@ -1,0 +1,100 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon>person_add</mat-icon>
+  Nouveau compte
+</h2>
+
+<mat-dialog-content class="dialog-content" [formGroup]="form">
+  <p class="dialog-intro">
+    Créez un compte conseiller ou administrateur. Le mot de passe est défini à la création.
+  </p>
+
+  @if (error()) {
+    <p class="dialog-error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      {{ error() }}
+    </p>
+  }
+
+  <mat-form-field appearance="outline">
+    <mat-label>Email</mat-label>
+    <input matInput type="email" formControlName="email" autocomplete="off" />
+    @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+      <mat-error>L'email est requis.</mat-error>
+    }
+    @if (form.controls.email.touched && form.controls.email.hasError('email')) {
+      <mat-error>Format d'email invalide.</mat-error>
+    }
+  </mat-form-field>
+
+  <div class="dialog-row">
+    <mat-form-field appearance="outline">
+      <mat-label>Prénom</mat-label>
+      <input matInput formControlName="firstName" autocomplete="off" />
+      @if (form.controls.firstName.touched && form.controls.firstName.hasError('required')) {
+        <mat-error>Le prénom est requis.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nom</mat-label>
+      <input matInput formControlName="lastName" autocomplete="off" />
+      @if (form.controls.lastName.touched && form.controls.lastName.hasError('required')) {
+        <mat-error>Le nom est requis.</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Mot de passe</mat-label>
+    <input
+      matInput
+      formControlName="password"
+      [type]="showPassword() ? 'text' : 'password'"
+      autocomplete="new-password"
+    />
+    <button
+      mat-icon-button
+      matSuffix
+      type="button"
+      (click)="togglePasswordVisibility()"
+      [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+    >
+      <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+    </button>
+    @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+      <mat-error>Le mot de passe est requis.</mat-error>
+    }
+    @if (form.controls.password.touched && form.controls.password.hasError('minlength')) {
+      <mat-error>Minimum 8 caractères.</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Rôle</mat-label>
+    <mat-select formControlName="role">
+      <mat-option value="CONSEILLER">Conseiller</mat-option>
+      <mat-option value="ADMIN">Administrateur</mat-option>
+    </mat-select>
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-button mat-dialog-close type="button" [disabled]="creating()">Annuler</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="form.invalid || creating()"
+    (click)="submit()"
+  >
+    <span class="dialog-actions__submit">
+      @if (creating()) {
+        <mat-spinner diameter="18" />
+        <span>Création…</span>
+      } @else {
+        <mat-icon aria-hidden="true">save</mat-icon>
+        <span>Créer le compte</span>
+      }
+    </span>
+  </button>
+</mat-dialog-actions>

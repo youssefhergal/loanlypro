@@ -1,0 +1,175 @@
+@startuml classes-domaine-loanlypro-slide
+' LoanlyPro — Diagramme de classes synthèse (slide / soutenance)
+' Export : PlantUML → PNG/SVG, ratio 16:9 recommandé
+' Prévisualisation : https://www.plantuml.com/plantuml/uml/
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontSize 11
+skinparam classFontSize 10
+skinparam packageFontSize 12
+skinparam nodesep 25
+skinparam ranksep 35
+skinparam linetype ortho
+skinparam backgroundColor white
+skinparam class {
+  BackgroundColor #FAFAFA
+  BorderColor #455A64
+  ArrowColor #455A64
+}
+skinparam package {
+  BackgroundColor #ECEFF1
+  BorderColor #78909C
+}
+
+left to right direction
+
+title <size:16><b>LoanlyPro</b></size>\nModèle de domaine — vue synthèse
+
+' ─── Identité ───────────────────────────────────────────────────────────────
+
+together {
+  package "Identité" #E3F2FD {
+    class User <<Entity>> {
+      id : Long
+      email : String
+      firstName : String
+    }
+    class Role <<Entity>> {
+      id : Long
+      name : String
+    }
+  }
+}
+
+' ─── Demande ────────────────────────────────────────────────────────────────
+
+together {
+  package "Demande de prêt" #E8F5E9 {
+    class LoanApplication <<Entity>> {
+      id : Long
+      reference : String
+      status : LoanApplicationStatus
+    }
+    class LoanDocument <<Entity>> {
+      id : Long
+      documentType : LoanDocumentType
+      storagePath : String
+    }
+    class LoanDocumentReview <<Entity>> {
+      id : Long
+      reviewStatus : LoanDocumentReviewStatus
+    }
+    class LoanApplicationEvent <<Entity>> {
+      id : Long
+      eventType : LoanApplicationEventType
+      occurredAt : Instant
+    }
+    class IssuedDocument <<Entity>> {
+      id : Long
+      documentType : IssuedDocumentType
+    }
+  }
+}
+
+' ─── Prêt & remboursement ───────────────────────────────────────────────────
+
+together {
+  package "Prêt & remboursement" #FFF3E0 {
+    class Loan <<Entity>> {
+      id : Long
+      status : LoanStatus
+      remainingBalance : BigDecimal
+    }
+    class RepaymentPlan <<Entity>> {
+      id : Long
+      monthlyPayment : BigDecimal
+      installmentCount : Integer
+    }
+    class Installment <<Entity>> {
+      id : Long
+      dueDate : LocalDate
+      status : InstallmentStatus
+    }
+    class PaymentTransaction <<Entity>> {
+      id : Long
+      amount : BigDecimal
+      status : PaymentTransactionStatus
+    }
+    class PaymentMethod <<Entity>> {
+      id : Long
+      ibanMasked : String
+    }
+    class DirectDebitMandate <<Entity>> {
+      id : Long
+      mandateReference : String
+      status : MandateStatus
+    }
+  }
+}
+
+' ─── Transversal ────────────────────────────────────────────────────────────
+
+together {
+  package "Notifications & messagerie" #F3E5F5 {
+    class Notification <<Entity>> {
+      id : Long
+      title : String
+      readAt : Instant
+    }
+    class Conversation <<Entity>> {
+      id : Long
+      lastMessageAt : Instant
+    }
+    class Message <<Entity>> {
+      id : Long
+      content : String
+      sentAt : Instant
+    }
+  }
+
+  package "IA" #FBE9E7 {
+    class LearningSession <<Entity>> {
+      id : Long
+      objective : String
+      status : LearningSessionStatus
+    }
+  }
+}
+
+' ─── Relations identité ─────────────────────────────────────────────────────
+
+User "0..*" -- "0..*" Role
+User "1" --> "0..*" LoanApplication : applicant
+User "0..1" --> "0..*" LoanApplication : conseiller
+User "1" --> "0..*" Loan : emprunteur
+User "1" --> "0..*" PaymentMethod
+User "1" --> "0..*" Notification
+User "1" --> "0..*" Conversation
+User "1" --> "0..*" Message : envoie
+User "1" --> "0..*" LearningSession
+
+' ─── Relations demande & prêt ─────────────────────────────────────────────────
+
+LoanApplication "1" *--> "0..*" LoanDocument
+LoanApplication "1" *--> "0..*" LoanDocumentReview
+LoanApplication "1" *--> "0..*" LoanApplicationEvent
+LoanApplication "1" *--> "0..*" IssuedDocument
+LoanApplication "1" --> "0..1" Loan
+
+Loan "1" --> "1" RepaymentPlan
+RepaymentPlan "1" *--> "1..*" Installment
+Installment "1" *--> "0..*" PaymentTransaction
+
+Loan "1" --> "0..1" DirectDebitMandate
+PaymentMethod "1" --> "0..*" DirectDebitMandate
+
+Conversation "1" *--> "0..*" Message
+
+legend bottom left
+  |= | |
+  | <b>17 entités JPA</b> | Attributs clés uniquement |
+  | Détail complet | [[./classes-domaine.puml classes-domaine.puml]] |
+endlegend
+
+@enduml

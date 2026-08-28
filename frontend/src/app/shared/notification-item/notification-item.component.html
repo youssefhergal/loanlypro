@@ -1,0 +1,34 @@
+<mat-card
+  appearance="outlined"
+  class="notification-item"
+  [class.notification-item--unread]="!notification().read"
+  [class.notification-item--compact]="compact()"
+  matRipple
+  [matRippleDisabled]="false"
+  (click)="onClick()"
+>
+  <span class="notification-item__accent" aria-hidden="true"></span>
+
+  <mat-card-content class="notification-item__content">
+    <span
+      class="notification-icon"
+      [class]="'notification-icon--' + visual().tone"
+      aria-hidden="true"
+    >
+      <mat-icon>{{ visual().icon }}</mat-icon>
+    </span>
+
+    <span class="notification-body">
+      <span class="notification-head">
+        <span class="notification-title">{{ notification().title }}</span>
+        @if (!notification().read && isRecent()) {
+          <mat-chip class="notification-chip" disabled>Nouveau</mat-chip>
+        }
+      </span>
+      <span class="notification-message">{{ notification().message }}</span>
+      <span class="notification-date">{{ relativeDate() }}</span>
+    </span>
+
+    <mat-icon class="notification-chevron" aria-hidden="true">chevron_right</mat-icon>
+  </mat-card-content>
+</mat-card>

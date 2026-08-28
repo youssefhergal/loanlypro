@@ -1,0 +1,32 @@
+@if (selectedLoan(); as loan) {
+  <div class="selected-loan-picker">
+    <span class="selected-loan-picker__label">{{ label() }}</span>
+    <div class="selected-loan-picker__row">
+      @if (loans().length > 1) {
+        <mat-form-field appearance="outline" class="selected-loan-picker__select">
+          <mat-select [value]="selectedLoanId()" (valueChange)="onLoanChange($event)">
+            <mat-select-trigger>
+              <span class="selected-loan-picker__value">
+                <span class="selected-loan-picker__ref">{{ loan.reference }}</span>
+                <app-loan-status-chip [status]="loan.status" />
+              </span>
+            </mat-select-trigger>
+            @for (item of loans(); track item.id) {
+              <mat-option [value]="item.id">
+                <span class="selected-loan-picker__option">
+                  <span>{{ item.reference }}</span>
+                  <app-loan-status-chip [status]="item.status" />
+                </span>
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      } @else {
+        <div class="selected-loan-picker__static">
+          <span class="selected-loan-picker__ref">{{ loan.reference }}</span>
+          <app-loan-status-chip [status]="loan.status" />
+        </div>
+      }
+    </div>
+  </div>
+}

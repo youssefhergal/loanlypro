@@ -1,0 +1,234 @@
+<div class="client-shell" [class.sidebar-collapsed]="sidebarCollapsed()">
+  <aside class="sidebar" aria-label="Navigation administrateur">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <app-logo
+          linkClass="logo"
+          routerLink="/admin/dashboard"
+          [showText]="!sidebarCollapsed()"
+          [iconSize]="28"
+          [fullLogoHeight]="72"
+        />
+      </div>
+      <button
+        type="button"
+        mat-icon-button
+        class="sidebar-toggle"
+        (click)="toggleSidebar()"
+        [attr.aria-expanded]="!sidebarCollapsed()"
+        [attr.aria-label]="sidebarCollapsed() ? 'Développer le menu' : 'Réduire le menu'"
+        matTooltipPosition="right"
+        [matTooltip]="sidebarCollapsed() ? 'Développer' : 'Réduire'"
+      >
+        <mat-icon>{{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+      </button>
+    </div>
+
+    <div class="sidebar-scroll">
+      <nav class="nav-list" aria-label="Menu administrateur">
+        <section class="nav-section">
+          <h3 class="nav-section-title">Principal</h3>
+          <div class="nav-section-items">
+            <a
+              routerLink="/admin/dashboard"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="nav-item"
+              matTooltip="Accueil"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>home</mat-icon>
+              <span>Accueil</span>
+            </a>
+          </div>
+        </section>
+
+        <section class="nav-section">
+          <h3 class="nav-section-title">Prêts</h3>
+          <div class="nav-section-items">
+            <a
+              routerLink="/admin/demandes"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="nav-item"
+              matTooltip="Toutes les demandes"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>description</mat-icon>
+              <span>Toutes les demandes</span>
+            </a>
+            <a
+              routerLink="/admin/prets"
+              routerLinkActive="active"
+              class="nav-item"
+              matTooltip="Prêts"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>account_balance</mat-icon>
+              <span>Prêts</span>
+            </a>
+          </div>
+        </section>
+
+        <section class="nav-section">
+          <h3 class="nav-section-title">Communication</h3>
+          <div class="nav-section-items">
+            <a
+              routerLink="/admin/messages"
+              routerLinkActive="active"
+              class="nav-item"
+              matTooltip="Messages"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>chat</mat-icon>
+              <span>Messages</span>
+            </a>
+            <a
+              routerLink="/admin/conseiller-ia"
+              routerLinkActive="active"
+              class="nav-item nav-item--ai"
+              matTooltip="Conseiller IA"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>auto_awesome</mat-icon>
+              <span>Conseiller IA</span>
+            </a>
+            <a
+              routerLink="/admin/formation"
+              routerLinkActive="active"
+              class="nav-item nav-item--ai"
+              matTooltip="Formation sur mesure"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>school</mat-icon>
+              <span>Formation sur mesure</span>
+            </a>
+          </div>
+        </section>
+
+        <section class="nav-section">
+          <h3 class="nav-section-title">Gestion</h3>
+          <div class="nav-section-items">
+            <a
+              routerLink="/admin/utilisateurs"
+              routerLinkActive="active"
+              class="nav-item"
+              matTooltip="Utilisateurs"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>group</mat-icon>
+              <span>Utilisateurs</span>
+            </a>
+            <a
+              routerLink="/admin/parametres"
+              routerLinkActive="active"
+              class="nav-item"
+              matTooltip="Paramètres"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>settings</mat-icon>
+              <span>Paramètres</span>
+            </a>
+          </div>
+        </section>
+
+        <section class="nav-section nav-section--compte">
+          <h3 class="nav-section-title">Compte</h3>
+          <div class="nav-section-items">
+            <a
+              routerLink="/admin/profil"
+              routerLinkActive="active"
+              class="nav-item"
+              matTooltip="Mon profil"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>person</mat-icon>
+              <span>Mon profil</span>
+            </a>
+            <a
+              routerLink="/admin/aide"
+              routerLinkActive="active"
+              class="nav-item nav-item--support"
+              matTooltip="Aide"
+              [matTooltipDisabled]="!sidebarCollapsed()"
+              matTooltipPosition="right"
+            >
+              <mat-icon>support_agent</mat-icon>
+              <span>Aide</span>
+            </a>
+          </div>
+        </section>
+      </nav>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <nav class="topbar-breadcrumb" aria-label="Fil d'Ariane">
+      @for (crumb of breadcrumbs(); track crumb.routerLink; let i = $index; let last = $last) {
+        @if (i > 0) {
+          <mat-icon class="bc-sep" aria-hidden="true">chevron_right</mat-icon>
+        }
+        @if (last) {
+          <span class="bc-current" aria-current="page">{{ crumb.label }}</span>
+        } @else {
+          <a [routerLink]="crumb.routerLink" class="bc-link">{{ crumb.label }}</a>
+        }
+      }
+    </nav>
+    <div class="topbar-spacer"></div>
+    @if (auth.currentUser(); as user) {
+      <div class="topbar-actions">
+        <button
+          type="button"
+          mat-button
+          class="topbar-profile-btn"
+          [matMenuTriggerFor]="profileMenu"
+          aria-label="Menu compte"
+        >
+          <span class="avatar-badge">{{ initials(user) }}</span>
+          <span class="profile-btn-label">{{ user.firstName }}</span>
+          <mat-icon class="profile-chevron" iconPositionEnd>expand_more</mat-icon>
+        </button>
+        <mat-menu #profileMenu="matMenu" xPosition="before">
+          <button type="button" mat-menu-item disabled class="menu-header-item">
+            <div class="menu-user-block">
+              <span class="menu-name">{{ user.firstName }} {{ user.lastName }}</span>
+              <span class="menu-email">{{ user.email }}</span>
+            </div>
+          </button>
+          <mat-divider />
+          <button type="button" mat-menu-item (click)="auth.logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Se déconnecter</span>
+          </button>
+        </mat-menu>
+      </div>
+    }
+  </header>
+
+  <main class="main">
+    @if (pageTitle()) {
+      <header class="page-header">
+        <div class="page-header-main">
+          <h1 class="page-title">{{ pageTitle() }}</h1>
+          @if (pageDescription()) {
+            <p class="page-description">{{ pageDescription() }}</p>
+          }
+        </div>
+        @if (showHelpFaqSearch()) {
+          <app-help-faq-search-field class="page-header-search" />
+        }
+      </header>
+    }
+    <router-outlet />
+  </main>
+</div>

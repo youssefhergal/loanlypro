@@ -1,0 +1,6 @@
+# Config commune des tests (profil actif : test → voir application-test.yml)
+# Ne pas définir datasource ici : évite les conflits driver H2 / URL MySQL injectée par CI.
+
+logging:
+  level:
+    root: WARN

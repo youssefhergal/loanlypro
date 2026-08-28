@@ -1,0 +1,79 @@
+<div class="credit-documents-tab">
+  <div class="credit-documents-tab__head">
+    <p class="credit-documents-tab__intro">
+      Contrats et documents émis par LoanlyPro.
+    </p>
+
+    @if (!loading() && !notImplemented() && pickerLoans().length > 0) {
+      <app-selected-loan-picker
+        [loans]="pickerLoans()"
+        [selectedLoanId]="selectedLoanId()"
+        (loanChange)="onLoanChange($event)"
+      />
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="documents-loading">
+      <mat-spinner diameter="36" />
+    </div>
+  } @else if (notImplemented()) {
+    <div class="credit-documents-empty">
+      <mat-icon aria-hidden="true">description</mat-icon>
+      <p>Les documents crédit seront listés ici prochainement.</p>
+    </div>
+  } @else if (filteredDocuments().length === 0) {
+    <div class="credit-documents-empty">
+      <mat-icon aria-hidden="true">description</mat-icon>
+      <p>Aucun document pour ce filtre.</p>
+    </div>
+  } @else {
+    <div class="credit-doc-grid">
+      @for (doc of filteredDocuments(); track trackDoc($index, doc)) {
+        <mat-card
+          class="credit-doc-card"
+          [class.credit-doc-card--unavailable]="!doc.available"
+        >
+          <div class="credit-doc-card__icon-wrap" aria-hidden="true">
+            <mat-icon>{{ helpers.creditDocumentIcon(doc.documentType) }}</mat-icon>
+          </div>
+
+          <div class="credit-doc-card__body">
+            <h3 class="credit-doc-card__title">{{ doc.title }}</h3>
+            <p class="credit-doc-card__ref">{{ doc.reference }}</p>
+            @if (doc.available) {
+              <p class="credit-doc-card__date">
+                Émis le {{ helpers.formatIssuedAt(doc.issuedAt) }}
+              </p>
+            } @else if (doc.unavailableReason) {
+              <p class="credit-doc-card__reason">{{ doc.unavailableReason }}</p>
+            }
+          </div>
+
+          <div class="credit-doc-card__actions">
+            @if (doc.available) {
+              <button
+                mat-stroked-button
+                type="button"
+                class="credit-doc-card__preview-btn"
+                (click)="openPreview(doc)"
+              >
+                <mat-icon>visibility</mat-icon>
+                Visualiser
+              </button>
+              <button mat-stroked-button type="button" (click)="download(doc)">
+                <mat-icon>download</mat-icon>
+                Télécharger le PDF
+              </button>
+            } @else {
+              <span class="credit-doc-card__locked">
+                <mat-icon>lock</mat-icon>
+                Document indisponible
+              </span>
+            }
+          </div>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

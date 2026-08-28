@@ -1,0 +1,107 @@
+<div class="admin-repayment-detail">
+  <header class="admin-repayment-detail__page-header">
+    <div class="admin-repayment-detail__page-header-main">
+      <div class="admin-repayment-detail__title-row">
+        <h1 class="admin-repayment-detail__page-title">Détail du prêt</h1>
+        @if (loan(); as detail) {
+          <app-loan-status-chip [status]="detail.status" />
+        }
+      </div>
+      @if (loan(); as detail) {
+        <p class="admin-repayment-detail__page-meta">
+          {{ detail.reference }} — {{ detail.borrowerName || 'Client' }}
+          @if (detail.borrowerEmail) {
+            <span> · {{ detail.borrowerEmail }}</span>
+          }
+          @if (detail.advisorName) {
+            <span> · Conseiller : {{ detail.advisorName }}</span>
+          }
+        </p>
+      } @else {
+        <p class="admin-repayment-detail__page-meta">
+          Consultation du plan de remboursement et de l'historique.
+        </p>
+      }
+    </div>
+    <div class="admin-repayment-detail__page-actions">
+      <a mat-stroked-button routerLink="/admin/prets">
+        <mat-icon>arrow_back</mat-icon>
+        Retour à la liste
+      </a>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="admin-repayment-detail__loading">Chargement du prêt…</p>
+  } @else if (error()) {
+    <p class="admin-repayment-detail__error">{{ error() }}</p>
+  } @else {
+    @if (loan(); as detail) {
+      <div class="admin-repayment-detail__layout">
+        <main class="admin-repayment-detail__main">
+          <p class="admin-repayment-info">
+            <mat-icon aria-hidden="true">visibility</mat-icon>
+            Consultation seule — supervision du portefeuille. Aucune action de paiement manuel.
+          </p>
+
+          <div class="admin-repayment-detail__metrics">
+            <article>
+              <span>Montant initial</span>
+              <strong>{{ detail.principalAmount | currency: 'EUR' : 'symbol' : '1.2-2' }}</strong>
+            </article>
+            <article>
+              <span>Solde restant</span>
+              <strong class="admin-repayment-detail__balance">
+                {{ detail.remainingBalance | currency: 'EUR' : 'symbol' : '1.2-2' }}
+              </strong>
+            </article>
+            <article>
+              <span>Mensualité</span>
+              <strong>
+                @if (detail.monthlyPayment != null) {
+                  {{ detail.monthlyPayment | currency: 'EUR' : 'symbol' : '1.2-2' }}
+                } @else {
+                  —
+                }
+              </strong>
+            </article>
+            <article>
+              <span>Prochaine échéance</span>
+              <strong>
+                @if (detail.nextInstallmentDate) {
+                  {{ detail.nextInstallmentDate | date: 'dd/MM/yyyy' }}
+                } @else {
+                  —
+                }
+              </strong>
+            </article>
+          </div>
+
+          @if (detail.installments?.length) {
+            <section class="admin-repayment-detail__section">
+              <h3>Échéancier</h3>
+              <app-installment-table [installments]="detail.installments!" />
+            </section>
+          }
+
+          @if (detail.transactions?.length) {
+            <section class="admin-repayment-detail__section">
+              <h3>Prélèvements</h3>
+              <app-payment-transaction-list [transactions]="detail.transactions!" />
+            </section>
+          }
+        </main>
+
+        <aside class="admin-repayment-detail__aside">
+          <section class="admin-repayment-detail__history-card">
+            <h3>Historique</h3>
+            <app-repayment-history-timeline
+              [events]="history()"
+              [loading]="historyLoading()"
+            />
+          </section>
+        </aside>
+      </div>
+    }
+  }
+</div>

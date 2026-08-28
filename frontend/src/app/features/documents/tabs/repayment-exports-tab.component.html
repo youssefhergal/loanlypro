@@ -1,0 +1,210 @@
+<div class="repayment-exports-tab">
+  @if (loadingLoans()) {
+    <div class="documents-loading">
+      <mat-spinner diameter="36" />
+    </div>
+  } @else if (loans().length === 0) {
+    <div class="repayment-exports-empty">
+      <mat-icon aria-hidden="true">account_balance</mat-icon>
+      <h3>Aucun prêt actif</h3>
+      <p>Les exports PDF seront disponibles une fois votre prêt débloqué.</p>
+      <a mat-stroked-button routerLink="/mes-prets">Voir mes prêts</a>
+    </div>
+  } @else {
+    <div class="repayment-exports-tab__head">
+      <p class="repayment-exports-tab__intro">
+        Exportez votre planning de remboursement et consultez vos prélèvements.
+      </p>
+
+      @if (loans().length > 0) {
+        <app-selected-loan-picker
+          [loans]="loans()"
+          [selectedLoanId]="selectedLoanId()"
+          (loanChange)="onLoanChange($event)"
+        />
+      }
+    </div>
+
+    <div class="repayment-exports-tab__cards">
+      <article class="export-card">
+        <div class="export-card__icon" aria-hidden="true">
+          <mat-icon>calendar_month</mat-icon>
+        </div>
+        <div class="export-card__body">
+          <h3>Échéancier de remboursement</h3>
+          <p>PDF avec toutes vos échéances (date, montant, statut et détails).</p>
+          <button
+            mat-stroked-button
+            type="button"
+            class="export-card__btn"
+            [disabled]="exporting() !== null"
+            (click)="exportSchedule()"
+          >
+            @if (exporting() === 'schedule') {
+              <mat-spinner diameter="18" />
+            } @else {
+              <mat-icon>download</mat-icon>
+            }
+            Télécharger l'échéancier (PDF)
+          </button>
+        </div>
+      </article>
+
+      <article class="export-card">
+        <div class="export-card__icon" aria-hidden="true">
+          <mat-icon>receipt_long</mat-icon>
+        </div>
+        <div class="export-card__body">
+          <h3>Relevé des prélèvements</h3>
+          <p>Historique de tous vos prélèvements automatiques effectués.</p>
+          <button
+            mat-stroked-button
+            type="button"
+            class="export-card__btn"
+            [disabled]="exporting() !== null"
+            (click)="exportPayments()"
+          >
+            @if (exporting() === 'payments') {
+              <mat-spinner diameter="18" />
+            } @else {
+              <mat-icon>download</mat-icon>
+            }
+            Télécharger le relevé (PDF)
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <div class="repayment-exports-tab__info" role="status">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <p>
+        Les prélèvements sont automatiques depuis le compte IBAN enregistré
+        @if (loanDetail()?.ibanMasked) {
+          ({{ loanDetail()?.ibanMasked }}).
+        } @else {
+          .
+        }
+        Ces documents sont à usage personnel et informatif.
+      </p>
+    </div>
+
+    @if (loadingDetails()) {
+      <div class="documents-loading documents-loading--inline">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else {
+      <div class="repayment-exports-tab__preview-grid">
+        <section class="preview-panel">
+          <header class="preview-panel__header">
+            <h3>Aperçu de l'échéancier</h3>
+          </header>
+          @if (previewInstallments().length === 0) {
+            <p class="preview-panel__empty">Aucune échéance disponible.</p>
+          } @else {
+            <div class="preview-panel__table">
+              <app-installment-table
+                [installments]="previewInstallments()"
+                variant="schedule"
+              />
+            </div>
+            <a
+              class="preview-panel__link"
+              [routerLink]="paymentsLink()"
+              [queryParams]="paymentsQueryParams()"
+            >
+              Voir l'échéancier complet
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          }
+        </section>
+
+        <section class="preview-panel">
+          <header class="preview-panel__header">
+            <h3>Historique des prélèvements</h3>
+          </header>
+          @if (previewTransactions().length === 0) {
+            <p class="preview-panel__empty">Aucun prélèvement effectué pour le moment.</p>
+          } @else {
+            <ul class="tx-preview-list">
+              @for (tx of previewTransactions(); track tx.id) {
+                <li class="tx-preview-item">
+                  <span class="tx-preview-item__icon" aria-hidden="true">
+                    <mat-icon>{{
+                      tx.status === 'SUCCESS' ? 'check_circle' : 'error_outline'
+                    }}</mat-icon>
+                  </span>
+                  <div class="tx-preview-item__content">
+                    <div class="tx-preview-item__row">
+                      <span class="tx-preview-item__date">{{
+                        tx.attemptedAt | date: 'dd/MM/yyyy'
+                      }}</span>
+                      <span class="tx-preview-item__amount">{{
+                        tx.amount | currency: 'EUR' : 'symbol' : '1.2-2'
+                      }}</span>
+                    </div>
+                    <div class="tx-preview-item__row tx-preview-item__row--meta">
+                      <span class="tx-preview-item__ref">
+                        {{ selectedLoan()?.reference }} — Échéance N° {{ tx.sequenceNumber }}
+                      </span>
+                      <span
+                        class="tx-preview-item__status"
+                        [class.tx-preview-item__status--ok]="tx.status === 'SUCCESS'"
+                        [class.tx-preview-item__status--ko]="tx.status === 'FAILED'"
+                      >
+                        {{ transactionStatusLabel(tx.status) }}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="tx-preview-item__download"
+                    aria-label="Télécharger le relevé PDF"
+                    [disabled]="exporting() !== null"
+                    (click)="exportPayments()"
+                  >
+                    <mat-icon>download</mat-icon>
+                  </button>
+                </li>
+              }
+            </ul>
+            <a
+              class="preview-panel__link"
+              [routerLink]="paymentsLink()"
+              [queryParams]="paymentsQueryParams()"
+            >
+              Voir tout l'historique
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          }
+        </section>
+      </div>
+    }
+
+    @if (showMandateCard()) {
+      <section class="mandate-card">
+        <div class="mandate-card__main">
+          <span class="mandate-card__icon" aria-hidden="true">
+            <mat-icon>lock</mat-icon>
+          </span>
+          <div>
+            <h3>Mandat de prélèvement actif</h3>
+            <p>
+              Votre mandat SEPA est actif. Les mensualités sont prélevées automatiquement sur votre
+              compte
+              @if (loanDetail()?.ibanMasked) {
+                <strong>{{ loanDetail()?.ibanMasked }}</strong>.
+              } @else {
+                enregistré.
+              }
+            </p>
+          </div>
+        </div>
+        <a mat-stroked-button class="mandate-card__btn" [routerLink]="mandateLink()">
+          Gérer mon mandat
+          <mat-icon iconPositionEnd>chevron_right</mat-icon>
+        </a>
+      </section>
+    }
+  }
+</div>

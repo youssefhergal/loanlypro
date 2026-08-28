@@ -1,0 +1,37 @@
+# Profil local / développement (activé par défaut via spring.profiles.active)
+
+app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200,https://pfr-dev.web.app}
+  payment:
+    iban-vault-key: ${IBAN_VAULT_KEY:loanlyfans-dev-iban-vault-key}
+  # En dev : exécution toutes les 5 minutes (prod reste horaire via application.yml)
+  advisor-assignment:
+    scheduler:
+      enabled: true
+      cron: "0 */5 * * * *"
+  repayment:
+    scheduler:
+      cron: "0 */5 * * * *"
+      internal-token: ${REPAYMENT_SCHEDULER_TOKEN:dev-scheduler-token}
+  mail:
+    provider: logging
+    verification:
+      dev-fixed-code: "000000"
+      log-code-to-console: true
+  ai:
+    anthropic-api-key: ${ANTHROPIC_API_KEY:}
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/loan_management?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
+    username: ${SPRING_DATASOURCE_USERNAME:app}
+    password: ${SPRING_DATASOURCE_PASSWORD:app}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false

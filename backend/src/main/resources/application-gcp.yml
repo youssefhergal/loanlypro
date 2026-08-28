@@ -1,0 +1,12 @@
+# Profil Cloud Run / GCP — datasource via secrets (pas de localhost).
+# Activer avec SPRING_PROFILES_ACTIVE=dev,gcp (staging) ou prod,gcp si besoin.
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update

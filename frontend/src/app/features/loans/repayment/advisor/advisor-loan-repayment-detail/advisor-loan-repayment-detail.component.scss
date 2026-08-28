@@ -1,0 +1,154 @@
+.advisor-repayment-detail {
+  padding: 0 28px 1.5rem;
+}
+
+.advisor-repayment-detail__page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.advisor-repayment-detail__page-title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--color-text, #1a2e22);
+}
+
+.advisor-repayment-detail__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.35rem;
+}
+
+.advisor-repayment-detail__page-meta {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #6b7c72);
+  line-height: 1.45;
+}
+
+.advisor-repayment-detail__page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex-shrink: 0;
+
+  mat-icon {
+    margin-right: 0.2rem;
+  }
+}
+
+.advisor-repayment-detail__page-header-main {
+  flex: 1;
+  min-width: min(100%, 240px);
+}
+
+.advisor-repayment-detail__loading,
+.advisor-repayment-detail__error {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+}
+
+.advisor-repayment-detail__error {
+  color: #c62828;
+}
+
+.advisor-repayment-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  font-size: 0.8125rem;
+  color: #0d47a1;
+  line-height: 1.45;
+
+  mat-icon {
+    font-size: 1.125rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    color: #1565c0;
+    flex-shrink: 0;
+  }
+}
+
+.advisor-repayment-detail__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.advisor-repayment-detail__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+
+  article {
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--color-border, #d8e8de);
+    background: var(--color-surface, #fff);
+
+    span {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-text-muted, #6b7c72);
+    }
+
+    strong {
+      font-size: 1rem;
+      color: var(--color-text, #1a2e22);
+    }
+  }
+}
+
+.advisor-repayment-detail__balance {
+  color: var(--color-primary, #1a7a4a) !important;
+}
+
+.advisor-repayment-detail__section {
+  margin-bottom: 1.25rem;
+
+  h3 {
+    margin: 0 0 0.65rem;
+    font-size: 0.9375rem;
+    color: var(--color-text, #1a2e22);
+  }
+}
+
+.advisor-repayment-detail__history-card {
+  padding: 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-border, #d8e8de);
+  background: var(--color-surface, #fff);
+
+  h3 {
+    margin: 0 0 0.65rem;
+    font-size: 0.9375rem;
+  }
+}
+
+@media (max-width: 960px) {
+  .advisor-repayment-detail__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .advisor-repayment-detail__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

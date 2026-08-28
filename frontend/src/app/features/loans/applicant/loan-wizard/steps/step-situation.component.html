@@ -1,0 +1,152 @@
+<div class="step-situation" [formGroup]="form">
+  <div class="step-situation__main">
+    <section class="loan-detail-card">
+      <h2 class="loan-detail-card__title">
+        <mat-icon>work</mat-icon>
+        Statut d'emploi
+        <span class="loan-detail-card__desc loan-detail-card__desc--inline">
+          Sélectionnez votre situation professionnelle actuelle.
+        </span>
+      </h2>
+      <mat-button-toggle-group
+        formControlName="employmentStatus"
+        class="employment-toggle"
+        aria-label="Statut d'emploi"
+      >
+        @for (opt of employmentOptions; track opt.value) {
+          <mat-button-toggle [value]="opt.value">{{ opt.label }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </section>
+
+    @if (showEmployerFields) {
+      <section class="loan-detail-card">
+        <h2 class="loan-detail-card__title">
+          <mat-icon>business</mat-icon>
+          Employeur &amp; ancienneté
+          <span class="loan-detail-card__desc loan-detail-card__desc--inline">
+            Renseignez les informations relatives à votre employeur actuel.
+          </span>
+        </h2>
+        <div class="loan-detail-card__body loan-detail-card__body--after-title">
+          <div class="row-2">
+            <mat-form-field appearance="outline" class="loan-field-compact">
+              <mat-label>Nom de l'employeur</mat-label>
+              <input matInput formControlName="employerName" placeholder="BNP Paribas SA" />
+              @if (form.get('employerName')?.hasError('required') && form.get('employerName')?.touched) {
+                <mat-error>Obligatoire</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="loan-field-compact">
+              <mat-label>Secteur d'activité</mat-label>
+              <mat-select formControlName="employerSector">
+                <mat-option value="">—</mat-option>
+                @for (opt of sectorOptions; track opt.value) {
+                  <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="row-2">
+            <mat-form-field appearance="outline" class="loan-field-compact">
+              <mat-label>Ancienneté dans le poste</mat-label>
+              <mat-select formControlName="seniorityRange">
+                @for (opt of seniorityOptions; track opt.value) {
+                  <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                }
+              </mat-select>
+              @if (form.get('seniorityRange')?.hasError('required') && form.get('seniorityRange')?.touched) {
+                <mat-error>Obligatoire</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="loan-field-compact">
+              <mat-label>Intitulé du poste</mat-label>
+              <input matInput formControlName="jobTitle" placeholder="Chargée de clientèle" />
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="loan-field-compact">
+            <mat-label>Date d'embauche</mat-label>
+            <input matInput type="date" formControlName="hireDate" />
+          </mat-form-field>
+        </div>
+      </section>
+    }
+
+    <section class="loan-detail-card">
+      <h2 class="loan-detail-card__title">
+        <mat-icon>account_balance_wallet</mat-icon>
+        Revenus &amp; charges mensuels
+        <span class="loan-detail-card__desc loan-detail-card__desc--inline">
+          Indiquez vos revenus nets et vos charges mensuelles actuelles.
+        </span>
+      </h2>
+
+      <div class="loan-detail-card__body loan-detail-card__body--after-title">
+        <div class="row-2">
+          <mat-form-field appearance="outline" class="loan-field-compact">
+            <mat-label>Revenu net mensuel</mat-label>
+            <span matTextPrefix>€&nbsp;</span>
+            <input matInput type="number" formControlName="monthlyIncome" min="0" />
+            <mat-hint>Salaire net après impôts</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="loan-field-compact">
+            <mat-label>Autres revenus</mat-label>
+            <span matTextPrefix>€&nbsp;</span>
+            <input matInput type="number" formControlName="additionalIncome" min="0" />
+            <mat-hint>Locatif, allocations…</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="row-2">
+          <mat-form-field appearance="outline" class="loan-field-compact">
+            <mat-label>Loyer ou crédit immobilier</mat-label>
+            <span matTextPrefix>€&nbsp;</span>
+            <input matInput type="number" formControlName="monthlyRent" min="0" />
+            <mat-hint>Résidence principale</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="loan-field-compact">
+            <mat-label>Autres crédits en cours</mat-label>
+            <span matTextPrefix>€&nbsp;</span>
+            <input matInput type="number" formControlName="monthlyLoanPayments" min="0" />
+            <mat-hint>Auto, conso, personnel…</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="totals-row">
+        <div class="totals-row__item">
+          <span class="totals-row__label">Total revenus</span>
+          <strong class="totals-row__value totals-row__value--income">
+            {{ totalIncome | currency: 'EUR' : 'symbol' : '1.0-0' }}
+          </strong>
+        </div>
+        <div class="totals-row__item">
+          <span class="totals-row__label">Total charges</span>
+          <strong class="totals-row__value totals-row__value--charges">
+            {{ totalCharges | currency: 'EUR' : 'symbol' : '1.0-0' }}
+          </strong>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="step-situation__aside">
+    <app-wizard-estimation-panel
+      [amount]="amount"
+      [durationMonths]="durationMonths"
+      [loanPurpose]="loanPurpose"
+    />
+    <app-wizard-debt-ratio-panel
+      [debtRatio]="debtRatio"
+      [totalIncome]="totalIncome"
+      [totalCharges]="totalCharges"
+    />
+    <app-wizard-advice-panel [title]="adviceTitle" [message]="adviceMessage" />
+  </aside>
+</div>

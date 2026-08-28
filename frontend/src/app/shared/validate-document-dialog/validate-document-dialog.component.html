@@ -1,0 +1,49 @@
+<div class="validate-doc-dialog">
+  <header class="validate-doc-dialog__header">
+    <div class="validate-doc-dialog__title-row">
+      <span class="validate-doc-dialog__title-icon" aria-hidden="true">
+        <mat-icon>check</mat-icon>
+      </span>
+      <h2>Valider cette pièce ?</h2>
+    </div>
+    <button
+      mat-icon-button
+      type="button"
+      class="validate-doc-dialog__close"
+      aria-label="Fermer"
+      (click)="onCancel()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="validate-doc-dialog__body">
+    <section class="validate-doc-dialog__doc-box">
+      <p class="validate-doc-dialog__doc-label">Document concerné</p>
+      <p class="validate-doc-dialog__doc-name">
+        <mat-icon aria-hidden="true">description</mat-icon>
+        {{ documentLine() }}
+      </p>
+    </section>
+
+    <p class="validate-doc-dialog__message">
+      Vous confirmez que le document est <strong>conforme, lisible</strong> et correspond aux
+      exigences pour ce type de justificatif.
+    </p>
+  </div>
+
+  <footer class="validate-doc-dialog__footer">
+    <button mat-button type="button" class="validate-doc-dialog__cancel" (click)="onCancel()">
+      Annuler
+    </button>
+    <button
+      mat-flat-button
+      type="button"
+      class="validate-doc-dialog__confirm"
+      (click)="onConfirm()"
+    >
+      <mat-icon aria-hidden="true">check_circle</mat-icon>
+      Confirmer la validation
+    </button>
+  </footer>
+</div>

@@ -1,0 +1,150 @@
+<div class="my-loans-page">
+  @if (loading()) {
+    <div class="my-loans-page__loading" aria-busy="true">Chargement de vos prêts…</div>
+  } @else if (!loans().length) {
+    <div class="my-loans-empty">
+      <mat-icon>account_balance</mat-icon>
+      <h2>Aucun prêt en cours</h2>
+      <p>
+        Lorsqu’une demande sera approuvée et les fonds débloqués, votre plan de remboursement
+        apparaîtra ici.
+      </p>
+      <a mat-stroked-button routerLink="/mes-demandes">Voir mes demandes</a>
+    </div>
+  } @else {
+    <div class="my-loans-layout">
+      <div class="my-loans-layout__main">
+        <div class="my-loans-stack">
+      @for (loan of loans(); track loan.id) {
+        @let accent = statusStyle(loan.status).accent;
+        <article class="my-loan-card" [style.--loan-accent]="accent">
+          <span class="my-loan-card__accent" aria-hidden="true"></span>
+
+          <header class="my-loan-card__header">
+            <div>
+              <p class="my-loan-card__ref">{{ loan.reference }}</p>
+              <h2 class="my-loan-card__title">Prêt en cours</h2>
+            </div>
+            <app-loan-status-chip [status]="loan.status" />
+          </header>
+
+          @if (needsMandate(loan.status, loan.mandateStatus)) {
+            <app-mandate-status-banner
+              [loanId]="loan.id"
+              [loanStatus]="loan.status"
+              [mandateStatus]="loan.mandateStatus"
+              [overdueCount]="loan.overdueInstallmentsCount"
+            />
+          } @else if (loan.overdueInstallmentsCount > 0 || loan.status === 'DEFAULTED') {
+            <app-mandate-status-banner
+              [loanId]="loan.id"
+              [loanStatus]="loan.status"
+              [mandateStatus]="loan.mandateStatus"
+              [overdueCount]="loan.overdueInstallmentsCount"
+            />
+          }
+
+          <div class="my-loan-card__metrics">
+            <div>
+              <span class="my-loan-card__label">Montant initial</span>
+              <strong>{{ loan.principalAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}</strong>
+            </div>
+            <div>
+              <span class="my-loan-card__label">Solde restant</span>
+              <strong>{{ loan.remainingBalance | currency: 'EUR' : 'symbol' : '1.0-0' }}</strong>
+            </div>
+            <div>
+              <span class="my-loan-card__label">Mensualité</span>
+              <strong>
+                @if (loan.monthlyPayment != null) {
+                  {{ loan.monthlyPayment | currency: 'EUR' : 'symbol' : '1.2-2' }}
+                } @else {
+                  —
+                }
+              </strong>
+            </div>
+            <div>
+              <span class="my-loan-card__label">Durée restante</span>
+              <strong>
+                @if (loan.remainingInstallmentsCount != null) {
+                  {{ loan.remainingInstallmentsCount }} mois
+                } @else {
+                  —
+                }
+              </strong>
+            </div>
+          </div>
+
+          <div class="my-loan-card__footer">
+            <div class="my-loan-card__next">
+              <div class="my-loan-card__next-label">Prochaine échéance</div>
+              @if (loan.nextInstallmentDate) {
+                <div class="my-loan-card__next-row">
+                  <span class="my-loan-card__next-date">
+                    {{ loan.nextInstallmentDate | date: 'dd/MM/yyyy' }}
+                    @if (loan.nextInstallmentAmount != null) {
+                      — {{ loan.nextInstallmentAmount | currency: 'EUR' : 'symbol' : '1.2-2' }}
+                    }
+                  </span>
+                  <app-installment-status-chip [status]="loan.nextInstallmentStatus" />
+                </div>
+              } @else {
+                <span class="my-loan-card__muted">Aucune échéance à venir</span>
+              }
+            </div>
+
+            <div class="my-loan-card__actions">
+              @if (needsMandate(loan.status, loan.mandateStatus)) {
+                <a mat-flat-button color="primary" [routerLink]="['/mes-prets', loan.id, 'mandat']">
+                  Configurer le prélèvement
+                </a>
+              }
+              <a
+                mat-button
+                class="my-loan-card__schedule-link"
+                [routerLink]="['/paiements']"
+                [queryParams]="{ loanId: loan.id }"
+              >
+                Voir l'échéancier complet
+                <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+              </a>
+              <a mat-stroked-button [routerLink]="['/mes-prets', loan.id]">Détail du prêt</a>
+            </div>
+          </div>
+        </article>
+      }
+        </div>
+      </div>
+
+      <aside class="my-loans-layout__aside" aria-label="Aide et raccourcis">
+        <section class="my-loans-help-card">
+          <h2 class="my-loans-help-card__title">
+            <mat-icon>support_agent</mat-icon>
+            Besoin d'aide ?
+          </h2>
+          <p>
+            Une question sur vos remboursements ? Nos conseillers sont là pour vous accompagner.
+          </p>
+          <a mat-stroked-button class="my-loans-help-card__btn" href="mailto:conseil@loanlypro.fr">
+            <mat-icon>chat</mat-icon>
+            Contacter un conseiller
+          </a>
+        </section>
+
+        <section class="my-loans-aside-card">
+          <h2 class="my-loans-aside-card__title">Accès rapide</h2>
+          <nav class="my-loans-aside-links">
+            <a routerLink="/paiements" class="my-loans-aside-links__item">
+              <mat-icon>calendar_month</mat-icon>
+              Paiements / Échéancier
+            </a>
+            <a routerLink="/mes-demandes" class="my-loans-aside-links__item">
+              <mat-icon>description</mat-icon>
+              Mes demandes
+            </a>
+          </nav>
+        </section>
+      </aside>
+    </div>
+  }
+</div>

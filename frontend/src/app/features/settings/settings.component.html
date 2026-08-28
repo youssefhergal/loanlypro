@@ -1,0 +1,114 @@
+<div class="settings-page">
+  <header class="settings-intro">
+    <div class="settings-intro__icon" aria-hidden="true">
+      <mat-icon>settings</mat-icon>
+    </div>
+    <div>
+      <h2 class="settings-intro__title">Paramètres</h2>
+      <p class="settings-intro__text">{{ copy().intro }}</p>
+    </div>
+  </header>
+
+  <section class="loan-detail-card">
+    <h2 class="loan-detail-card__title">
+      <mat-icon>view_sidebar</mat-icon>
+      Affichage
+    </h2>
+    <ul class="settings-list">
+      <li class="settings-row">
+        <div class="settings-row__copy">
+          <span class="settings-row__label">Menu latéral replié par défaut</span>
+          <span class="settings-row__hint">Au prochain chargement, le menu démarre en mode compact.</span>
+        </div>
+        <mat-slide-toggle
+          [checked]="settings().sidebarCollapsedByDefault"
+          (change)="update('sidebarCollapsedByDefault', $event.checked)"
+          aria-label="Menu latéral replié par défaut"
+        />
+      </li>
+      <li class="settings-row">
+        <div class="settings-row__copy">
+          <span class="settings-row__label">Tableaux compacts</span>
+          <span class="settings-row__hint">Réduit l’espacement des listes et tableaux.</span>
+        </div>
+        <mat-slide-toggle
+          [checked]="settings().compactTables"
+          (change)="update('compactTables', $event.checked)"
+          aria-label="Tableaux compacts"
+        />
+      </li>
+    </ul>
+  </section>
+
+  <section class="loan-detail-card">
+    <h2 class="loan-detail-card__title">
+      <mat-icon>notifications</mat-icon>
+      Notifications
+    </h2>
+    <ul class="settings-list">
+      <li class="settings-row">
+        <div class="settings-row__copy">
+          <span class="settings-row__label">Rappels par e-mail</span>
+          <span class="settings-row__hint">{{ copy().emailHint }}</span>
+        </div>
+        <mat-slide-toggle
+          [checked]="settings().emailNotifications"
+          (change)="update('emailNotifications', $event.checked)"
+          aria-label="Rappels par e-mail"
+        />
+      </li>
+      <li class="settings-row">
+        <div class="settings-row__copy">
+          <span class="settings-row__label">{{ copy().alertsLabel }}</span>
+          <span class="settings-row__hint">{{ copy().alertsHint }}</span>
+        </div>
+        <mat-slide-toggle
+          [checked]="settings().inAppAlerts"
+          (change)="update('inAppAlerts', $event.checked)"
+          [attr.aria-label]="copy().alertsLabel"
+        />
+      </li>
+    </ul>
+    <p class="settings-note">
+      Les préférences e-mail seront synchronisées avec votre compte dès que le backend le prendra en charge.
+      En attendant, elles sont mémorisées sur cet appareil.
+    </p>
+  </section>
+
+  <section class="loan-detail-card">
+    <h2 class="loan-detail-card__title">
+      <mat-icon>shield</mat-icon>
+      Compte & sécurité
+    </h2>
+    <p class="settings-note settings-note--spaced">
+      E-mail, mot de passe et vérification du compte se gèrent depuis votre profil.
+    </p>
+    <div class="settings-actions">
+      <a mat-stroked-button [routerLink]="copy().profileLink">
+        <mat-icon>person</mat-icon>
+        Mon profil
+      </a>
+      <a mat-stroked-button [href]="'mailto:' + supportEmail">
+        <mat-icon>mail</mat-icon>
+        Contacter le support
+      </a>
+      <a mat-stroked-button [routerLink]="copy().helpLink">
+        <mat-icon>help_outline</mat-icon>
+        Aide & FAQ
+      </a>
+    </div>
+  </section>
+
+  <footer class="settings-footer">
+    @if (saved()) {
+      <span class="settings-footer__saved" role="status">
+        <mat-icon aria-hidden="true">check_circle</mat-icon>
+        Préférences enregistrées
+      </span>
+    }
+    <div class="settings-footer__actions">
+      <button mat-stroked-button type="button" (click)="reset()">Réinitialiser</button>
+      <button mat-flat-button color="primary" type="button" (click)="save()">Enregistrer</button>
+    </div>
+  </footer>
+</div>

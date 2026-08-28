@@ -1,0 +1,381 @@
+<div class="step-summary" [formGroup]="form">
+  <div class="step-summary__main">
+    <section class="loan-detail-card recap-section recap-section--static">
+      <div class="recap-section__header recap-section__header--card recap-section__header--static">
+        <div class="recap-section__header-main">
+          <h2 class="loan-detail-card__title recap-section__title recap-section__title--page">
+            <mat-icon>fact_check</mat-icon>
+            {{ form.get('title')?.value || 'Demande de prêt' }}
+          </h2>
+          <p class="recap-section__summary">
+            Vérifiez votre dossier avant de le soumettre. Toutes les informations peuvent encore être
+            modifiées.
+          </p>
+          @if (reference()) {
+            <p class="recap-section__ref">
+              Référence : <strong>{{ reference() }}</strong>
+            </p>
+          }
+        </div>
+      </div>
+    </section>
+
+    <p class="recap-page-sub">
+      <mat-icon>fact_check</mat-icon>
+      Récapitulatif de votre dossier — Cliquez sur une section pour la développer et vérifier les
+      informations.
+    </p>
+
+    <div class="recap-sections">
+      <!-- Besoin -->
+      <section class="loan-detail-card recap-section" [class.recap-section--open]="isExpanded('need')">
+        <div
+          class="recap-section__header recap-section__header--card"
+          role="button"
+          tabindex="0"
+          (click)="toggleSection('need')"
+          (keydown.enter)="toggleSection('need')"
+          (keydown.space)="$event.preventDefault(); toggleSection('need')"
+        >
+          <div class="recap-section__header-main">
+            <div class="recap-section__title-row">
+              <h3 class="loan-detail-card__title recap-section__title">
+                <mat-icon>euro</mat-icon>
+                Besoin de financement
+              </h3>
+              @if (needComplete()) {
+                <span class="recap-badge recap-badge--complete"><mat-icon>check</mat-icon> Complet</span>
+              }
+            </div>
+            <p class="recap-section__summary">{{ needSummary() }}</p>
+          </div>
+          <div class="recap-section__header-actions">
+            <button type="button" class="recap-section__edit-btn" (click)="goToStep(0, $event)">
+              <mat-icon>edit</mat-icon> Modifier
+            </button>
+            <mat-icon class="recap-section__chevron">{{ isExpanded('need') ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </div>
+        </div>
+        @if (isExpanded('need')) {
+          <div class="recap-section__body recap-section__body--grid">
+            <div class="recap-grid">
+              <div class="recap-grid__row">
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Type de prêt</span>
+                  <span class="recap-grid__value">{{ purposeLabel() }}</span>
+                </div>
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Montant demandé</span>
+                  <span class="recap-grid__value recap-grid__value--accent">
+                    {{ form.get('requestedAmount')?.value | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                  </span>
+                </div>
+              </div>
+              <div class="recap-grid__row">
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Durée souhaitée</span>
+                  <span class="recap-grid__value">{{ formatDurationLong(form.get('requestedDurationMonths')?.value ?? 0) }}</span>
+                </div>
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Intitulé de la demande</span>
+                  <span class="recap-grid__value">{{ form.get('title')?.value }}</span>
+                </div>
+              </div>
+              <div class="recap-grid__row">
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Objet du financement</span>
+                  <span class="recap-grid__value">{{ purposeLabel() }}</span>
+                </div>
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Mensualité estimée</span>
+                  <span class="recap-grid__value recap-grid__value--accent">
+                    ~{{ monthlyPayment() | currency: 'EUR' : 'symbol' : '1.0-0' }}/mois
+                  </span>
+                </div>
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Taux indicatif</span>
+                  <span class="recap-grid__value">{{ indicativeRatePercent() | number: '1.2-2' }} %</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+
+      <!-- Situation -->
+      <section class="loan-detail-card recap-section" [class.recap-section--open]="isExpanded('situation')">
+        <div
+          class="recap-section__header recap-section__header--card"
+          role="button"
+          tabindex="0"
+          (click)="toggleSection('situation')"
+          (keydown.enter)="toggleSection('situation')"
+          (keydown.space)="$event.preventDefault(); toggleSection('situation')"
+        >
+          <div class="recap-section__header-main">
+            <div class="recap-section__title-row">
+              <h3 class="loan-detail-card__title recap-section__title">
+                <mat-icon>work</mat-icon>
+                Situation professionnelle
+              </h3>
+              @if (situationComplete()) {
+                <span class="recap-badge recap-badge--complete"><mat-icon>check</mat-icon> Complet</span>
+              }
+            </div>
+            <p class="recap-section__summary">{{ situationSummary() }}</p>
+          </div>
+          <div class="recap-section__header-actions">
+            <button type="button" class="recap-section__edit-btn" (click)="goToStep(1, $event)">
+              <mat-icon>edit</mat-icon> Modifier
+            </button>
+            <mat-icon class="recap-section__chevron">{{ isExpanded('situation') ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </div>
+        </div>
+        @if (isExpanded('situation')) {
+          <div class="recap-section__body recap-section__body--grid">
+            <div class="recap-grid">
+              <div class="recap-grid__row">
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Statut professionnel</span>
+                  <span class="recap-grid__value">{{ employmentLabel() }}</span>
+                </div>
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Employeur</span>
+                  <span class="recap-grid__value">{{ fv().employerName || '—' }}</span>
+                </div>
+              </div>
+              <div class="recap-grid__row">
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Poste occupé</span>
+                  <span class="recap-grid__value">{{ fv().jobTitle || '—' }}</span>
+                </div>
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Ancienneté</span>
+                  <span class="recap-grid__value">{{ seniorityLabel() || '—' }}</span>
+                </div>
+              </div>
+              <div class="recap-grid__row">
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Revenu net mensuel</span>
+                  <span class="recap-grid__value recap-grid__value--accent">
+                    {{ form.get('monthlyIncome')?.value | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                  </span>
+                </div>
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Charges mensuelles</span>
+                  <span class="recap-grid__value">{{ chargesLabel() }}</span>
+                </div>
+              </div>
+              <div class="recap-grid__row">
+                <div class="recap-grid__cell">
+                  <span class="recap-grid__label">Taux d'endettement</span>
+                  <span class="recap-grid__value" [class.recap-grid__value--accent]="debtRatioOk()">
+                    {{ debtRatioPercent() | number: '1.0-1' }}%
+                    <span class="recap-grid__value-hint">@if (debtRatioOk()) { (≤ 35% ✓) }</span>
+                  </span>
+                </div>
+                <div class="recap-grid__cell"></div>
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+
+      <!-- Documents -->
+      <section class="loan-detail-card recap-section" [class.recap-section--open]="isExpanded('documents')">
+        <div
+          class="recap-section__header recap-section__header--card"
+          role="button"
+          tabindex="0"
+          (click)="toggleSection('documents')"
+          (keydown.enter)="toggleSection('documents')"
+          (keydown.space)="$event.preventDefault(); toggleSection('documents')"
+        >
+          <div class="recap-section__header-main">
+            <div class="recap-section__title-row">
+              <h3 class="loan-detail-card__title recap-section__title">
+                <mat-icon>folder_open</mat-icon>
+                Documents
+              </h3>
+              @if (documentsComplete()) {
+                <span class="recap-badge recap-badge--complete"><mat-icon>check</mat-icon> Complet</span>
+              } @else {
+                <span class="recap-badge recap-badge--warn"><mat-icon>warning_amber</mat-icon> À compléter</span>
+              }
+            </div>
+            <p class="recap-section__summary">{{ documentsSummary() }}</p>
+          </div>
+          <div class="recap-section__header-actions">
+            <button type="button" class="recap-section__edit-btn" (click)="goToStep(2, $event)">
+              <mat-icon>edit</mat-icon> Modifier
+            </button>
+            <mat-icon class="recap-section__chevron">{{ isExpanded('documents') ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </div>
+        </div>
+        @if (isExpanded('documents')) {
+          <div class="recap-section__body">
+            <ul class="recap-docs">
+              @for (item of documentRecapItems(); track item.type) {
+                <li class="recap-docs__item" [class.recap-docs__item--missing]="item.status === 'missing'">
+                  <mat-icon class="recap-docs__icon">{{ item.icon }}</mat-icon>
+                  <div class="recap-docs__content">
+                    <span class="recap-docs__label">{{ item.label }}</span>
+                    @if (item.files.length > 0) {
+                      @for (file of item.files; track file.id) {
+                        <span class="recap-docs__file">{{ docDisplayName(file) }} · {{ formatSize(file.fileSizeBytes) }}</span>
+                      }
+                    } @else if (item.required) {
+                      <span class="recap-docs__file recap-docs__file--muted">Document obligatoire manquant</span>
+                    } @else {
+                      <span class="recap-docs__file recap-docs__file--muted">Optionnel</span>
+                    }
+                  </div>
+                  <span class="recap-docs__status" [class.recap-docs__status--ok]="item.status === 'provided'" [class.recap-docs__status--missing]="item.status === 'missing'">
+                    @if (item.status === 'provided') {
+                      <mat-icon>check_circle</mat-icon> Importé
+                    } @else if (item.required) {
+                      <mat-icon>error_outline</mat-icon> Manquant
+                    } @else {
+                      <mat-icon>warning_amber</mat-icon> —
+                    }
+                  </span>
+                </li>
+              }
+            </ul>
+            @if (missingRequiredDocs().length > 0) {
+              <p class="recap-docs__alert">
+                <mat-icon>warning_amber</mat-icon>
+                Les documents obligatoires manquants doivent être téléversés avant la soumission.
+              </p>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- CGU -->
+      <section class="loan-detail-card recap-section" [class.recap-section--open]="isExpanded('cgu')">
+        <div
+          class="recap-section__header recap-section__header--card"
+          role="button"
+          tabindex="0"
+          (click)="toggleSection('cgu')"
+          (keydown.enter)="toggleSection('cgu')"
+          (keydown.space)="$event.preventDefault(); toggleSection('cgu')"
+        >
+          <div class="recap-section__header-main">
+            <div class="recap-section__title-row">
+              <h3 class="loan-detail-card__title recap-section__title">
+                <mat-icon>gavel</mat-icon>
+                Conditions Générales d'Utilisation
+              </h3>
+              @if (cguAccepted()) {
+                <span class="recap-badge recap-badge--complete"><mat-icon>check</mat-icon> Acceptées</span>
+              }
+            </div>
+            <p class="recap-section__summary">Lisez attentivement les conditions avant d'accepter.</p>
+          </div>
+          <mat-icon class="recap-section__chevron recap-section__chevron--solo">{{ isExpanded('cgu') ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </div>
+        @if (isExpanded('cgu')) {
+          <div class="recap-section__body recap-section__body--cgu">
+            <div class="recap-cgu__scroll">
+              @for (article of cguArticles; track article.title) {
+                <article class="recap-cgu__article">
+                  <h4>{{ article.title }}</h4>
+                  <p>{{ article.body }}</p>
+                </article>
+              }
+            </div>
+            <p class="recap-cgu__hint">
+              <mat-icon>swipe_vertical</mat-icon>
+              Faites défiler pour lire l'intégralité des conditions (Articles 1–3)
+            </p>
+            <div class="recap-legal recap-legal--inline">
+              <mat-checkbox formControlName="acceptTerms">
+                <span class="recap-legal__label">J'accepte les Conditions Générales d'Utilisation</span>
+                <span class="recap-legal__sub">Je déclare avoir lu et accepté sans réserve les CGU de LoanlyPro.</span>
+              </mat-checkbox>
+              <mat-checkbox formControlName="certifyAccuracy">
+                <span class="recap-legal__label">Je certifie l'exactitude des informations fournies</span>
+                <span class="recap-legal__sub">Je certifie sur l'honneur que toutes les informations sont exactes et sincères.</span>
+              </mat-checkbox>
+            </div>
+          </div>
+        }
+      </section>
+    </div>
+
+    <p class="recap-secure">
+      <mat-icon>lock</mat-icon>
+      Votre dossier est transmis de manière sécurisée. Après soumission, un conseiller LoanlyPro vous contactera sous 48 h ouvrées.
+    </p>
+  </div>
+
+  <aside class="step-summary__aside">
+    <section class="loan-detail-card recap-aside-card recap-aside-card--score">
+      <h3 class="loan-detail-card__title recap-aside-card__head">
+        <mat-icon>analytics</mat-icon>
+        Score de complétude
+      </h3>
+      <div class="recap-score">
+        <span class="recap-score__value">{{ completionPercent() }}%</span>
+        <mat-progress-bar mode="determinate" [value]="completionPercent()" />
+      </div>
+      <p class="recap-score__status">{{ completionStatusLabel() }}</p>
+      <p class="recap-score__hint">{{ completionHint() }}</p>
+      <ul class="recap-score__checks">
+        @for (item of completionChecks(); track item.label) {
+          <li [class.recap-score__checks-item--ok]="item.ok" [class.recap-score__checks-item--warn]="item.warn && !item.ok">
+            @if (item.ok) {
+              <mat-icon>check_circle</mat-icon>
+            } @else if (item.warn) {
+              <mat-icon>warning_amber</mat-icon>
+            } @else {
+              <mat-icon>radio_button_unchecked</mat-icon>
+            }
+            <span>{{ item.label }}@if (item.detail) { {{ item.detail }} }</span>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="loan-detail-card recap-aside-card">
+      <h3 class="loan-detail-card__title recap-aside-card__head">
+        <mat-icon>summarize</mat-icon>
+        Résumé du prêt
+      </h3>
+      <dl class="recap-aside-dl">
+        <div>
+          <dt>Montant emprunté</dt>
+          <dd>{{ form.get('requestedAmount')?.value | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+        </div>
+        <div>
+          <dt>Durée</dt>
+          <dd>{{ durationYearsLabel() }}</dd>
+        </div>
+        <div>
+          <dt>Mensualité estimée</dt>
+          <dd class="recap-aside-dl__accent">~{{ monthlyPayment() | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+        </div>
+        <div>
+          <dt>Taux d'endettement</dt>
+          <dd [class.recap-aside-dl__accent]="debtRatioOk()">
+            {{ debtRatioPercent() | number: '1.0-1' }}% @if (debtRatioOk()) { ✓ }
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="loan-detail-card recap-aside-card recap-aside-card--help">
+      <h3 class="loan-detail-card__title recap-aside-card__head">
+        <mat-icon>support_agent</mat-icon>
+        Besoin d'aide ?
+      </h3>
+      <p>Un conseiller LoanlyPro est disponible pour vous accompagner dans la finalisation de votre dossier.</p>
+      <a mat-stroked-button class="recap-help-btn" href="mailto:conseil@loanlypro.fr">
+        <mat-icon>chat</mat-icon>
+        Contacter un conseiller
+      </a>
+    </section>
+  </aside>
+</div>

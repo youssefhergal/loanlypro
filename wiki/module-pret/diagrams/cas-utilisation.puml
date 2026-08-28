@@ -1,0 +1,66 @@
+@startuml cas-utilisation-module-pret
+title Cas d'utilisation — Prêt & Paiements
+
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor "Client" as Client
+actor "Conseiller" as Conseiller
+actor "Administrateur" as Admin
+actor "Système" as System
+
+rectangle "Module Prêt & Paiements" {
+
+  package "Espace client" {
+    usecase "Configurer IBAN\n+ mandat" as UC_C1
+    usecase "Consulter mes prêts\n(synthèse)" as UC_C2
+    usecase "Consulter échéancier\n+ historique" as UC_C3
+    usecase "Voir alertes\néchec / retard" as UC_C4
+    usecase "Révoquer mandat" as UC_C5
+  }
+
+  package "Espace conseiller" {
+    usecase "Lister prêts actifs\nde ses clients" as UC_O1
+    usecase "Consulter détail\nprêt + échéances" as UC_O2
+    usecase "Filtrer retards\n/ échecs récents" as UC_O3
+  }
+
+  package "Espace administrateur" {
+    usecase "Consulter KPI\nrecouvrement" as UC_A1
+    usecase "Lister tous\nles prêts" as UC_A2
+    usecase "Consulter détail\nprêt (lecture)" as UC_A3
+  }
+
+  package "Automatisation système" {
+    usecase "Générer plan\nà l'APPROVED" as UC_S1
+    usecase "Exécuter prélèvement\nà l'échéance" as UC_S2
+    usecase "Retry + marquer\nOVERDUE" as UC_S3
+    usecase "Clôturer prêt\nsi soldé" as UC_S4
+  }
+}
+
+Client --> UC_C1
+Client --> UC_C2
+Client --> UC_C3
+Client --> UC_C4
+Client --> UC_C5
+
+Conseiller --> UC_O1
+Conseiller --> UC_O2
+Conseiller --> UC_O3
+
+Admin --> UC_A1
+Admin --> UC_A2
+Admin --> UC_A3
+
+System --> UC_S1
+System --> UC_S2
+System --> UC_S3
+System --> UC_S4
+
+UC_S2 ..> UC_C1 : <<precondition>>
+UC_C3 ..> UC_C2 : <<extend>>
+UC_O2 ..> UC_O1 : <<extend>>
+
+@enduml

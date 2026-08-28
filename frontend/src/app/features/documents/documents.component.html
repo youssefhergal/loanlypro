@@ -1,0 +1,91 @@
+<section class="documents-page">
+  <div class="documents-layout">
+    <div class="documents-layout__main">
+      <mat-tab-group
+        class="documents-tabs"
+        animationDuration="0ms"
+        [selectedIndex]="activeTabIndex()"
+        (selectedIndexChange)="onTabChange($event)"
+      >
+        <mat-tab label="Mes justificatifs">
+          <app-justificatifs-tab />
+        </mat-tab>
+        <mat-tab label="Mon crédit">
+          <app-credit-documents-tab />
+        </mat-tab>
+        <mat-tab label="Échéancier & prélèvements">
+          <app-repayment-exports-tab [initialLoanId]="initialRepaymentLoanId()" />
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+
+    <aside class="documents-layout__aside" aria-label="Informations et raccourcis">
+      @if (asideTip(); as tip) {
+        <section class="documents-aside-card documents-aside-card--tip">
+          <h2 class="documents-aside-card__title">
+            <mat-icon>{{ tip.icon }}</mat-icon>
+            {{ tip.title }}
+          </h2>
+          @for (paragraph of tip.paragraphs; track paragraph) {
+            <p>{{ paragraph }}</p>
+          }
+        </section>
+      }
+
+      <section class="documents-aside-card">
+        <h2 class="documents-aside-card__title documents-aside-card__title--plain">
+          Accès rapide
+        </h2>
+        <nav class="documents-aside-links">
+          <a routerLink="/mes-demandes" class="documents-aside-links__item">
+            <mat-icon>folder_open</mat-icon>
+            Mes demandes
+          </a>
+          <a routerLink="/nouvelle-demande" class="documents-aside-links__item">
+            <mat-icon>add_circle_outline</mat-icon>
+            Nouvelle demande
+          </a>
+          <a routerLink="/paiements" class="documents-aside-links__item">
+            <mat-icon>calendar_month</mat-icon>
+            Paiements / Échéancier
+          </a>
+        </nav>
+      </section>
+
+      <section class="documents-aside-card documents-aside-card--security">
+        <h2 class="documents-aside-card__title documents-aside-card__title--plain">
+          <mat-icon>lock</mat-icon>
+          Confidentialité
+        </h2>
+        <p>
+          Vos documents sont stockés de manière sécurisée et accessibles uniquement depuis votre
+          espace client.
+        </p>
+      </section>
+    </aside>
+  </div>
+</section>
+
+<app-advisor-document-preview-panel
+  class="documents-preview-panel"
+  [open]="preview.open()"
+  [row]="preview.row()"
+  [fileMeta]="preview.fileMeta()"
+  [previewUrl]="preview.url()"
+  contentType="application/pdf"
+  [loading]="preview.loading()"
+  [zoom]="preview.zoom()"
+  [canReviewActions]="false"
+  [hasPrev]="preview.index() > 0"
+  [hasNext]="preview.index() >= 0 && preview.index() < preview.previewableDocuments().length - 1"
+  [pageLabel]="previewPageLabel()"
+  [statusBadgeClass]="preview.statusClass()"
+  [statusLabel]="preview.statusLabel()"
+  (closed)="preview.close()"
+  (zoomIn)="preview.zoomIn()"
+  (zoomOut)="preview.zoomOut()"
+  (prevDocument)="preview.prev()"
+  (nextDocument)="preview.next()"
+  (download)="preview.downloadCurrent()"
+/>
+

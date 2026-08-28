@@ -1,0 +1,17 @@
+<a
+  [routerLink]="routerLink()"
+  [class]="linkClass()"
+  [attr.aria-label]="usesFullLogo() ? null : brandName + ' — accueil'"
+  (click)="onClick()"
+>
+  <img
+    class="app-logo__image"
+    [class.app-logo__image--full]="usesFullLogo()"
+    [class.app-logo__image--icon]="!usesFullLogo()"
+    [src]="activeLogoSrc()"
+    [alt]="usesFullLogo() ? brandName : ''"
+    [attr.aria-hidden]="usesFullLogo() ? null : true"
+    [style.--app-logo-icon-size.px]="iconSize()"
+    [style.--app-logo-full-height.px]="fullLogoHeight()"
+  />
+</a>

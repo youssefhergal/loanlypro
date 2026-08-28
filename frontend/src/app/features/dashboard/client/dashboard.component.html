@@ -1,0 +1,583 @@
+<div class="client-dashboard">
+  @if (loading()) {
+    <div class="client-dashboard__loading">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else {
+    @if (!isNewClientProfile()) {
+      @if (paymentFailureAlert(); as paymentAlert) {
+        <div class="client-dashboard__alert client-dashboard__alert--danger" role="alert">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <p>
+            Échec de prélèvement sur le prêt <strong>{{ paymentAlert.loanReference }}</strong>
+          </p>
+          <a
+            class="client-dashboard__alert-link client-dashboard__alert-link--danger"
+            [routerLink]="['/mes-prets', paymentAlert.loanId, 'mandat']"
+          >
+            Mettez à jour votre mandat
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+        </div>
+      } @else {
+        @if (documentAlert(); as alert) {
+          <div class="client-dashboard__alert" role="alert">
+            <mat-icon aria-hidden="true">warning_amber</mat-icon>
+            <p>
+              {{ alert.rejectedCount }} document{{ alert.rejectedCount > 1 ? 's' : '' }}
+              rejeté{{ alert.rejectedCount > 1 ? 's' : '' }} sur le dossier
+              <strong>{{ alert.loanReference }}</strong>
+            </p>
+            <a
+              class="client-dashboard__alert-link"
+              [routerLink]="['/mes-demandes', alert.loanApplicationId]"
+            >
+              Compléter mon dossier
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          </div>
+        }
+      }
+    }
+
+    <div class="client-dashboard__layout">
+      <div class="client-dashboard__main">
+        @if (isClosedLoanProfile() && primaryClosedLoan(); as closedLoan) {
+          <section class="closed-loan-hero" aria-labelledby="closed-loan-hero-title">
+            <span class="closed-loan-hero__icon" aria-hidden="true">
+              <mat-icon>celebration</mat-icon>
+            </span>
+            <div class="closed-loan-hero__content">
+              <h2 id="closed-loan-hero-title" class="closed-loan-hero__title">
+                Félicitations ! Votre prêt {{ closedLoan.reference }} est soldé.
+              </h2>
+              <p class="closed-loan-hero__subtitle">
+                Toutes vos échéances ont été honorées. Merci pour votre confiance.
+              </p>
+              <button mat-stroked-button class="closed-loan-hero__cta" disabled>
+                Télécharger l'attestation de solde
+                <span class="closed-loan-hero__soon">Bientôt</span>
+              </button>
+            </div>
+          </section>
+        }
+
+        @if (!isNewClientProfile()) {
+          <app-dashboard-hero-carousel
+            [slides]="heroSlides()"
+            [activeIndex]="heroSlideIndex()"
+            (indexChange)="onHeroSlideChange($event)"
+          />
+        }
+
+        @if (isNewClientProfile()) {
+          <section class="new-client-empty" aria-labelledby="new-client-empty-title">
+            <img
+              class="new-client-empty__illustration"
+              src="/images/dashboard/empty-state-new-client.png"
+              alt=""
+              width="160"
+              height="160"
+            />
+            <h2 id="new-client-empty-title" class="new-client-empty__title">
+              Prêt à démarrer votre projet ?
+            </h2>
+            <p class="new-client-empty__subtitle">
+              Simulez votre crédit, déposez vos pièces et suivez votre dossier en toute transparence.
+            </p>
+            <a mat-flat-button color="primary" class="new-client-empty__cta" routerLink="/nouvelle-demande">
+              Nouvelle demande de prêt
+            </a>
+            <ol class="new-client-steps">
+              @for (step of newClientOnboardingSteps; track step.label; let i = $index) {
+                <li class="new-client-steps__item">
+                  <span class="new-client-steps__index" aria-hidden="true">{{ i + 1 }}</span>
+                  <span class="new-client-steps__icon" aria-hidden="true">
+                    <mat-icon>{{ step.icon }}</mat-icon>
+                  </span>
+                  <span class="new-client-steps__label">{{ step.label }}</span>
+                </li>
+              }
+            </ol>
+          </section>
+        } @else if (isClosedLoanProfile()) {
+          <div class="kpi-row kpi-row--compact">
+            <a routerLink="/mes-prets" class="kpi-card kpi-card--link">
+              <div class="kpi-card__head">
+                <span class="kpi-card__icon" aria-hidden="true">
+                  <mat-icon>verified</mat-icon>
+                </span>
+                <span class="kpi-card__label">Prêts soldés</span>
+              </div>
+              <strong class="kpi-card__value">{{ closedLoansCount() }}</strong>
+              <span class="kpi-card__muted">Remboursement terminé</span>
+            </a>
+
+            <a routerLink="/mes-demandes" class="kpi-card kpi-card--link">
+              <div class="kpi-card__head">
+                <span class="kpi-card__icon" aria-hidden="true">
+                  <mat-icon>inventory_2</mat-icon>
+                </span>
+                <span class="kpi-card__label">Demandes archivées</span>
+              </div>
+              <strong class="kpi-card__value">{{ archivedDemandesCount() }}</strong>
+              <span class="kpi-card__link">
+                Voir tout
+                <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+              </span>
+            </a>
+
+            <a routerLink="/documents" class="kpi-card kpi-card--link">
+              <div class="kpi-card__head">
+                <span class="kpi-card__icon" aria-hidden="true">
+                  <mat-icon>folder</mat-icon>
+                </span>
+                <span class="kpi-card__label">Documents</span>
+              </div>
+              <strong class="kpi-card__value">{{ documentsToProcessCount() }}</strong>
+              <span class="kpi-card__muted">À jour</span>
+            </a>
+          </div>
+
+          <section class="closed-loan-promo" aria-labelledby="closed-loan-promo-title">
+            <div class="closed-loan-promo__copy">
+              <h2 id="closed-loan-promo-title">Un nouveau projet en tête ?</h2>
+              <p>
+                Simulez et déposez une nouvelle demande de prêt en quelques minutes.
+              </p>
+            </div>
+            <a mat-flat-button color="primary" class="closed-loan-promo__cta" routerLink="/nouvelle-demande">
+              Nouvelle demande de prêt
+            </a>
+          </section>
+        } @else {
+          <div class="kpi-row">
+          <a routerLink="/mes-demandes" class="kpi-card kpi-card--link">
+            <div class="kpi-card__head">
+              <span class="kpi-card__icon" aria-hidden="true">
+                <mat-icon>description</mat-icon>
+              </span>
+              <span class="kpi-card__label">Demandes en cours</span>
+            </div>
+            <strong class="kpi-card__value">{{ inProgressCount() }}</strong>
+            <span class="kpi-card__link">
+              Voir tout
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </span>
+          </a>
+
+          <a
+            class="kpi-card kpi-card--link"
+            [routerLink]="activeRepaymentLoan() ? ['/mes-prets', activeRepaymentLoan()!.id] : ['/mes-prets']"
+          >
+            <div class="kpi-card__head">
+              <span class="kpi-card__icon" aria-hidden="true">
+                <mat-icon>account_balance</mat-icon>
+              </span>
+              <span class="kpi-card__label">Prêt actif</span>
+            </div>
+            @if (activeRepaymentLoan(); as loan) {
+              <strong class="kpi-card__value kpi-card__value--ref">{{ loan.reference }}</strong>
+              <app-loan-status-chip [status]="loan.status" />
+            } @else {
+              <strong class="kpi-card__value">—</strong>
+              <span class="kpi-card__muted">Aucun prêt actif</span>
+            }
+          </a>
+
+          <a
+            class="kpi-card kpi-card--link"
+            routerLink="/paiements"
+            [queryParams]="activeRepaymentLoan() ? { loanId: activeRepaymentLoan()!.id } : {}"
+          >
+            <div class="kpi-card__head">
+              <span class="kpi-card__icon" aria-hidden="true">
+                <mat-icon>calendar_month</mat-icon>
+              </span>
+              <span class="kpi-card__label">Prochain prélèvement</span>
+            </div>
+            @if (activeRepaymentLoan()?.nextInstallmentAmount != null) {
+              <strong class="kpi-card__value">
+                {{ activeRepaymentLoan()?.nextInstallmentAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}
+              </strong>
+              @if (activeRepaymentLoan()?.nextInstallmentDate) {
+                <span class="kpi-card__muted">
+                  {{ activeRepaymentLoan()?.nextInstallmentDate | date: 'dd/MM/yyyy' }}
+                </span>
+              }
+            } @else {
+              <strong class="kpi-card__value">—</strong>
+            }
+          </a>
+
+          <a routerLink="/documents" class="kpi-card kpi-card--link">
+            <div class="kpi-card__head">
+              <span class="kpi-card__icon" aria-hidden="true">
+                <mat-icon>folder</mat-icon>
+              </span>
+              <span class="kpi-card__label">Documents</span>
+            </div>
+            <strong class="kpi-card__value">{{ documentsToProcessCount() }} à traiter</strong>
+            @if (documentsToProcessCount() > 0) {
+              <span class="kpi-card__badge">Action requise</span>
+            } @else {
+              <span class="kpi-card__muted">À jour</span>
+            }
+          </a>
+        </div>
+        }
+
+        @if (!isNewClientProfile()) {
+        <section class="recent-section">
+          <header class="recent-section__header">
+            <h2>Mes demandes récentes</h2>
+            <a routerLink="/mes-demandes" class="recent-section__link">
+              Voir tout
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          </header>
+
+          @if (recentDemandes().length === 0) {
+            <div class="recent-section__empty">
+              <p>Aucune demande pour le moment.</p>
+              <a mat-stroked-button routerLink="/nouvelle-demande">Créer une demande</a>
+            </div>
+          } @else {
+            <div class="application-cards">
+              @for (demande of recentDemandes(); track demande.id) {
+                <article class="application-card">
+                  <div class="application-card__head">
+                    <span
+                      class="application-card__icon"
+                      [ngClass]="helpers.applicationStatusClass(demande.status)"
+                      aria-hidden="true"
+                    >
+                      <mat-icon>{{ helpers.applicationStatusIcon(demande.status) }}</mat-icon>
+                    </span>
+                    <div class="application-card__info">
+                      <div class="application-card__row">
+                        <span class="application-card__ref">{{ demande.reference }}</span>
+                        <span class="application-card__amount">
+                          {{ demande.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                        </span>
+                      </div>
+                      <span class="application-card__title">{{ demande.title }}</span>
+                    </div>
+                    <span
+                      class="application-card__status"
+                      [ngClass]="helpers.applicationStatusClass(demande.status)"
+                    >
+                      {{ helpers.applicationStatusLabel(demande.status) }}
+                    </span>
+                  </div>
+
+                  @if (helpers.showApplicationStepper(demande.status)) {
+                    <ol class="application-stepper">
+                      @for (step of helpers.applicationProgressSteps(demande.status); track step.label) {
+                        <li
+                          class="application-stepper__step"
+                          [class.application-stepper__step--done]="step.state === 'done'"
+                          [class.application-stepper__step--current]="step.state === 'current'"
+                        >
+                          <span class="application-stepper__dot" aria-hidden="true">
+                            @if (step.state === 'done') {
+                              <mat-icon>check</mat-icon>
+                            }
+                          </span>
+                          <span class="application-stepper__label">{{ step.label }}</span>
+                        </li>
+                      }
+                    </ol>
+                  }
+
+                  @if (demande.status === 'DRAFT') {
+                    <div class="application-card__draft">
+                      <p class="application-card__hint">Reprendre la demande là où vous l'avez laissée.</p>
+                      <a
+                        mat-stroked-button
+                        class="application-card__resume"
+                        [routerLink]="['/nouvelle-demande', demande.id]"
+                      >
+                        Reprendre
+                      </a>
+                    </div>
+                  } @else if (!helpers.showApplicationStepper(demande.status)) {
+                    <a
+                      class="application-card__link"
+                      [routerLink]="helpers.applicationRouterLink(demande)"
+                    >
+                      Voir le dossier
+                      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                    </a>
+                  }
+                </article>
+              }
+            </div>
+          }
+        </section>
+        }
+      </div>
+
+      <aside class="client-dashboard__aside" aria-label="Widgets crédit et alertes">
+        @if (!isNewClientProfile()) {
+        @if (isDossierEnCoursProfile() && primaryTrackedDemande(); as demande) {
+          <section class="widget-card widget-card--reassurance">
+            <div class="dossier-reassurance">
+              <span class="dossier-reassurance__icon" aria-hidden="true">
+                <mat-icon>support_agent</mat-icon>
+              </span>
+              <div>
+                <h3 class="dossier-reassurance__title">Votre demande est entre de bonnes mains</h3>
+                <p class="dossier-reassurance__text">
+                  Un conseiller LoanlyPro examine votre dossier
+                  <strong>{{ demande.reference }}</strong>.
+                  Vous serez notifié dès qu'une décision sera disponible.
+                </p>
+                <a
+                  class="dossier-reassurance__link"
+                  [routerLink]="['/mes-demandes', demande.id]"
+                >
+                  Voir mon dossier
+                  <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                </a>
+              </div>
+            </div>
+          </section>
+
+          <section class="widget-card">
+            <header class="widget-card__header">
+              <h3>Avancement du dossier</h3>
+              <span class="widget-card__ref">{{ demande.reference }}</span>
+            </header>
+            <ol class="dossier-timeline">
+              @for (step of helpers.dossierVerticalTimelineSteps(demande.status); track step.label) {
+                <li
+                  class="dossier-timeline__step"
+                  [class.dossier-timeline__step--done]="step.state === 'done'"
+                  [class.dossier-timeline__step--current]="step.state === 'current'"
+                >
+                  <span class="dossier-timeline__marker" aria-hidden="true">
+                    @if (step.state === 'done') {
+                      <mat-icon>check</mat-icon>
+                    } @else if (step.state === 'current') {
+                      <span class="dossier-timeline__dot"></span>
+                    }
+                  </span>
+                  <span class="dossier-timeline__label">{{ step.label }}</span>
+                </li>
+              }
+            </ol>
+          </section>
+        } @else if (isClosedLoanProfile()) {
+          @if (closedLoanRecap(); as recap) {
+          <section class="widget-card widget-card--closed-recap">
+            <header class="widget-card__header">
+              <h3>Prêt soldé</h3>
+              <span class="widget-card__ref">{{ recap.reference }}</span>
+            </header>
+            <div class="closed-loan-recap">
+              <span class="closed-loan-recap__icon" aria-hidden="true">
+                <mat-icon>check_circle</mat-icon>
+              </span>
+              <p class="closed-loan-recap__text">
+                <strong>{{ recap.paidCount }} / {{ recap.totalCount }}</strong>
+                échéances payées
+              </p>
+              <p class="widget-card__muted">Remboursement intégral confirmé</p>
+            </div>
+            <a
+              class="widget-card__footer-link"
+              [routerLink]="['/mes-prets', recap.loanId]"
+            >
+              Voir le détail du prêt
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          </section>
+          }
+        } @else {
+          @if (activeRepaymentLoan(); as loan) {
+            <section class="widget-card">
+            <header class="widget-card__header">
+              <h3>Mon crédit (actif)</h3>
+              <span class="widget-card__ref">{{ loan.reference }}</span>
+            </header>
+            <dl class="widget-stats">
+              <div>
+                <dt>Capital restant dû</dt>
+                <dd>{{ loan.remainingBalance | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+              </div>
+              <div>
+                <dt>Prochaine échéance</dt>
+                <dd>
+                  @if (loan.nextInstallmentAmount != null) {
+                    {{ loan.nextInstallmentAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                  } @else {
+                    —
+                  }
+                </dd>
+              </div>
+            </dl>
+            <nav class="widget-links">
+              <a [routerLink]="['/mes-prets', loan.id]">
+                Voir mon prêt
+                <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+              </a>
+              <a routerLink="/paiements" [queryParams]="{ loanId: loan.id }">
+                Paiements
+                <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+              </a>
+              <a
+                routerLink="/documents"
+                [queryParams]="{ tab: 'repayment', loanId: loan.id }"
+              >
+                Télécharger mon échéancier
+                <mat-icon aria-hidden="true">download</mat-icon>
+              </a>
+            </nav>
+            </section>
+
+            @if (repaymentProgress(); as progress) {
+              <section class="widget-card">
+              <header class="widget-card__header">
+                <h3>Progression du remboursement</h3>
+              </header>
+              <div class="progress-ring-wrap">
+                <div
+                  class="progress-ring"
+                  [style.--progress]="progress.percent + '%'"
+                  aria-hidden="true"
+                >
+                  <span class="progress-ring__value">{{ progress.percent }}%</span>
+                </div>
+                <div class="progress-ring__meta">
+                  <p>
+                    <strong>{{ progress.paidCount }} / {{ progress.totalCount }}</strong>
+                    échéances payées
+                  </p>
+                  <p class="widget-card__muted">
+                    Capital remboursé
+                    {{ progress.capitalRepaid | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                  </p>
+                </div>
+              </div>
+              </section>
+            }
+          }
+        }
+
+        <section class="widget-card">
+          <header class="widget-card__header">
+            <h3>
+              <mat-icon class="widget-card__title-icon" aria-hidden="true">folder</mat-icon>
+              Documents
+            </h3>
+            @if (documentsToProcessCount() > 0) {
+              <span class="widget-card__badge">{{ documentsToProcessCount() }} à traiter</span>
+            }
+          </header>
+          @if (recentDocuments().length === 0) {
+            <p class="widget-card__empty">Aucun document en attente.</p>
+          } @else {
+            <ul class="widget-list">
+              @for (doc of recentDocuments(); track doc.documentId) {
+                <li class="widget-list__item">
+                  <span class="widget-list__leading">
+                    <span class="widget-list__item-icon" aria-hidden="true">
+                      <mat-icon>{{ helpers.documentTypeIcon(doc.documentType) }}</mat-icon>
+                    </span>
+                    <span class="widget-list__label">{{ doc.documentTypeLabel }}</span>
+                  </span>
+                  <span
+                    class="widget-list__status"
+                    [ngClass]="helpers.validationStatusClass(doc.validationStatus)"
+                  >
+                    {{ helpers.validationStatusLabel(doc.validationStatus) }}
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+          <a routerLink="/documents" class="widget-card__footer-link">
+            Tous mes documents
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+        </section>
+
+        <section class="widget-card">
+          <header class="widget-card__header">
+            <h3>
+              <mat-icon class="widget-card__title-icon" aria-hidden="true">notifications</mat-icon>
+              Notifications
+            </h3>
+            @if (unreadNotificationsCount() > 0) {
+              <span class="widget-card__badge">{{ unreadNotificationsCount() }} non lues</span>
+            }
+          </header>
+          @if (recentNotifications().length === 0) {
+            <p class="widget-card__empty">Aucune notification récente.</p>
+          } @else {
+            <ul class="widget-list widget-list--notifications">
+              @for (notification of recentNotifications(); track notification.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="widget-notification"
+                    [class.widget-notification--unread]="!notification.read"
+                    (click)="openNotification(notification)"
+                  >
+                    <span
+                      class="widget-notification__icon"
+                      [ngClass]="'widget-notification__icon--' + helpers.getNotificationVisual(notification.eventType).tone"
+                      aria-hidden="true"
+                    >
+                      <mat-icon>{{ helpers.getNotificationVisual(notification.eventType).icon }}</mat-icon>
+                    </span>
+                    <span class="widget-notification__body">
+                      <span class="widget-notification__title">{{ notification.title }}</span>
+                      <span class="widget-notification__date">
+                        {{ helpers.formatRelativeNotificationDate(notification.createdAt) }}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+          <a routerLink="/notifications" class="widget-card__footer-link">
+            Tout voir
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+        </section>
+        }
+
+        <section class="widget-card widget-card--tip">
+          <h3 class="widget-card__tip-title">
+            <mat-icon aria-hidden="true">lightbulb</mat-icon>
+            Bon à savoir
+          </h3>
+          @if (isNewClientProfile()) {
+            <p>
+              Votre demande se fait en ligne en quelques minutes. Préparez une pièce d'identité et
+              vos justificatifs de revenus pour accélérer l'étude de votre dossier.
+            </p>
+          } @else if (isClosedLoanProfile()) {
+            <p>
+              Votre prêt est soldé. Vous pouvez à tout moment déposer une nouvelle demande pour
+              financer un autre projet.
+            </p>
+          } @else if (isDossierEnCoursProfile()) {
+            <p>
+              Votre conseiller examine votre dossier sous 48 h ouvrées. Pensez à compléter
+              rapidement les documents refusés pour accélérer l'étude.
+            </p>
+          } @else {
+            <p>
+              Les prélèvements sont automatiques depuis votre compte IBAN enregistré. Consultez
+              l'onglet Paiements pour suivre votre échéancier.
+            </p>
+          }
+        </section>
+      </aside>
+    </div>
+  }
+</div>

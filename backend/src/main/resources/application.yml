@@ -1,0 +1,75 @@
+# Configuration commune — profil actif : dev (voir application-dev.yml / application-prod.yml)
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  application:
+    name: loanmanagement
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+server:
+  port: 8080
+  tomcat:
+    max-http-form-post-size: -1
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:defaultSecretKeyForDevelopmentOnlyChangeInProductionMinimum32Characters}
+    expiration-ms: 86400000
+  storage:
+    type: ${STORAGE_TYPE:local}
+    loan-documents-dir: ${LOAN_DOCUMENTS_DIR:uploads/loan-documents}
+    gcs-bucket: ${GCS_BUCKET:}
+    gcs-prefix: loan-documents
+  advisor-assignment:
+    scheduler:
+      enabled: true
+      cron: "0 0 * * * *"
+  payment:
+    provider: fake
+    fake:
+      always-success: false
+      fail-rate: 0.0
+      delay-ms: 0
+  repayment:
+    scheduler:
+      enabled: true
+      cron: "0 0 6 * * *"
+      internal-token: ${REPAYMENT_SCHEDULER_TOKEN:}
+      max-attempts: 3
+      retry-days:
+        - 0
+        - 3
+        - 7
+      overdue-threshold: 2
+  ai:
+    anthropic-api-key: ${ANTHROPIC_API_KEY:}
+    model: ${AI_MODEL:claude-haiku-4-5-20251001}
+  seed:
+    bulk:
+      enabled: false
+      password: ${SEED_BULK_PASSWORD:LoanlyPro2026!}
+  mail:
+    provider: logging
+    from: LoanlyPro <noreply@loanlypro.fr>
+    resend:
+      api-key: ${RESEND_API_KEY:}
+    verification:
+      expiry-minutes: 30
+      dev-fixed-code: ${MAIL_DEV_VERIFICATION_CODE:}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha

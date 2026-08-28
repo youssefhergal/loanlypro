@@ -1,0 +1,95 @@
+<app-navbar />
+<div class="page">
+  <div class="card">
+    <h2>Créer un compte</h2>
+    <p class="subtitle">Quelques informations pour démarrer</p>
+
+    <form [formGroup]="registerForm" (ngSubmit)="submit()">
+      <div class="row">
+        <mat-form-field appearance="outline">
+          <mat-label>Prénom *</mat-label>
+          <input matInput formControlName="firstName" />
+          @if (registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched) {
+            <mat-error>Prénom requis</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Nom *</mat-label>
+          <input matInput formControlName="lastName" />
+          @if (registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched) {
+            <mat-error>Nom requis</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>E-mail *</mat-label>
+        <input matInput type="email" formControlName="email" placeholder="vous@exemple.com" />
+        @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+          <mat-error>Adresse email valide requise</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Téléphone (optionnel)</mat-label>
+        <input matInput type="tel" formControlName="phone" placeholder="+33 6 00 00 00 00" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Mot de passe *</mat-label>
+        <input
+          matInput
+          [type]="hidePassword ? 'password' : 'text'"
+          formControlName="password"
+          autocomplete="new-password"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="hidePassword = !hidePassword"
+          [attr.aria-label]="hidePassword ? 'Afficher' : 'Masquer'"
+        >
+          <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+          <mat-error>Minimum 6 caractères</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Confirmer le mot de passe *</mat-label>
+        <input
+          matInput
+          [type]="hidePasswordConfirm ? 'password' : 'text'"
+          formControlName="passwordConfirm"
+          autocomplete="new-password"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="hidePasswordConfirm = !hidePasswordConfirm"
+          [attr.aria-label]="hidePasswordConfirm ? 'Afficher' : 'Masquer'"
+        >
+          <mat-icon>{{ hidePasswordConfirm ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (registerForm.hasError('mismatch') && registerForm.get('passwordConfirm')?.touched) {
+          <mat-error>Les mots de passe doivent être identiques</mat-error>
+        }
+      </mat-form-field>
+
+      @if (error) {
+        <p class="error">{{ error }}</p>
+      }
+
+      <button mat-raised-button color="primary" type="submit" [disabled]="loading">
+        {{ loading ? 'Création...' : 'Créer mon compte' }}
+      </button>
+    </form>
+
+    <p class="footer">
+      Déjà un compte ? <a routerLink="/login">Se connecter</a>
+    </p>
+  </div>
+</div>

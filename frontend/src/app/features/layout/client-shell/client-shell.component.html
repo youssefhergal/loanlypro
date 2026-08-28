@@ -1,0 +1,402 @@
+<div class="client-shell" [class.sidebar-collapsed]="sidebarCollapsed()">
+  <aside class="sidebar" aria-label="Navigation principale">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <app-logo
+          linkClass="logo"
+          routerLink="/dashboard"
+          [showText]="!sidebarCollapsed()"
+          [iconSize]="28"
+          [fullLogoHeight]="72"
+        />
+      </div>
+      <button
+        type="button"
+        mat-icon-button
+        class="sidebar-toggle"
+        (click)="toggleSidebar()"
+        [attr.aria-expanded]="!sidebarCollapsed()"
+        [attr.aria-label]="
+          sidebarCollapsed() ? 'Développer le menu latéral' : 'Réduire le menu latéral'
+        "
+        [matTooltip]="
+          sidebarCollapsed() ? 'Développer le menu' : 'Réduire le menu'
+        "
+        matTooltipPosition="right"
+      >
+        <mat-icon>{{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+      </button>
+    </div>
+
+    <div class="sidebar-scroll">
+      <section
+        class="cta-demand-card"
+        matTooltip="Nouvelle demande"
+        [matTooltipDisabled]="!sidebarCollapsed()"
+        matTooltipPosition="right"
+        aria-label="Créer une nouvelle demande de financement"
+      >
+      <svg
+        class="cta-demand-card__motif"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <defs>
+          <pattern
+            id="sidebarCtaFiligree"
+            width="36"
+            height="36"
+            patternUnits="userSpaceOnUse"
+          >
+            <circle cx="4" cy="4" r="1.25" fill="currentColor" opacity="0.14" />
+            <circle cx="22" cy="14" r="1" fill="currentColor" opacity="0.1" />
+            <circle cx="14" cy="26" r="0.85" fill="currentColor" opacity="0.12" />
+            <path
+              d="M28 2c0 6 4 10 10 10M2 28c8 0 14 6 14 14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="0.9"
+              opacity="0.12"
+            />
+            <path
+              d="M0 18h36M18 0v36"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="0.5"
+              opacity="0.06"
+            />
+          </pattern>
+          <linearGradient id="sidebarCtaFade" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1a7a4a" stop-opacity="0.07" />
+            <stop offset="100%" stop-color="#5db885" stop-opacity="0.05" />
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#sidebarCtaFade)" />
+        <rect width="100%" height="100%" fill="url(#sidebarCtaFiligree)" />
+      </svg>
+
+      <div class="cta-demand-card__body">
+        <p class="cta-demand-card__text">
+          Lancez une nouvelle demande et suivez votre dossier depuis votre espace.
+        </p>
+        <a
+          mat-flat-button
+          color="primary"
+          class="cta-demand-card__btn"
+          routerLink="/nouvelle-demande"
+        >
+          <mat-icon>add</mat-icon>
+          <span class="cta-demand-card__btn-label">Nouvelle demande</span>
+        </a>
+      </div>
+    </section>
+
+    <nav class="nav-list" aria-label="Menu de l’espace client">
+      <section class="nav-section">
+        <h3 class="nav-section-title">Principal</h3>
+        <div class="nav-section-items">
+          <a
+            routerLink="/dashboard"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="nav-item"
+            matTooltip="Accueil"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon>home</mat-icon>
+            <span>Accueil</span>
+          </a>
+          <a
+            routerLink="/mes-demandes"
+            routerLinkActive="active"
+            class="nav-item"
+            matTooltip="Mes demandes"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon>description</mat-icon>
+            <span>Mes demandes</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="nav-section">
+        <h3 class="nav-section-title">Finances</h3>
+        <div class="nav-section-items">
+          <a
+            routerLink="/mes-prets"
+            routerLinkActive="active"
+            class="nav-item"
+            matTooltip="Mes prêts"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon>account_balance</mat-icon>
+            <span>Mes prêts</span>
+          </a>
+          <a
+            routerLink="/paiements"
+            routerLinkActive="active"
+            class="nav-item"
+            matTooltip="Paiements / Échéancier"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon>calendar_month</mat-icon>
+            <span>Paiements / Échéancier</span>
+          </a>
+          <a
+            routerLink="/documents"
+            routerLinkActive="active"
+            class="nav-item"
+            matTooltip="Documents"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon>folder</mat-icon>
+            <span>Documents</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="nav-section">
+        <h3 class="nav-section-title">Communication</h3>
+        <div class="nav-section-items">
+          <a
+            routerLink="/messages"
+            routerLinkActive="active"
+            class="nav-item"
+            matTooltip="Messages"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon>chat</mat-icon>
+            <span>Messages</span>
+          </a>
+          <a
+            routerLink="/conseiller-ia"
+            routerLinkActive="active"
+            class="nav-item nav-item--ai"
+            matTooltip="Conseiller IA"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon>auto_awesome</mat-icon>
+            <span>Conseiller IA</span>
+          </a>
+          <a
+            routerLink="/formation"
+            routerLinkActive="active"
+            class="nav-item nav-item--ai"
+            matTooltip="Formation sur mesure"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon>school</mat-icon>
+            <span>Formation sur mesure</span>
+          </a>
+          <a
+            routerLink="/notifications"
+            routerLinkActive="active"
+            class="nav-item nav-item--notifications"
+            [matTooltip]="notificationUnread.count() > 0 ? notificationUnread.count() + ' non lues' : 'Notifications'"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon class="nav-item-icon" fontSet="material-icons" aria-hidden="true">notifications</mat-icon>
+            <span>Notifications</span>
+            @if (notificationUnread.count() > 0) {
+              <span class="nav-badge-count" [attr.aria-label]="notificationUnread.count() + ' non lues'">
+                {{ notificationUnread.count() }}
+              </span>
+            }
+          </a>
+        </div>
+      </section>
+
+      <section class="nav-section nav-section--compte">
+        <h3 class="nav-section-title">Compte</h3>
+        <div class="nav-section-items">
+          <a
+            routerLink="/profil"
+            routerLinkActive="active"
+            class="nav-item"
+            matTooltip="Mon profil"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon>person</mat-icon>
+            <span>Mon profil</span>
+          </a>
+          <a
+            routerLink="/parametres"
+            routerLinkActive="active"
+            class="nav-item"
+            matTooltip="Paramètres"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon>settings</mat-icon>
+            <span>Paramètres</span>
+          </a>
+          <a
+            routerLink="/aide"
+            routerLinkActive="active"
+            class="nav-item nav-item--support"
+            matTooltip="Besoin d’aide ?"
+            [matTooltipDisabled]="!sidebarCollapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon>support_agent</mat-icon>
+            <span>Besoin d’aide ?</span>
+          </a>
+        </div>
+      </section>
+    </nav>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <nav class="topbar-breadcrumb" aria-label="Fil d'Ariane">
+      @for (crumb of breadcrumbs(); track crumb.routerLink; let i = $index; let last = $last) {
+        @if (i > 0) {
+          <mat-icon class="bc-sep" aria-hidden="true">chevron_right</mat-icon>
+        }
+        @if (i === 0 && crumb.label === 'Accueil') {
+          <span class="bc-with-home">
+            <mat-icon class="bc-home" aria-hidden="true">home</mat-icon>
+            @if (last) {
+              <span class="bc-current" aria-current="page">{{ crumb.label }}</span>
+            } @else {
+              <a [routerLink]="crumb.routerLink" class="bc-link">{{ crumb.label }}</a>
+            }
+          </span>
+        } @else {
+          @if (last) {
+            <span class="bc-current" aria-current="page">{{ crumb.label }}</span>
+          } @else {
+            <a [routerLink]="crumb.routerLink" class="bc-link">{{ crumb.label }}</a>
+          }
+        }
+      }
+    </nav>
+    <div class="topbar-spacer"></div>
+    @if (auth.currentUser(); as user) {
+      <div class="topbar-actions">
+        <a
+          mat-icon-button
+          routerLink="/aide"
+          class="topbar-icon"
+          matTooltip="Aide"
+          aria-label="Aide et FAQ"
+        >
+          <mat-icon fontSet="material-icons">help_outline</mat-icon>
+        </a>
+        <app-notification-bell-menu
+          centerLink="/notifications"
+          dossierLinkBase="/mes-demandes"
+        />
+
+        <button
+          type="button"
+          mat-button
+          class="topbar-profile-btn"
+          [matMenuTriggerFor]="profileMenu"
+          matTooltip="Mon compte"
+          aria-label="Ouvrir le menu compte"
+        >
+          <span class="avatar-badge">{{ initials(user) }}</span>
+          <span class="profile-btn-label">{{ user.firstName }}</span>
+          <mat-icon class="profile-chevron" iconPositionEnd>expand_more</mat-icon>
+        </button>
+
+        <mat-menu #profileMenu="matMenu" xPosition="before">
+          <button type="button" mat-menu-item disabled class="menu-header-item">
+            <div class="menu-user-block">
+              <span class="menu-name">{{ user.firstName }} {{ user.lastName }}</span>
+              <span class="menu-email">{{ user.email }}</span>
+            </div>
+          </button>
+          <mat-divider />
+          <a mat-menu-item routerLink="/profil">
+            <mat-icon>person</mat-icon>
+            <span>Mon profil</span>
+          </a>
+          <a mat-menu-item routerLink="/parametres">
+            <mat-icon>settings</mat-icon>
+            <span>Paramètres</span>
+          </a>
+          <a mat-menu-item routerLink="/aide">
+            <mat-icon>help_outline</mat-icon>
+            <span>Aide / FAQ</span>
+          </a>
+          <mat-divider />
+          <button type="button" mat-menu-item (click)="auth.logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Se déconnecter</span>
+          </button>
+        </mat-menu>
+      </div>
+    }
+  </header>
+
+  <main class="main">
+    @if (auth.currentUser(); as user) {
+      @if (user.emailVerified === false) {
+        <div class="email-verify-banner" role="status">
+          <mat-icon aria-hidden="true">mark_email_unread</mat-icon>
+          <span>Votre adresse e-mail n’est pas encore vérifiée.</span>
+          <a
+            mat-button
+            color="primary"
+            [routerLink]="['/verify-email']"
+            [queryParams]="{ email: user.email }"
+          >
+            Vérifier maintenant
+          </a>
+        </div>
+      }
+    }
+    @if (pageTitle()) {
+      <header class="page-header">
+        <div class="page-header-main">
+          <h1 class="page-title">{{ pageTitle() }}</h1>
+          @if (pageDescription()) {
+            <p class="page-description">{{ pageDescription() }}</p>
+          }
+        </div>
+        @if (showNewRequestCta()) {
+          <a
+            mat-flat-button
+            color="primary"
+            class="page-header-cta"
+            routerLink="/nouvelle-demande"
+          >
+            <mat-icon>add</mat-icon>
+            Nouvelle demande
+          </a>
+        }
+        @if (showMarkAllNotificationsCta() && notificationUnread.count() > 0) {
+          <button
+            type="button"
+            mat-stroked-button
+            class="page-header-cta"
+            (click)="markAllNotificationsRead()"
+            [disabled]="markingAllNotifications()"
+          >
+            Tout marquer comme lu
+          </button>
+        }
+        @if (showPaymentsLoanPicker()) {
+          <app-payments-schedule-loan-picker class="page-header-cta" />
+        }
+        @if (showHelpFaqSearch()) {
+          <app-help-faq-search-field class="page-header-search" />
+        }
+      </header>
+    }
+    <router-outlet />
+  </main>
+</div>

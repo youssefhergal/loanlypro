@@ -1,0 +1,125 @@
+<div class="mandate-setup">
+  <header class="mandate-setup__hero">
+    <h1 class="mandate-setup__title">Configurer le prélèvement</h1>
+    <p class="mandate-setup__subtitle">
+      Autorisez le prélèvement automatique de vos mensualités en toute sécurité.
+    </p>
+  </header>
+
+  @if (loading()) {
+    <p class="mandate-setup__loading" aria-busy="true">Chargement du prêt…</p>
+  } @else if (loan()) {
+    @let loanDetail = loan()!;
+    <div class="mandate-setup__loan-banner" aria-label="Prêt concerné">
+      <div class="mandate-setup__loan-banner-main">
+        <span class="mandate-setup__loan-icon" aria-hidden="true">
+          <mat-icon>credit_card</mat-icon>
+        </span>
+        <div>
+          <span class="mandate-setup__loan-label">Prêt concerné</span>
+          <strong class="mandate-setup__loan-ref">{{ loanDetail.reference }}</strong>
+        </div>
+      </div>
+      <div class="mandate-setup__loan-payment">
+        <span class="mandate-setup__loan-label">Mensualité</span>
+        <strong class="mandate-setup__loan-amount">
+          @if (loanDetail.monthlyPayment != null) {
+            {{ loanDetail.monthlyPayment | currency: 'EUR' : 'symbol' : '1.2-2' }}
+          } @else {
+            —
+          }
+        </strong>
+      </div>
+    </div>
+
+    <div class="mandate-setup__card">
+      <form [formGroup]="form" (ngSubmit)="submit()" class="mandate-setup__form" novalidate>
+        <div class="mandate-setup__field">
+          <label class="mandate-setup__field-label" for="mandate-holder-name">
+            Titulaire du compte
+          </label>
+          <mat-form-field appearance="outline" class="mandate-setup__mat-field" subscriptSizing="dynamic">
+            <input
+              matInput
+              id="mandate-holder-name"
+              formControlName="holderName"
+              autocomplete="name"
+            />
+            @if (form.controls.holderName.touched && form.controls.holderName.hasError('required')) {
+              <mat-error>Le titulaire est obligatoire.</mat-error>
+            }
+          </mat-form-field>
+          <p class="mandate-setup__field-hint">
+            Le nom doit correspondre à celui du titulaire du prêt.
+          </p>
+        </div>
+
+        <div class="mandate-setup__field">
+          <label class="mandate-setup__field-label" for="mandate-iban">
+            IBAN (International Bank Account Number)
+          </label>
+          <mat-form-field appearance="outline" class="mandate-setup__mat-field" subscriptSizing="dynamic">
+            <input
+              matInput
+              id="mandate-iban"
+              formControlName="iban"
+              autocomplete="off"
+              placeholder="FR76 0000 0000 0000 0000 0000 000"
+            />
+            <mat-icon matSuffix class="mandate-setup__iban-icon">credit_card</mat-icon>
+            @if (form.controls.iban.touched && form.controls.iban.hasError('required')) {
+              <mat-error>L’IBAN est obligatoire.</mat-error>
+            } @else if (form.controls.iban.touched && form.controls.iban.hasError('minlength')) {
+              <mat-error>IBAN invalide.</mat-error>
+            }
+          </mat-form-field>
+          <p class="mandate-setup__field-hint">
+            Votre IBAN sera masqué après enregistrement pour votre sécurité.
+          </p>
+        </div>
+
+        <div class="mandate-setup__consent-box">
+          <label class="mandate-setup__consent">
+            <mat-checkbox formControlName="consent" />
+            <span class="mandate-setup__consent-text">
+              J’autorise <strong>LoanlyPro</strong> à prélever automatiquement le montant de
+              chaque échéance sur le compte indiqué ci-dessus conformément au mandat de prélèvement
+              SEPA.
+            </span>
+          </label>
+          <p class="mandate-setup__consent-fine">{{ consentFinePrint }}</p>
+          @if (form.controls.consent.touched && form.controls.consent.hasError('required')) {
+            <p class="mandate-setup__consent-error">Vous devez accepter le mandat de prélèvement.</p>
+          }
+        </div>
+
+        <div class="mandate-setup__actions">
+          <a
+            mat-stroked-button
+            type="button"
+            class="mandate-setup__cancel"
+            [routerLink]="['/mes-prets', loanDetail.id]"
+          >
+            Annuler
+          </a>
+          <button
+            mat-flat-button
+            color="primary"
+            type="submit"
+            class="mandate-setup__submit"
+            [disabled]="submitting()"
+          >
+            {{ submitting() ? 'Activation…' : 'Activer le mandat' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <footer class="mandate-setup__security" aria-label="Sécurité des paiements">
+      <span class="mandate-setup__security-icon" aria-hidden="true">
+        <mat-icon>verified_user</mat-icon>
+      </span>
+      <span>Paiements sécurisés par cryptage SSL 256 bits</span>
+    </footer>
+  }
+</div>

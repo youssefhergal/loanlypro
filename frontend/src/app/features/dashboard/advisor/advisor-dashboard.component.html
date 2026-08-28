@@ -1,0 +1,286 @@
+<div class="advisor-dashboard">
+  @if (loading()) {
+    <div class="advisor-dashboard__loading" aria-busy="true" aria-label="Chargement">
+      <mat-progress-spinner mode="indeterminate" diameter="40" />
+    </div>
+  } @else {
+    @if (error()) {
+      <p class="advisor-dashboard__error" role="alert">{{ error() }}</p>
+    }
+
+    @if (!isEmpty()) {
+      @if (priorityBannerText(); as bannerText) {
+        <div class="advisor-dashboard__alert" role="alert">
+          <mat-icon aria-hidden="true">priority_high</mat-icon>
+          <div class="advisor-dashboard__alert-copy">
+            <p class="advisor-dashboard__alert-title">{{ bannerText }}</p>
+            <p class="advisor-dashboard__alert-detail">
+              @for (alert of priorityAlerts(); track alert.reference; let last = $last) {
+                <span>
+                  <strong>{{ alert.reference }}</strong> — {{ alert.message }}
+                </span>
+                @if (!last) {
+                  <span class="advisor-dashboard__alert-sep"> • </span>
+                }
+              }
+            </p>
+          </div>
+          <a routerLink="/conseiller/dossiers" class="advisor-dashboard__alert-link">
+            Voir les dossiers prioritaires
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+        </div>
+      }
+
+      <app-dashboard-hero-carousel
+        [slides]="heroSlides()"
+        [activeIndex]="heroSlideIndex()"
+        (indexChange)="onHeroSlideChange($event)"
+      />
+
+      <div class="kpi-row">
+        <a routerLink="/conseiller/dossiers" class="kpi-card kpi-card--link">
+          <div class="kpi-card__head">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <mat-icon>folder_open</mat-icon>
+            </span>
+            <span class="kpi-card__label">Dossiers assignés</span>
+          </div>
+          <strong class="kpi-card__value">{{ applicationsTotal() }}</strong>
+          <span class="kpi-card__link">
+            Mes dossiers
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </span>
+        </a>
+
+        <a routerLink="/conseiller/dossiers" class="kpi-card kpi-card--link">
+          <div class="kpi-card__head">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <mat-icon>hourglass_top</mat-icon>
+            </span>
+            <span class="kpi-card__label">À traiter</span>
+          </div>
+          <strong class="kpi-card__value">{{ actionRequiredCount() }}</strong>
+          @if (actionRequiredCount() > 0) {
+            <span class="kpi-card__badge">Action requise</span>
+          } @else {
+            <span class="kpi-card__muted">À jour</span>
+          }
+        </a>
+
+        <a routerLink="/conseiller/prets" class="kpi-card kpi-card--link">
+          <div class="kpi-card__head">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <mat-icon>account_balance</mat-icon>
+            </span>
+            <span class="kpi-card__label">Prêts actifs</span>
+          </div>
+          <strong class="kpi-card__value">{{ activeLoansCount() }}</strong>
+          <span class="kpi-card__link">
+            Voir tout
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </span>
+        </a>
+
+        <a routerLink="/conseiller/messages" class="kpi-card kpi-card--link">
+          <div class="kpi-card__head">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <mat-icon>chat</mat-icon>
+            </span>
+            <span class="kpi-card__label">Messages</span>
+          </div>
+          <strong class="kpi-card__value">
+            @if (unreadMessages() > 0) {
+              {{ unreadMessages() }} non lu{{ unreadMessages() > 1 ? 's' : '' }}
+            } @else {
+              0
+            }
+          </strong>
+          @if (unreadMessages() > 0) {
+            <span class="kpi-card__badge kpi-card__badge--info">À consulter</span>
+          } @else {
+            <span class="kpi-card__muted">Boîte à jour</span>
+          }
+        </a>
+      </div>
+    } @else {
+      <section class="advisor-empty" aria-labelledby="advisor-empty-title">
+        <span class="advisor-empty__icon" aria-hidden="true">
+          <mat-icon>support_agent</mat-icon>
+        </span>
+        <h2 id="advisor-empty-title">Aucun dossier assigné pour le moment</h2>
+        <p>
+          Les nouvelles demandes vous seront attribuées automatiquement ou par un administrateur.
+        </p>
+        <a mat-stroked-button routerLink="/conseiller/dossiers">Voir mes dossiers</a>
+      </section>
+    }
+
+    @if (!isEmpty()) {
+      <section class="recent-section">
+        <header class="recent-section__header">
+          <h2>Dossiers prioritaires</h2>
+          <a routerLink="/conseiller/dossiers" class="recent-section__link">
+            Tous mes dossiers
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+        </header>
+
+        @if (priorityApplications().length === 0) {
+          <div class="recent-section__empty">
+            <p>Aucun dossier prioritaire pour le moment.</p>
+          </div>
+        } @else {
+          <div class="application-cards">
+            @for (demande of priorityApplications(); track demande.id) {
+              <article
+                class="application-card"
+                [ngClass]="helpers.applicationStatusClass(demande.status)"
+              >
+                <div class="application-card__head">
+                  <span
+                    class="application-card__icon"
+                    [ngClass]="helpers.applicationStatusClass(demande.status)"
+                    aria-hidden="true"
+                  >
+                    <mat-icon>{{ helpers.applicationStatusIcon(demande.status) }}</mat-icon>
+                  </span>
+                  <div class="application-card__info">
+                    <div class="application-card__row">
+                      <span class="application-card__client">
+                        {{ helpers.displayApplicantName(demande) }}
+                      </span>
+                      <span class="application-card__amount">
+                        {{ demande.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                      </span>
+                    </div>
+                    <span class="application-card__title">{{ demande.title }}</span>
+                    <span class="application-card__ref">{{ demande.reference }}</span>
+                  </div>
+                  <span
+                    class="application-card__status"
+                    [ngClass]="helpers.applicationStatusClass(demande.status)"
+                  >
+                    {{ helpers.applicationStatusLabel(demande.status) }}
+                  </span>
+                </div>
+
+                @if (helpers.advisorApplicationHint(demande); as hint) {
+                  <p
+                    class="application-card__hint"
+                    [class.application-card__hint--warning]="
+                      helpers.advisorApplicationHintTone(demande) === 'warning'
+                    "
+                  >
+                    <span class="application-card__hint-dot" aria-hidden="true"></span>
+                    {{ hint }}
+                  </p>
+                }
+
+                @if (helpers.showApplicationStepper(demande.status)) {
+                  <ol class="application-stepper">
+                    @for (
+                      step of helpers.applicationProgressSteps(demande.status);
+                      track step.label
+                    ) {
+                      <li
+                        class="application-stepper__step"
+                        [class.application-stepper__step--done]="step.state === 'done'"
+                        [class.application-stepper__step--current]="step.state === 'current'"
+                      >
+                        <span class="application-stepper__dot" aria-hidden="true">
+                          @if (step.state === 'done') {
+                            <mat-icon>check</mat-icon>
+                          }
+                        </span>
+                        <span class="application-stepper__label">{{ step.label }}</span>
+                      </li>
+                    }
+                  </ol>
+                }
+
+                <a
+                  mat-stroked-button
+                  class="application-card__cta"
+                  [routerLink]="helpers.advisorApplicationRouterLink(demande)"
+                >
+                  {{ helpers.advisorApplicationCtaLabel(demande.status) }}
+                </a>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="recent-section">
+        <header class="recent-section__header">
+          <h2>Prêts suivis</h2>
+          <a routerLink="/conseiller/prets" class="recent-section__link">
+            Tous les prêts
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+        </header>
+
+        @if (trackedLoans().length === 0) {
+          <div class="recent-section__empty">
+            <p>Aucun prêt assigné pour le moment.</p>
+          </div>
+        } @else {
+          <div class="loans-table-wrap">
+            <table class="loans-table">
+              <thead>
+                <tr>
+                  <th scope="col">Prêt</th>
+                  <th scope="col">Client</th>
+                  <th scope="col">Encours</th>
+                  <th scope="col">Statut</th>
+                  <th scope="col">Prochaine échéance</th>
+                  <th scope="col"><span class="sr-only">Action</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (loan of trackedLoans(); track loan.id) {
+                  <tr class="loans-table__row">
+                    <td>
+                      <div class="loans-table__loan">
+                        <span class="loans-table__avatar" aria-hidden="true">
+                          <mat-icon>account_balance</mat-icon>
+                        </span>
+                        <span class="loans-table__ref">{{ loan.reference }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="loans-table__client">{{ loan.borrowerName || '—' }}</span>
+                    </td>
+                    <td>
+                      @if (loan.status === 'ACTIVE') {
+                        {{ loan.remainingBalance | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                      } @else {
+                        —
+                      }
+                    </td>
+                    <td>
+                      <app-loan-status-chip [status]="loan.status" />
+                    </td>
+                    <td class="loans-table__due">
+                      {{ helpers.formatNextInstallment(loan) }}
+                    </td>
+                    <td class="loans-table__action">
+                      <a
+                        mat-icon-button
+                        [routerLink]="['/conseiller/prets', loan.id]"
+                        [attr.aria-label]="'Ouvrir le prêt ' + loan.reference"
+                      >
+                        <mat-icon>chevron_right</mat-icon>
+                      </a>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+  }
+</div>

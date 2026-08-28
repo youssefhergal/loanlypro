@@ -1,0 +1,97 @@
+.repayment-history__title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text, #1a2e22);
+
+  mat-icon {
+    font-size: 1.125rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--color-primary, #1a7a4a);
+  }
+}
+
+.repayment-history__muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #6b7c72);
+}
+
+.repayment-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.repayment-timeline__item {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 0.65rem;
+  padding-bottom: 0.85rem;
+  position: relative;
+
+  &:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 16px;
+    bottom: 0;
+    width: 2px;
+    background: var(--color-border, #d8e8de);
+  }
+}
+
+.repayment-timeline__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border, #d8e8de);
+  background: #fff;
+  margin-top: 0.15rem;
+}
+
+.repayment-timeline__item--done .repayment-timeline__dot {
+  border-color: var(--color-primary, #1a7a4a);
+  background: var(--color-primary, #1a7a4a);
+}
+
+.repayment-timeline__item--current .repayment-timeline__dot {
+  border-color: #1e88e5;
+  background: #1e88e5;
+  box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2);
+}
+
+.repayment-timeline__item--warn .repayment-timeline__dot {
+  border-color: #f57f17;
+  background: #f57f17;
+}
+
+.repayment-timeline__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+
+  h4 {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--color-text, #1a2e22);
+  }
+}
+
+.repayment-timeline__date {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted, #6b7c72);
+  font-weight: 600;
+}
+
+.repayment-timeline__item p {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #6b7c72);
+  line-height: 1.45;
+}

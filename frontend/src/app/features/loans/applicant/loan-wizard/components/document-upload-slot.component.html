@@ -1,0 +1,147 @@
+<div class="doc-slot" [class.doc-slot--required]="required">
+  <div class="doc-slot__header">
+    <div class="doc-slot__header-main">
+      <h4 class="doc-slot__label">
+        {{ label }}
+        @if (required) {
+          <span class="doc-slot__req">*</span>
+        }
+      </h4>
+      @if (slotsHint) {
+        <p class="doc-slot__hint">{{ slotsHint }}</p>
+      }
+    </div>
+    @if (isPending) {
+      <span class="doc-slot__badge doc-slot__badge--pending">En attente</span>
+    }
+  </div>
+
+  @for (doc of files; track doc.id) {
+    <article class="doc-file doc-file--done">
+      <mat-icon class="doc-file__icon" aria-hidden="true">{{ fileIcon(doc) }}</mat-icon>
+      <div class="doc-file__body">
+        <span class="doc-file__name">{{ docTitle(doc) }}</span>
+        <p class="doc-file__meta">
+          @if (doc.displayName) {
+            <span class="doc-file__filename">{{ doc.originalFileName }}</span>
+            <span class="doc-file__sep">·</span>
+          }
+          {{ formatType(doc.contentType) }} · {{ formatSize(doc.fileSizeBytes) }}
+          <span class="doc-file__sep">·</span>
+          Téléversé le {{ doc.uploadedAt | date: 'dd/MM/yyyy' }}
+        </p>
+      </div>
+      <div class="doc-file__aside">
+        <span class="doc-file__status">
+          <mat-icon>check_circle</mat-icon>
+          Importé
+        </span>
+        <div class="doc-file__actions">
+          <button
+            type="button"
+            mat-icon-button
+            class="doc-file__action doc-file__action--download"
+            aria-label="Télécharger"
+            (click)="download.emit(doc.id)"
+          >
+            <mat-icon>download</mat-icon>
+          </button>
+          <button
+            type="button"
+            mat-icon-button
+            class="doc-file__action doc-file__action--delete"
+            aria-label="Supprimer"
+            (click)="remove.emit(doc.id)"
+          >
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </div>
+      </div>
+    </article>
+  }
+
+  @if (isUploading && uploadState) {
+    <article class="doc-file doc-file--uploading">
+      <mat-icon class="doc-file__icon" aria-hidden="true">{{ uploadFileIcon() }}</mat-icon>
+      <div class="doc-file__body">
+        <div class="doc-file__row">
+          <span class="doc-file__name">{{
+            uploadState.displayName || uploadState.fileName
+          }}</span>
+          <span class="doc-file__status doc-file__status--progress">
+            <mat-icon class="doc-file__spin">sync</mat-icon>
+            En cours…
+          </span>
+        </div>
+        <p class="doc-file__meta">
+          {{ formatType(uploadState.mimeType) }} · {{ formatSize(uploadState.fileSize) }}
+        </p>
+        <mat-progress-bar mode="determinate" [value]="uploadState.progress" />
+        <span class="doc-file__percent">{{ uploadState.progress }}%</span>
+      </div>
+      <button
+        type="button"
+        mat-icon-button
+        class="doc-file__cancel"
+        aria-label="Annuler le téléversement"
+        (click)="cancelUpload.emit()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </article>
+  }
+
+  @if (pendingFile(); as file) {
+    <article class="doc-pending">
+      <mat-icon class="doc-pending__icon" aria-hidden="true">description</mat-icon>
+      <div class="doc-pending__body">
+        <p class="doc-pending__file">{{ file.name }} · {{ formatSize(file.size) }}</p>
+        @if (requireDisplayName) {
+          <mat-form-field appearance="outline" class="doc-pending__field">
+            <mat-label>Nom du document</mat-label>
+            <input
+              matInput
+              [(ngModel)]="pendingDisplayName"
+              [maxlength]="labelMaxLength"
+              placeholder="Ex. Attestation employeur"
+            />
+            <mat-hint align="end">{{ pendingDisplayName.length }} / {{ labelMaxLength }}</mat-hint>
+          </mat-form-field>
+        }
+        <div class="doc-pending__actions">
+          <button mat-button type="button" (click)="cancelPending()">Annuler</button>
+          <button mat-flat-button color="primary" type="button" (click)="confirmPendingUpload()">
+            Téléverser
+          </button>
+        </div>
+      </div>
+    </article>
+  }
+
+  @if (showDropZone) {
+    <label
+      class="doc-drop"
+      [class.doc-drop--over]="dragOver()"
+    >
+      <input
+        type="file"
+        class="doc-drop__input"
+        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+        (change)="onFileSelected($event)"
+      />
+      <mat-icon class="doc-drop__icon">cloud_upload</mat-icon>
+      <p class="doc-drop__title">Glissez vos fichiers ici</p>
+      <p class="doc-drop__sub">ou <span class="doc-drop__link">parcourez vos fichiers</span></p>
+      <div class="doc-drop__formats">
+        <span>PDF</span>
+        <span>JPG</span>
+        <span>PNG</span>
+        <span class="doc-drop__max">Max 10 Mo</span>
+      </div>
+    </label>
+  }
+
+  @if (localError()) {
+    <p class="doc-slot__error">{{ localError() }}</p>
+  }
+</div>

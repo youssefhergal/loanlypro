@@ -1,0 +1,25 @@
+# Profil production — activer avec SPRING_PROFILES_ACTIVE=prod
+
+app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:https://pfr-prod.web.app}
+  advisor-assignment:
+    scheduler:
+      enabled: true
+      cron: "0 0 * * * *"
+  mail:
+    # Pas de domaine Resend pour l'instant : logs console + code fixe (passer à resend après achat domaine).
+    provider: logging
+    verification:
+      dev-fixed-code: "000000"
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false

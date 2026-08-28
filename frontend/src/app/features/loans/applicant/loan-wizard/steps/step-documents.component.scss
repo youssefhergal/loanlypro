@@ -1,0 +1,51 @@
+.step-documents {
+  display: grid;
+  grid-template-columns: 1fr minmax(220px, 260px);
+  gap: 1rem;
+  align-items: start;
+}
+
+.step-documents__main {
+  margin-left: var(--wizard-inset-x, 0.75rem);
+  min-width: 0;
+
+  .loan-detail-card {
+    margin-bottom: 0;
+  }
+}
+
+.step-documents__aside {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-right: var(--wizard-inset-x, 0.75rem);
+}
+
+.step-documents__error {
+  margin: 0 0 0.65rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #c62828;
+  background: #ffebee;
+  border-radius: var(--radius-sm, 8px);
+}
+
+.step-documents__slots {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+@media (max-width: 960px) {
+  .step-documents {
+    grid-template-columns: 1fr;
+  }
+
+  .step-documents__main {
+    margin-left: 0;
+  }
+
+  .step-documents__aside {
+    margin-right: 0;
+  }
+}

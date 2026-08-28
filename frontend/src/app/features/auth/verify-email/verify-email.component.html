@@ -1,0 +1,65 @@
+<app-navbar />
+<div class="page">
+  <div class="card">
+    @if (verified) {
+      <div class="status-icon success">✓</div>
+      <h2>E-mail vérifié !</h2>
+      <p>{{ successMessage || 'Votre compte est actif. Redirection vers la connexion…' }}</p>
+      <a mat-raised-button color="primary" routerLink="/login">Se connecter</a>
+    } @else {
+      <div class="status-icon pending">✉</div>
+      <h2>Vérifiez votre e-mail</h2>
+      <p>
+        Nous avons envoyé un code à
+        @if (email) {
+          <strong>{{ email }}</strong>
+        } @else {
+          votre adresse
+        }
+        . Saisissez-le ci-dessous.
+      </p>
+
+      @if (!email) {
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Adresse e-mail</mat-label>
+          <input matInput [(ngModel)]="email" type="email" autocomplete="email" />
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Code de vérification</mat-label>
+        <input matInput [(ngModel)]="token" placeholder="Ex. 000000" autocomplete="one-time-code" />
+      </mat-form-field>
+
+      @if (error) {
+        <p class="error">{{ error }}</p>
+      }
+      @if (successMessage) {
+        <p class="success">{{ successMessage }}</p>
+      }
+
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="verify()"
+        [disabled]="loading || !token.trim() || !email.trim()"
+      >
+        {{ loading ? 'Vérification...' : 'Vérifier mon compte' }}
+      </button>
+
+      <button
+        mat-button
+        type="button"
+        class="resend-btn"
+        (click)="resend()"
+        [disabled]="resending || !email.trim()"
+      >
+        {{ resending ? 'Envoi...' : 'Renvoyer le code' }}
+      </button>
+
+      <p class="footer">
+        <a routerLink="/login">Retour à la connexion</a>
+      </p>
+    }
+  </div>
+</div>

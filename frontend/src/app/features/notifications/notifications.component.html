@@ -1,0 +1,129 @@
+<section class="notifications-page">
+  <div class="notifications-layout">
+    <div class="notifications-layout__main">
+      @if (!loading() && notifications().length > 0) {
+        <mat-button-toggle-group
+          class="notification-filters"
+          [value]="filter()"
+          (change)="setFilter($event.value)"
+          aria-label="Filtrer les notifications"
+          hideSingleSelectionIndicator
+        >
+          <mat-button-toggle value="all">
+            Toutes
+            <span class="notification-filter-count">{{ notifications().length }}</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="unread">
+            Non lues
+            <span class="notification-filter-count">{{ unreadCount() }}</span>
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      }
+
+      @if (loading()) {
+        <div class="loading-state">
+          <mat-spinner diameter="40" />
+        </div>
+      } @else if (notifications().length === 0) {
+        <div class="empty-state">
+          <mat-icon aria-hidden="true">notifications_none</mat-icon>
+          <p>Aucune notification pour le moment.</p>
+          <p class="empty-state__hint">
+            Vous serez alerté ici lors des mises à jour de vos dossiers et de vos paiements.
+          </p>
+        </div>
+      } @else if (filteredNotifications().length === 0) {
+        <div class="empty-state">
+          <mat-icon aria-hidden="true">mark_email_read</mat-icon>
+          <p>Toutes vos notifications ont été lues.</p>
+        </div>
+      } @else {
+        <div class="notification-groups">
+          @for (group of groupedNotifications(); track group.key) {
+            <section class="notification-group">
+              <h2 class="notification-group-title">{{ group.label }}</h2>
+              <ul class="notification-list">
+                @for (notification of group.items; track notification.id) {
+                  <li>
+                    <app-notification-item
+                      [notification]="notification"
+                      (clicked)="openNotification($event)"
+                    />
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+        </div>
+      }
+    </div>
+
+    <aside class="notifications-layout__aside" aria-label="Informations et raccourcis">
+      <section class="notifications-aside-card notifications-aside-card--tip">
+        <h2 class="notifications-aside-card__title">
+          <mat-icon>lightbulb</mat-icon>
+          Bon à savoir
+        </h2>
+        @for (paragraph of asideTipParagraphs(); track paragraph) {
+          <p>{{ paragraph }}</p>
+        }
+      </section>
+
+      @if (unreadCount() > 0) {
+        <section class="notifications-aside-card notifications-aside-card--stats">
+          <h2 class="notifications-aside-card__title notifications-aside-card__title--plain">
+            <mat-icon>mark_email_unread</mat-icon>
+            En attente
+          </h2>
+          <p class="notifications-aside-stats">
+            <strong>{{ unreadCount() }}</strong>
+            notification{{ unreadCount() > 1 ? 's' : '' }} non lue{{ unreadCount() > 1 ? 's' : '' }}
+          </p>
+          <p>Cliquez sur une alerte pour l’ouvrir et accéder au dossier concerné.</p>
+        </section>
+      }
+
+      <section class="notifications-aside-card">
+        <h2 class="notifications-aside-card__title notifications-aside-card__title--plain">
+          Types d’alertes
+        </h2>
+        <ul class="notifications-aside-types">
+          @for (item of alertTypes(); track item.label) {
+            <li class="notifications-aside-types__item">
+              <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+              <div>
+                <strong>{{ item.label }}</strong>
+                <span>{{ item.description }}</span>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="notifications-aside-card">
+        <h2 class="notifications-aside-card__title notifications-aside-card__title--plain">
+          Accès rapide
+        </h2>
+        <nav class="notifications-aside-links">
+          @for (link of quickLinks(); track link.route) {
+            <a [routerLink]="link.route" class="notifications-aside-links__item">
+              <mat-icon>{{ link.icon }}</mat-icon>
+              {{ link.label }}
+            </a>
+          }
+        </nav>
+      </section>
+
+      <section class="notifications-aside-card notifications-aside-card--security">
+        <h2 class="notifications-aside-card__title notifications-aside-card__title--plain">
+          <mat-icon>mail</mat-icon>
+          E-mail & alertes
+        </h2>
+        <p>
+          Certaines notifications importantes peuvent aussi vous être envoyées par e-mail selon
+          l’avancement de votre dossier.
+        </p>
+      </section>
+    </aside>
+  </div>
+</section>

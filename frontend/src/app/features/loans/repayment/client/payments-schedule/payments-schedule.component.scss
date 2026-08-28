@@ -1,0 +1,219 @@
+.payments-schedule {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 28px 2rem;
+}
+
+.payments-schedule__loading,
+.payments-schedule__muted {
+  color: var(--color-text-muted, #6b7c72);
+  font-size: 0.875rem;
+}
+
+.payments-schedule__empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--color-text-muted, #6b7c72);
+
+  mat-icon {
+    font-size: 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--color-primary, #1a7a4a);
+  }
+
+  p {
+    margin: 0 0 1rem;
+  }
+}
+
+.payments-schedule__mandate-ok {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  background: #e8f5ee;
+  border: 1px solid #c8e6d4;
+  color: #1a7a4a;
+  font-size: 0.875rem;
+  line-height: 1.45;
+
+  mat-icon {
+    flex-shrink: 0;
+    font-size: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+.payments-schedule__alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  background: #ffebee;
+  color: #c62828;
+  font-size: 0.875rem;
+}
+
+.payments-schedule__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.payments-schedule__main-card {
+  border: 1px solid var(--color-border, #d8e8de);
+  border-radius: 12px;
+  background: #fff;
+  padding: 0 1rem 1rem;
+  min-height: 420px;
+}
+
+.payments-schedule__panel-title {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-text, #1a2e22);
+}
+
+.payments-schedule__tab-panel {
+  padding: 1rem 0 0.25rem;
+}
+
+.payments-schedule__tabs {
+  ::ng-deep {
+    .mat-mdc-tab-header {
+      border-bottom: 1px solid var(--color-border, #d8e8de);
+    }
+
+    .mat-mdc-tab .mdc-tab__text-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+      color: var(--color-primary, #1a7a4a);
+    }
+
+    .mdc-tab-indicator__content--underline {
+      border-color: var(--color-primary, #1a7a4a) !important;
+      border-top-width: 2px;
+    }
+  }
+}
+
+.payments-schedule__aside {
+  position: sticky;
+  top: calc(var(--page-header-sticky-offset, 72px) + 0.5rem);
+}
+
+.payments-schedule__status-card {
+  padding: 1rem;
+  border: 1px solid var(--color-border, #d8e8de);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.payments-schedule__status-title {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-text, #1a2e22);
+}
+
+.payments-schedule__progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.payments-schedule__progress-pct {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-primary, #1a7a4a);
+  line-height: 1;
+}
+
+.payments-schedule__progress-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7c72);
+  text-align: right;
+}
+
+.payments-schedule__progress-bar {
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  height: 6px;
+
+  ::ng-deep .mdc-linear-progress__bar-inner {
+    border-color: var(--color-primary, #1a7a4a);
+  }
+
+  ::ng-deep .mdc-linear-progress__buffer-bar {
+    background-color: var(--color-primary-light, #e8f5ee);
+  }
+}
+
+.payments-schedule__breakdown {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  dt {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--color-text-muted, #6b7c72);
+    font-weight: 500;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text, #1a2e22);
+  }
+}
+
+.payments-schedule__breakdown-total {
+  margin-top: 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--color-border, #d8e8de);
+
+  dd {
+    font-size: 1rem;
+    font-weight: 800;
+  }
+}
+
+.payments-schedule__main-card app-mandate-status-banner {
+  display: block;
+  margin-bottom: 0;
+}
+
+@media (max-width: 960px) {
+  .payments-schedule__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .payments-schedule__aside {
+    position: static;
+  }
+}

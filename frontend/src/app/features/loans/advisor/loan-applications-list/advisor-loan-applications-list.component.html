@@ -1,0 +1,172 @@
+<div class="advisor-loans-page">
+  <p class="advisor-loans-info">
+    <mat-icon aria-hidden="true">info</mat-icon>
+    Vous voyez les dossiers qui vous sont affectés et les demandes soumises en attente de prise en charge.
+  </p>
+
+  <div class="loan-list-toolbar">
+    <mat-form-field appearance="outline" class="loan-list-search">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        placeholder="Rechercher par référence, client ou intitulé…"
+        [value]="searchQuery()"
+        (input)="onSearchInput($any($event.target).value)"
+      />
+    </mat-form-field>
+    <button
+      mat-stroked-button
+      type="button"
+      class="loan-list-toolbar__btn"
+      (click)="load()"
+      matTooltip="Rafraîchir la liste"
+    >
+      <mat-icon>refresh</mat-icon>
+      Rafraîchir
+    </button>
+    <button
+      mat-stroked-button
+      type="button"
+      class="loan-list-toolbar__btn"
+      [matMenuTriggerFor]="sortMenu"
+    >
+      <mat-icon>swap_vert</mat-icon>
+      {{ sortLabel() }}
+    </button>
+    <mat-menu #sortMenu="matMenu">
+      <button mat-menu-item type="button" (click)="setSort('updatedDesc')">Plus récentes</button>
+      <button mat-menu-item type="button" (click)="setSort('updatedAsc')">Plus anciennes</button>
+      <button mat-menu-item type="button" (click)="setSort('amountDesc')">Montant décroissant</button>
+      <button mat-menu-item type="button" (click)="setSort('amountAsc')">Montant croissant</button>
+    </mat-menu>
+  </div>
+
+  <nav class="loan-list-tabs" aria-label="Filtrer par statut">
+    @for (tab of statusTabs; track tab.key) {
+      <button
+        type="button"
+        class="loan-list-tabs__tab"
+        [class.loan-list-tabs__tab--active]="statusFilter() === tab.key"
+        (click)="selectStatus(tab.key)"
+      >
+        <span>{{ tab.label }}</span>
+        <span class="loan-list-tabs__count">{{ tabCount(tab.key) }}</span>
+      </button>
+    }
+  </nav>
+
+  @if (loading()) {
+    <div class="advisor-loans-loading" aria-busy="true" aria-label="Chargement">
+      <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+    </div>
+  } @else if (!filteredLoans().length) {
+    <div class="loan-list-empty">
+      <mat-icon>inbox</mat-icon>
+      <p>Aucun dossier ne correspond à votre recherche.</p>
+    </div>
+  } @else {
+    <div class="advisor-loans-table-wrap">
+      <table mat-table [dataSource]="paginatedLoans()" class="advisor-loans-table">
+        <ng-container matColumnDef="reference">
+          <th mat-header-cell *matHeaderCellDef>Référence</th>
+          <td mat-cell *matCellDef="let loan">
+            <span class="advisor-loans-table__ref">{{ loan.reference }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="applicantName">
+          <th mat-header-cell *matHeaderCellDef>Client</th>
+          <td mat-cell *matCellDef="let loan">{{ loan.applicantName || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>Intitulé</th>
+          <td mat-cell *matCellDef="let loan">
+            <span class="advisor-loans-table__title">{{ loan.title }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="loanPurpose">
+          <th mat-header-cell *matHeaderCellDef>Objet</th>
+          <td mat-cell *matCellDef="let loan">
+            <span class="advisor-loans-table__tag">{{ purposeLabel(loan.loanPurpose) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="requestedAmount">
+          <th mat-header-cell *matHeaderCellDef>Montant</th>
+          <td mat-cell *matCellDef="let loan">
+            {{ loan.requestedAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="requestedDurationMonths">
+          <th mat-header-cell *matHeaderCellDef>Durée</th>
+          <td mat-cell *matCellDef="let loan">{{ loan.requestedDurationMonths }} mois</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Statut</th>
+          <td mat-cell *matCellDef="let loan">
+            @let style = statusStyle(loan.status);
+            <span
+              class="loan-status-badge"
+              [style.background]="style.badgeBg"
+              [style.color]="style.badgeColor"
+            >
+              <span class="loan-status-badge__dot" [style.background]="style.accent"></span>
+              <mat-icon aria-hidden="true">{{ style.icon }}</mat-icon>
+              {{ style.label }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="submittedAt">
+          <th mat-header-cell *matHeaderCellDef>Soumission</th>
+          <td mat-cell *matCellDef="let loan">{{ submittedDate(loan) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="advisor-loans-table__actions-head"></th>
+          <td mat-cell *matCellDef="let loan" class="advisor-loans-table__actions-cell">
+            <button
+              type="button"
+              mat-stroked-button
+              color="primary"
+              class="advisor-loans-table__open-btn"
+              (click)="open(loan); $event.stopPropagation()"
+            >
+              Ouvrir
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          class="advisor-loans-table__row"
+          (click)="open(row)"
+        ></tr>
+      </table>
+    </div>
+
+    <footer class="loan-list-footer">
+      <p class="loan-list-footer__summary">
+        Affichage de {{ paginatedLoans().length }} sur {{ totalFiltered() }} dossier{{
+          totalFiltered() > 1 ? 's' : ''
+        }}
+      </p>
+      @if (totalFiltered() > pageSize()) {
+        <mat-paginator
+          [length]="totalFiltered()"
+          [pageSize]="pageSize()"
+          [pageIndex]="pageIndex()"
+          [pageSizeOptions]="[10, 25, 50]"
+          (page)="onPage($event)"
+          hidePageSize
+        />
+      }
+    </footer>
+  }
+</div>

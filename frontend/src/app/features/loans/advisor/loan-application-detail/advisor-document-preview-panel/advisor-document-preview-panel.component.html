@@ -1,0 +1,134 @@
+@if (open && row) {
+  <div class="doc-preview-backdrop" (click)="closed.emit()" aria-hidden="true"></div>
+
+  <aside class="doc-preview-panel" role="dialog" aria-modal="true" [attr.aria-label]="row.label">
+    <header class="doc-preview-panel__header">
+      <div class="doc-preview-panel__header-main">
+        <span class="doc-preview-panel__header-icon" aria-hidden="true">
+          <mat-icon>description</mat-icon>
+        </span>
+        <div>
+          <h2>{{ row.label }}</h2>
+          <p>{{ fileMeta }}</p>
+        </div>
+      </div>
+      <div class="doc-preview-panel__header-actions">
+        <span [class]="statusBadgeClass">{{ statusLabel }}</span>
+        <button
+          mat-icon-button
+          type="button"
+          class="doc-preview-panel__close"
+          aria-label="Fermer l'aperçu"
+          (click)="closed.emit()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <div class="doc-preview-panel__toolbar">
+      <div class="doc-preview-panel__zoom">
+        <button mat-icon-button type="button" aria-label="Zoom arrière" (click)="zoomOut.emit()">
+          <mat-icon>remove</mat-icon>
+        </button>
+        <span>{{ zoom }}%</span>
+        <button mat-icon-button type="button" aria-label="Zoom avant" (click)="zoomIn.emit()">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+      <span class="doc-preview-panel__page">{{ pageLabel }}</span>
+    </div>
+
+    <div class="doc-preview-panel__stage">
+      @if (hasPrev) {
+        <button
+          mat-icon-button
+          type="button"
+          class="doc-preview-panel__nav doc-preview-panel__nav--prev"
+          aria-label="Document précédent"
+          (click)="prevDocument.emit()"
+        >
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+      }
+
+      <div class="doc-preview-panel__viewport">
+        @if (loading) {
+          <div class="doc-preview-panel__loading">
+            <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+            <p>Chargement du document…</p>
+          </div>
+        } @else if (safePreviewUrl && isPdfPreview) {
+          <iframe
+            class="doc-preview-panel__iframe"
+            [src]="safePreviewUrl"
+            [style.transform]="'scale(' + zoom / 100 + ')'"
+            title="Aperçu PDF"
+          ></iframe>
+        } @else if (rawPreviewUrl && isImagePreview) {
+          <img
+            class="doc-preview-panel__image"
+            [src]="rawPreviewUrl"
+            [alt]="row.label"
+            [style.transform]="'scale(' + zoom / 100 + ')'"
+          />
+        } @else if (rawPreviewUrl) {
+          <div class="doc-preview-panel__fallback">
+            <mat-icon>description</mat-icon>
+            <p>Aperçu non disponible pour ce type de fichier.</p>
+            <button mat-stroked-button type="button" (click)="download.emit()">Télécharger</button>
+          </div>
+        } @else {
+          <div class="doc-preview-panel__fallback">
+            <mat-icon>description</mat-icon>
+            <p>Aperçu du document</p>
+          </div>
+        }
+      </div>
+
+      @if (hasNext) {
+        <button
+          mat-icon-button
+          type="button"
+          class="doc-preview-panel__nav doc-preview-panel__nav--next"
+          aria-label="Document suivant"
+          (click)="nextDocument.emit()"
+        >
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      }
+    </div>
+
+    <footer class="doc-preview-panel__footer">
+      <button mat-stroked-button type="button" class="doc-preview-panel__download" (click)="download.emit()">
+        <mat-icon>download</mat-icon>
+        Télécharger
+      </button>
+
+      @if (canReviewActions) {
+        <div class="doc-preview-panel__decision">
+          <button
+            mat-stroked-button
+            type="button"
+            class="doc-preview-panel__reject"
+            (click)="reject.emit()"
+            [disabled]="actionLoading"
+          >
+            <mat-icon>cancel</mat-icon>
+            Rejeter
+          </button>
+          <button
+            mat-flat-button
+            type="button"
+            class="doc-preview-panel__validate"
+            (click)="validate.emit()"
+            [disabled]="actionLoading"
+          >
+            <mat-icon>check_circle</mat-icon>
+            Valider la pièce
+          </button>
+        </div>
+      }
+    </footer>
+  </aside>
+}
